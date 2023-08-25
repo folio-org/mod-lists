@@ -1,12 +1,12 @@
 package org.folio.list.service;
 
 import org.folio.fql.model.*;
-import org.folio.fqm.lib.service.ResultSetService;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.UserFriendlyQueryService;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.SourceColumn;
-import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,9 +26,7 @@ class UserFriendlyQueryServiceTest {
   @InjectMocks
   private UserFriendlyQueryService userFriendlyQueryService;
   @Mock
-  private FolioExecutionContext folioExecutionContext;
-  @Mock
-  private ResultSetService resultSetService;
+  private QueryClient queryClient;
 
   @Test
   void shouldGetStringForFqlEqualsConditionWithoutIdColumn() {
@@ -44,19 +42,22 @@ class UserFriendlyQueryServiceTest {
     List<Map<String, Object>> entityContents = List.of(
       Map.of("field1", "some value")
     );
-    String tenantId = "Tenant_01";
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value = UUID.randomUUID();
     UUID entityTypeId = UUID.randomUUID();
     List<String> fields = List.of("id", "field1");
+
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-
     EqualsCondition equalsCondition = new EqualsCondition("field1", value.toString());
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(resultSetService.getResultSet(tenantId, sourceEntityTypeId, fields, List.of(UUID.fromString(equalsCondition.value().toString())))).thenReturn(entityContents);
+    List<UUID> ids = List.of(UUID.fromString(equalsCondition.value().toString()));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
+
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
     String expectedEqualsCondition = "field2 == some value";
     String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
@@ -77,7 +78,6 @@ class UserFriendlyQueryServiceTest {
     List<Map<String, Object>> entityContents = List.of(
       Map.of("field1", "some value")
     );
-    String tenantId = "Tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value = UUID.randomUUID();
@@ -87,10 +87,12 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
     NotEqualsCondition notEqualsCondition = new NotEqualsCondition("field1", value.toString());
+    List<UUID> ids = List.of(UUID.fromString(notEqualsCondition.value().toString()));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
 
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(resultSetService.getResultSet(tenantId, sourceEntityTypeId, fields,
-      List.of(UUID.fromString(notEqualsCondition.value().toString())))).thenReturn(entityContents);
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
     String expectedNotEqualsCondition = "field2 != some value";
     String actualNotEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(notEqualsCondition, entityType);
@@ -112,20 +114,22 @@ class UserFriendlyQueryServiceTest {
       Map.of("field1", "value1"),
       Map.of("field1", "value2")
     );
-    String tenantId = "Tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value1 = UUID.randomUUID();
     UUID value2 = UUID.randomUUID();
+    List<UUID> ids = List.of(value1, value2);
     List<String> fields = List.of("id", "field1");
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
     InCondition inCondition = new InCondition("field1", List.of(value1, value2));
 
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(resultSetService.getResultSet(tenantId, sourceEntityTypeId, fields, List.of(value1, value2))).thenReturn(entityContents);
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
     String expectedInCondition = "field2 in [value1, value2]";
     String actualInConditions = userFriendlyQueryService.getUserFriendlyQuery(inCondition, entityType);
@@ -147,20 +151,22 @@ class UserFriendlyQueryServiceTest {
       Map.of("field1", "value1"),
       Map.of("field1", "value2")
     );
-    String tenantId = "Tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value1 = UUID.randomUUID();
     UUID value2 = UUID.randomUUID();
+    List<UUID> ids = List.of(value1, value2);
     List<String> fields = List.of("id", "field1");
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
     NotInCondition notInCondition = new NotInCondition("field1", List.of(value1, value2));
 
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(resultSetService.getResultSet(tenantId, sourceEntityTypeId, fields, List.of(value1, value2))).thenReturn(entityContents);
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
     String expectedNotInCondition = "field2 not in [value1, value2]";
     String actualNotInCondition = userFriendlyQueryService.getUserFriendlyQuery(notInCondition, entityType);

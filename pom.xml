@@ -32,6 +32,7 @@
     <jackson-dataformat-csv.version>2.14.2</jackson-dataformat-csv.version>
     <aws-sdk-java.version>2.19.2</aws-sdk-java.version>
     <folio-s3-client.version>1.1.0-SNAPSHOT</folio-s3-client.version>
+    <awaitility.version>4.2.0</awaitility.version>
 
     <!-- test dependencies -->
     <testcontainers.version>1.17.6</testcontainers.version>
@@ -126,6 +127,11 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-csv</artifactId>
       <version>${jackson-dataformat-csv.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>${awaitility.version}</version>
     </dependency>
 
     <dependency>

@@ -1,17 +1,18 @@
 package org.folio.list.service;
 
 import org.folio.fql.FqlService;
-import org.folio.fqm.lib.service.ResultSetService;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
@@ -40,11 +41,11 @@ class ListServiceGetListContentsTest {
   @Mock
   private ListRepository listRepository;
   @Mock
-  private ResultSetService resultSetService;
-  @Mock
   private ListContentsRepository listContentsRepository;
   @Mock
   private FqlService fqlService;
+  @Mock
+  private QueryClient queryClient;
   @InjectMocks
   private ListService listService;
 
@@ -58,6 +59,9 @@ class ListServiceGetListContentsTest {
     int size = 2;
     int contentVersion = 2;
     List<String> fields = List.of("id", "key1", "key2");
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entityTypeId)
+      .fields(fields)
+      .ids(contentIds);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("id", contentIds.get(0), "key1", "value1", "key2", "value2"),
       Map.of("id", contentIds.get(1), "key1", "value3", "key2", "value4")
@@ -82,7 +86,7 @@ class ListServiceGetListContentsTest {
     when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
-    when(resultSetService.getResultSet(tenantId, entityTypeId, fields, contentIds)).thenReturn(expectedList);
+    when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
     assertThat(actualContent).isEqualTo(expectedContent);
   }
@@ -97,6 +101,9 @@ class ListServiceGetListContentsTest {
     int size = 2;
     int contentVersion = 2;
     List<String> fields = new ArrayList<>(List.of("key1", "key2"));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entityTypeId)
+      .fields(fields)
+      .ids(contentIds);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("id", contentIds.get(0), "key1", "value1", "key2", "value2"),
       Map.of("id", contentIds.get(1), "key1", "value3", "key2", "value4")
@@ -121,7 +128,7 @@ class ListServiceGetListContentsTest {
     when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
-    when(resultSetService.getResultSet(tenantId, entityTypeId, List.of("key1", "key2", "id"), contentIds)).thenReturn(expectedList);
+    when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
     assertThat(actualContent).isEqualTo(expectedContent);
   }
@@ -136,6 +143,9 @@ class ListServiceGetListContentsTest {
     int size = 2;
     int contentVersion = 2;
     List<String> fields = List.of();
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entityTypeId)
+      .fields(List.of("id"))
+      .ids(contentIds);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("id", contentIds.get(0)),
       Map.of("id", contentIds.get(1))
@@ -160,7 +170,7 @@ class ListServiceGetListContentsTest {
     when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
-    when(resultSetService.getResultSet(tenantId, entityTypeId, List.of("id"), contentIds)).thenReturn(expectedList);
+    when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
     assertThat(actualContent).isEqualTo(expectedContent);
   }
@@ -174,7 +184,10 @@ class ListServiceGetListContentsTest {
     int offset = 0;
     int size = 2;
     int contentVersion = 2;
-    List<String> fields = List.of();
+    List<String> fields = List.of("id");
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entityTypeId)
+      .fields(fields)
+      .ids(contentIds);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("id", contentIds.get(0)),
       Map.of("id", contentIds.get(1))
@@ -198,7 +211,7 @@ class ListServiceGetListContentsTest {
     when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
-    when(resultSetService.getResultSet(tenantId, entityTypeId, List.of("id"), contentIds)).thenReturn(expectedList);
+    when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
     assertThat(actualContent).isEqualTo(expectedContent);
   }

@@ -1,7 +1,5 @@
 package org.folio.list.service.export;
 
-import org.folio.fqm.lib.service.FqmMetaDataService;
-import org.folio.fqm.lib.service.ResultSetService;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -9,13 +7,15 @@ import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
+import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
 import org.folio.list.utils.TestDataFixture;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.StringType;
-import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,11 +38,9 @@ class CsvCreatorTest {
   @Mock
   private ListContentsRepository contentsRepository;
   @Mock
-  private FqmMetaDataService metaDataService;
+  private EntityTypeClient entityTypeClient;
   @Mock
-  private FolioExecutionContext folioExecutionContext;
-  @Mock
-  private ResultSetService resultSetService;
+  private QueryClient queryClient;
   @Mock
   private ListExportRepository listExportRepository;
   @Mock(mockMaker = MockMakers.INLINE)
@@ -52,7 +50,6 @@ class CsvCreatorTest {
 
   @Test
   void shouldCreateCsvFromList() throws IOException {
-    String tenantId = "tenant_01";
     int batchSize = 100;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
@@ -60,6 +57,9 @@ class CsvCreatorTest {
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
 
     List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entity.getEntityTypeId())
+      .fields(entity.getFields())
+      .ids(contentIds);
     List<ListContent> contents = contentIds.stream()
       .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, 1))
       .toList();
@@ -74,14 +74,11 @@ class CsvCreatorTest {
       col1-value2,col2-value2
       """;
 
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
-    when(metaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId()))
-      .thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), -1, PageRequest.ofSize(batchSize)))
       .thenReturn(contents);
-    when(resultSetService.getResultSet(tenantId, entity.getEntityTypeId(), entity.getFields(), contentIds))
-      .thenReturn(contentsWithData);
+    when(queryClient.getContents(contentsRequest)).thenReturn(contentsWithData);
     when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
 
     try (ExportLocalStorage csvStorage = csvCreator.createCSV(exportDetails)) {
