@@ -1,0 +1,35 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet id="create-list-details-table" author="nshah@ebsco.com">
+    <sqlFile path="sql/create-list-details-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="create-list-refresh-details-table.sql" author="nshah@ebsco.com">
+    <sqlFile path="sql/create-list-refresh-details-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="create-list-contents-table" author="nshah@ebsco.com">
+    <sqlFile path="sql/create-list-contents-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="create-sort-seq-index" author="pkjacob@ebsco.com">
+    <sqlFile path="sql/create-sort-seq-index-in-list-contents-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="update-list-details-table" author="bsharp@ebsco.com">
+    <sqlFile path="sql/update-list-details-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="set-fk-list-details-table" author="kjain@ebsco.com">
+    <sqlFile path="sql/set-fk-list-details-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+  <changeSet id="create-export-details-table" author="kjain@ebsco.com">
+    <sqlFile path="sql/create-export-details-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+</databaseChangeLog>

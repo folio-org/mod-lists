@@ -1,0 +1,36 @@
+{
+  "id": "46848abd-d41f-42fd-8b8a-8aebc8ce1128",
+  "name": "Missing Items",
+  "description": "Missing Items List",
+  "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
+  "userFriendlyQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "createdBy": "3d96d21c-1b05-481b-97be-698a32e50d1b",
+  "createdByUsername": "SYSTEM",
+  "createdDate": "2023-01-27T20:54:41.528281+05:30",
+  "isActive": true,
+  "isPrivate": true,
+  "isCanned": true,
+  "inProgressRefresh": {
+    "id": "a648ae1e-ee4c-4f7e-a5e5-8837a6e0e493",
+    "listId": "46848abd-d41f-42fd-8b8a-8aebc8ce1128",
+    "status": "IN_PROGRESS",
+    "refreshStartDate": "2023-02-02T00:07:44.44125+05:30",
+    "refreshedBy": "7127d488-6ab6-4853-b234-45dca1dd1989",
+    "refreshedByUsername": "7127d488-6ab6-4853-b234-45dca1dd1989"
+  },
+  "successRefresh": {
+    "id": "8121445f-aae3-3920-b1c9-901255e0e400",
+    "listId": "46848abd-d41f-42fd-8b8a-8aebc8ce1128",
+    "status": "SUCCESS",
+    "refreshStartDate": "2023-02-01T00:08:44.44125+05:30",
+    "refreshedBy": "7127d488-6ab6-4853-b234-45dca1dd1989",
+    "refreshedByUsername": "7127d488-6ab6-4853-b234-45dca1dd1989",
+    "contentVersion": 2,
+    "recordsCount": 100
+  }
+}

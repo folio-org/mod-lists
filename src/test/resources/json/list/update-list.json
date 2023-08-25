@@ -1,0 +1,12 @@
+{
+  "name": "Updated List",
+  "description": "Updated Missing Items List",
+  "fqlQuery": "item_status = 'missing'",
+  "isActive": true,
+  "isPrivate": true,
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "version": 3
+}

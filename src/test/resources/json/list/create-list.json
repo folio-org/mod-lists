@@ -1,0 +1,12 @@
+{
+  "name": "Missing Items",
+  "description": "Missing Items List",
+  "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
+  "fqlQuery": "item_status = 'missing'",
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "isActive": true,
+  "isPrivate": true
+}

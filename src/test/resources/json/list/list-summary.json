@@ -1,0 +1,26 @@
+{
+  "id": "46848abd-d41f-42fd-8b8a-8aebc8ce1128",
+  "name": "Missing Items",
+  "description": "Missing Items List",
+  "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
+  "userFriendlyQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "createdByUsername": "SYSTEM",
+  "createdDate": "2023-01-27T20:54:41.528281+05:30",
+  "isActive": true,
+  "isPrivate": true,
+  "successRefresh": {
+    "id": "46848abd-d41f-42fd-8b8a-8aebc8ce1129",
+    "listId": "46848abd-d41f-42fd-8b8a-8aebc8ce1128",
+    "status": "SUCCESS",
+    "refreshStartDate": "2023-01-27T20:54:41.528281+05:30",
+    "refreshEndDate": "2023-01-27T20:59:41.528281+05:30",
+    "refreshedBy": "1ae31862-0cb0-4cbb-ae9f-3bd438208a23",
+    "refreshedByUsername": "nshah",
+    "recordsCount": 2
+  }
+}

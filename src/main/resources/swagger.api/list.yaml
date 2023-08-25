@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: ListEntity API
+  description: ListEntity API description
+  version: 1.0.0
+paths:
+  /lists:
+    get:
+      summary: ListEntity all reports
+      operationId: getAllLists
+      tags:
+        - list
+      parameters:
+        - name: ids
+          in: query
+          description: List of ids to retrieve information for
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: UUID
+        - name: entityTypeIds
+          in: query
+          description: List of entityTypeIds to retrieve information for
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: UUID
+        - name: offset
+          in: query
+          description: Offset to start retrieving list information for
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          description: how many item to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+        - name: active
+          in: query
+          description: Indicates whether list should be active or not
+          required: false
+          schema:
+            type: boolean
+        - name: private
+          in: query
+          description: Indicates whether list should be private or not
+          required: false
+          schema:
+            type: boolean
+        - name: updatedAsOf
+          in: query
+          description: Indicates the minimum create/update timestamp to filter lists by
+          required: false
+          schema:
+            type: string
+            format: offset-date-time
+      responses:
+        '200':
+          description: A paged array of reports
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSummaryResultsDTO"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+    post:
+      summary: Create a List
+      operationId: createList
+      tags:
+        - list
+      requestBody:
+        description: List object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRequestDTO'
+      responses:
+        '201':
+          description: 'returns if a list created successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}:
+    delete:
+      summary: Delete List with the provided id
+      operationId: deleteList
+      tags:
+        - list
+      description: delete the list with the specific id (if exists).
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: List has been deleted
+        '404':
+          description: List with id not found
+    get:
+      operationId: getListById
+      tags:
+        - list
+      description: gets the specific list information (if exists).
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: 'returns specific list information (if exists)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+    put:
+      summary: Update a List
+      operationId: updateList
+      tags:
+        - list
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        description: List object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListUpdateRequestDTO'
+      responses:
+        '200':
+          description: 'returns if a list updated successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/refresh:
+    post:
+      operationId: performRefresh
+      tags:
+        - list
+      description: Perform refresh of the list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '201':
+          description: 'Refresh request successfully submitted'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRefreshDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+    delete:
+      operationId: cancelRefresh
+      tags:
+        - list
+      description: Cancel refresh of the list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: 'Refresh cancelled'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/contents:
+    get:
+      operationId: getListContents
+      tags:
+        - list
+      description: gets the list contents (if exists).
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - name: offset
+          in: query
+          description: Offset to start retrieving items from
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          description: How many items to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+      responses:
+        '200':
+          description: A page of list contents
+          headers:
+            x-next:
+              description: A link to the next page of list contents
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultsetPage'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/exports:
+    post:
+      operationId: exportList
+      tags:
+        - listExport
+      description: Exports the list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '201':
+          description: 'returns if a list export request submitted successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListExportDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/exports/{exportId}:
+    get:
+      operationId: getExportDetails
+      tags:
+        - listExport
+      description: Get details of an export request
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/exportId'
+      responses:
+        '200':
+          description: "Returns details of requested exportId"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListExportDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/exports/{exportId}/cancel:
+    post:
+      operationId: cancelExport
+      tags:
+        - listExport
+      description: Cancel the export.
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/exportId'
+      responses:
+        '204':
+          description: Export cancelled
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/exports/{exportId}/download:
+    get:
+      operationId: downloadList
+      tags:
+        - listExport
+      description: Download the exported file.
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/exportId'
+      responses:
+        '200':
+          description: 'Ok'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/configuration:
+    get:
+      operationId: getListConfiguration
+      tags:
+        - listConfiguration
+      description: Get list app configuration.
+      responses:
+        '200':
+          description: 'Returns list app configuration'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConfiguration'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      description: id of the list
+      schema:
+        type: string
+        format: UUID
+    exportId:
+      name: exportId
+      in: path
+      required: true
+      description: exportId of the list
+      schema:
+        type: string
+        format: UUID
+  schemas:
+    ListDTO:
+      $ref: schemas/ListDTO.json
+    ListRefreshDTO:
+      $ref: schemas/ListRefreshDTO.json
+    ListRequestDTO:
+      $ref: schemas/ListRequestDTO.json
+    ListUpdateRequestDTO:
+      $ref: schemas/ListUpdateRequestDTO.json
+    ListExportDTO:
+      $ref: schemas/ListExportDTO.json
+    ListSummaryResultsDTO:
+      $ref: schemas/ListSummaryResultsDTO.json
+    ResultsetPage:
+      type: object
+    ContentItem:
+      type: object
+      additionalProperties:
+        type: object
+    ListAppError:
+      $ref: schemas/ListAppError.json
+    ListConfiguration:
+      $ref: schemas/ListConfiguration.json

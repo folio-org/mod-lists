@@ -1,0 +1,23 @@
+{
+  "exportId": "45912ec2-88cc-4799-a01a-89dbdfcfbf5a",
+  "list": {
+    "id": "a648ae1e-ee4c-4f7e-a5e5-8837a6e0e497",
+    "name": "Missing Items",
+    "description": "Missing Items List",
+    "createdBy": "3d96d21c-1b05-481b-97be-698a32e50d1b",
+    "createdByUsername": "SYSTEM",
+    "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
+    "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+    "fields": [
+      "id",
+      "item_status"
+    ],
+    "isActive": true,
+    "isPrivate": false,
+    "version": 3
+  },
+  "status": "IN_PROGRESS",
+  "createdBy": "7127d488-6ab6-4853-b234-45dca1dd1989",
+  "startDate": "2023-02-02T00:07:44.44125+05:30",
+  "endDate": null
+}

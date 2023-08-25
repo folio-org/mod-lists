@@ -1,0 +1,98 @@
+mod-lists:
+  general:
+    max-list-size: ${MAX_LIST_SIZE:1250000}
+  list-export:
+    data-fetch-properties:
+      batch-size: ${LIST_EXPORT_BATCH_SIZE:1000}
+    s3-properties:
+      bucket: ${LIST_APP_S3_BUCKET:list-exports-us-west-2}
+      region: ${AWS_REGION:us-west-2}
+      endpoint: ${AWS_URL:https://s3.amazonaws.com}
+      aws-sdk: ${USE_AWS_SDK:false}
+      access-key: ${S3_ACCESS_KEY_ID:}
+      secret-key: ${S3_SECRET_ACCESS_KEY:}
+server:
+  port: 8081
+spring:
+  application:
+    name: mod-lists
+  datasource:
+    writer:
+      username: ${DB_USERNAME:postgres}
+      password: ${DB_PASSWORD:postgres}
+      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:postgres}
+    reader:
+      username: ${DB_USERNAME:postgres}
+      password: ${DB_PASSWORD:postgres}
+      url: jdbc:postgresql://${DB_HOST_READER:localhost}:${DB_PORT_READER:5432}/${DB_DATABASE:postgres}
+    hikari:
+      # time in ms to wait for db connection
+      initialization-fail-timeout: 1800000
+  sql:
+    init:
+      # to boot up application despite of any DB connection issues
+      continue-on-error: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/changelog-master.xml
+  jackson:
+    default-property-inclusion: non_empty
+    deserialization:
+      fail-on-unknown-properties: true
+      accept-single-value-as-array: true
+  mustache:
+    check-template-location: false
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+  feign:
+    client:
+      config:
+        default:
+          connectTimeout: 5000
+          readTimeout: 5000
+          loggerLevel: BASIC
+    httpclient:
+      enabled: true
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 10 # Max number of concurrent async tasks
+        queue-capacity: 1000
+      thread-name-prefix: mod-lists-task-
+folio:
+  tenant:
+    validation:
+      enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,httptrace
+      base-path: /admin
+  #  endpoint:
+  #    health:
+  #      show-details: always
+  #      show-components: always
+  ###################################################
+  # Disable all checks except for readiness
+  ###################################################
+  health:
+    defaults:
+      enabled: false
+    readinessstate:
+      enabled: true
+debug: false

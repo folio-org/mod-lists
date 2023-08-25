@@ -1,0 +1,119 @@
+package org.folio.list.services.export;
+
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
+import org.folio.fqm.lib.service.FqmMetaDataService;
+import org.folio.fqm.lib.service.ResultSetService;
+import org.folio.list.configuration.ListExportProperties;
+import org.folio.list.domain.AsyncProcessStatus;
+import org.folio.list.domain.ExportDetails;
+import org.folio.list.domain.ListEntity;
+import org.folio.list.exception.ExportCancelledException;
+import org.folio.list.repository.ListContentsRepository;
+import org.folio.list.repository.ListExportRepository;
+import org.folio.list.services.ListActions;
+import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.spring.FolioExecutionContext;
+import org.springframework.stereotype.Service;
+
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
+/**
+ * Creates CSV file for the given export details.
+ */
+@Service
+@RequiredArgsConstructor
+@Log4j2
+public class CsvCreator {
+  private final ListExportRepository listExportRepository;
+  private final ListContentsRepository contentsRepository;
+  private final FqmMetaDataService metaDataService;
+  private final FolioExecutionContext folioExecutionContext;
+  private final ResultSetService resultSetService;
+  private final ListExportProperties exportProperties;
+
+  @SneakyThrows
+  public ExportLocalStorage createCSV(ExportDetails exportDetails) {
+    var localStorage = new ExportLocalStorage(exportDetails.getExportId());
+    ListEntity list = exportDetails.getList();
+    var idsProvider = new ListIdsProvider(contentsRepository, list);
+    EntityType entityType = metaDataService.getEntityTypeDefinition(folioExecutionContext.getTenantId(), list.getEntityTypeId())
+      .orElseThrow(() -> new IllegalStateException("List " + list.getId() + " is associated with an invalid entity type"));
+
+    try (var localStorageOutputStream = localStorage.outputStream()) {
+      var csvWriter = new ListCsvWriter(entityType, localStorageOutputStream);
+      int batchSize = exportProperties.getBatchSize();
+      int batchNumber = 0;
+      for (List<UUID> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
+        if (batchNumber % 10 == 0) {
+          checkIfExportCancelled(list.getId(), exportDetails.getExportId());
+        }
+        log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
+        var sortedContents = resultSetService.getResultSet(folioExecutionContext.getTenantId(), list.getEntityTypeId(), list.getFields(), ids);
+        csvWriter.writeCsv(sortedContents);
+        batchNumber++;
+      }
+    }
+    return localStorage;
+  }
+
+  private void checkIfExportCancelled(UUID listId, UUID exportId) {
+    ExportDetails exportDetails = listExportRepository.findById(exportId)
+      .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
+    if (exportDetails.getStatus().equals(AsyncProcessStatus.CANCELLED)) {
+      log.info("Export has been cancelled: exportId {}, listId {}", exportId, listId);
+      throw new ExportCancelledException(listId, exportId, ListActions.EXPORT);
+    }
+  }
+
+  private static class ListCsvWriter {
+    private final CsvSchema csvSchema;
+    private final OutputStream destination;
+    private final ObjectWriter objectWriter;
+    private boolean firstBatch;
+
+    private static final Map<String, CsvSchema.ColumnType> COLUMN_TYPE_MAPPER = Map.of(
+      "booleanType", CsvSchema.ColumnType.BOOLEAN,
+      "numberType", CsvSchema.ColumnType.NUMBER,
+      "arrayType", CsvSchema.ColumnType.ARRAY
+    );
+
+    private ListCsvWriter(EntityType entityType, OutputStream destination) {
+      this.destination = destination;
+      this.csvSchema = createSchema(entityType);
+      this.objectWriter = new CsvMapper().writerFor(List.class);
+      this.firstBatch = true;
+    }
+
+    @SneakyThrows
+    public void writeCsv(List<Map<String, Object>> listContents) {
+      objectWriter
+        .with(firstBatch ? csvSchema.withHeader() : csvSchema)
+        .writeValues(destination)
+        .write(listContents);
+      firstBatch = false;
+      destination.flush();
+    }
+
+    private CsvSchema createSchema(EntityType entityType) {
+      CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
+      entityType.getColumns().forEach(column -> csvSchemaBuilder.addColumn(column.getName(), getColumnType(column)));
+      return csvSchemaBuilder.build();
+    }
+
+    private CsvSchema.ColumnType getColumnType(EntityTypeColumn column) {
+      return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "id": "b8d3f619-6a7c-41c3-9a99-bb937735dcc7",
+    "name": "allitems",
+    "recordType": "item",
+    "userFriendlyQuery": "fql",
+    "fqlQuery": "fql",
+    "createdByUsername": "nshah",
+    "isActive": true,
+    "isPrivate": false
+}

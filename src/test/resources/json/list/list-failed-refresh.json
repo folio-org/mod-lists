@@ -1,0 +1,29 @@
+{
+  "id": "47793399-1d29-4ed0-8b33-c9f5e6d9dac3",
+  "name": "Missing Items",
+  "description": "Missing Items List",
+  "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
+  "userFriendlyQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "createdByUsername": "SYSTEM",
+  "createdDate": "2023-02-06T18:16:54.924892+05:30",
+  "isActive": true,
+  "isPrivate": true,
+  "isCanned": true,
+  "failedRefresh": {
+    "id": "47793399-1d29-4ed0-8b33-c9f5e6d9dac1",
+    "listId": "47793399-1d29-4ed0-8b33-c9f5e6d9dac3",
+    "status": "FAILED",
+    "refreshStartDate": "2023-02-06T18:16:54.924892+05:30",
+    "refreshEndDate": "2023-02-06T18:16:54.924892+05:30",
+    "refreshedBy": "47793399-1d29-4ed0-8b33-c9f5e6d9dac2",
+    "refreshedByUsername": "nshah",
+    "recordsCount": 0,
+    "errorCode": "max.list.size.exceeded",
+    "errorMessage": "list ( with id 47793399-1d29-4ed0-8b33-c9f5e6d9dac3 ) has exceeded maximum list size of 1000"
+  }
+}
