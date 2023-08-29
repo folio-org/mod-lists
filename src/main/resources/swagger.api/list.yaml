@@ -391,3 +391,4 @@ components:
       $ref: schemas/ListAppError.json
     ListConfiguration:
       $ref: schemas/ListConfiguration.json
+
