@@ -40,7 +40,7 @@ public class DataBatchCallback implements BiConsumer<ListEntity, List<UUID>> {
     checkIfMaxListSizeExceeded(entity, sortSequence + contentIds.size());
     List<ListContent> batch = contentIds.stream()
       .map(id -> new ListContent(entity.getId(), refreshId, id, sortSequence++))
-      .collect(Collectors.toList());
+      .toList();
     listContentsRepository.saveAll(batch);
     log.info("Saved list contents; list ID: {}; refreshId: {}; records in this batch: {}; total records so far: {}",
       entity.getId(), refreshId, contentIds.size(), sortSequence);
