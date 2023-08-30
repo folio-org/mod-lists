@@ -14,7 +14,11 @@ import java.util.Set;
 @Log4j2
 public class AppShutdownService {
 
-  private final Set<ShutdownTask> shutdownTasks = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Set<ShutdownTask> shutdownTasks;
+
+  public AppShutdownService() {
+    this.shutdownTasks = Collections.synchronizedSet(new LinkedHashSet<>());
+  }
 
   /**
    * Register a shutdown task that will be executed on app shutdown.
