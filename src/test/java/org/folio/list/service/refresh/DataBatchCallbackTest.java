@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
@@ -56,7 +56,7 @@ class DataBatchCallbackTest {
     verify(listContentsRepository, times(1)).saveAll(savedContentsCapture.capture());
     List<ListContent> capturedContents = savedContentsCapture.getValue();
 
-    assertThat(capturedContents.size()).isEqualTo(contentIds.size());
+    assertThat(capturedContents).hasSameSizeAs(contentIds);
     assertThat(capturedContents.get(0).getListId()).isEqualTo(entity.getId());
     assertThat(capturedContents.get(0).getContentId()).isEqualTo(contentIds.get(0));
     assertThat(capturedContents.get(0).getRefreshId()).isEqualTo(entity.getInProgressRefreshId().orElseThrow(() -> new ListNotRefreshingException(entity, ListActions.REFRESH)));
