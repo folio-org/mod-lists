@@ -6,8 +6,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.folio.fqm.lib.service.FqmMetaDataService;
-import org.folio.fqm.lib.service.ResultSetService;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -15,10 +13,12 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
+import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 
 import java.io.OutputStream;
@@ -38,18 +38,16 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 public class CsvCreator {
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
-  private final FqmMetaDataService metaDataService;
-  private final FolioExecutionContext folioExecutionContext;
-  private final ResultSetService resultSetService;
   private final ListExportProperties exportProperties;
+  private final QueryClient queryClient;
+  private final EntityTypeClient entityTypeClient;
 
   @SneakyThrows
   public ExportLocalStorage createCSV(ExportDetails exportDetails) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
-    EntityType entityType = metaDataService.getEntityTypeDefinition(folioExecutionContext.getTenantId(), list.getEntityTypeId())
-      .orElseThrow(() -> new IllegalStateException("List " + list.getId() + " is associated with an invalid entity type"));
+    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId());
 
     try (var localStorageOutputStream = localStorage.outputStream()) {
       var csvWriter = new ListCsvWriter(entityType, localStorageOutputStream);
@@ -60,7 +58,10 @@ public class CsvCreator {
           checkIfExportCancelled(list.getId(), exportDetails.getExportId());
         }
         log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
-        var sortedContents = resultSetService.getResultSet(folioExecutionContext.getTenantId(), list.getEntityTypeId(), list.getFields(), ids);
+        ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
+          .fields(list.getFields())
+          .ids(ids);
+        var sortedContents = queryClient.getContents(contentsRequest);
         csvWriter.writeCsv(sortedContents);
         batchNumber++;
       }

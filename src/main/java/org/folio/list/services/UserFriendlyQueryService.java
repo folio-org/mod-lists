@@ -3,10 +3,10 @@ package org.folio.list.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.fql.model.*;
-import org.folio.fqm.lib.service.ResultSetService;
+import org.folio.list.rest.QueryClient;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,8 +18,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserFriendlyQueryService {
-  private final ResultSetService resultSetService;
-  private final FolioExecutionContext executionContext;
+
+  private final QueryClient queryClient;
+
   private final Map<Class<? extends FqlCondition<?>>, BiFunction<FqlCondition<?>, EntityType, String>> userFriendlyQuery = Map.of(
     EqualsCondition.class, (cnd, ent) -> handleEquals((EqualsCondition) cnd, ent),
     NotEqualsCondition.class, (cnd, ent) -> handleNotEquals((NotEqualsCondition) cnd, ent),
@@ -100,7 +101,7 @@ public class UserFriendlyQueryService {
         .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
         .orElse(condition.fieldName() + operatorWithPadding + condition.value());
     } catch (Exception e) {
-      log.error("Unexpected error when creating user friendly query for condition " + condition);
+      log.error("Unexpected error when creating user friendly query for condition " + condition + ". Exception: " + e);
       return condition.fieldName() + operatorWithPadding + condition.value();
     }
   }
@@ -110,13 +111,14 @@ public class UserFriendlyQueryService {
   }
 
   private String getLabel(List<UUID> ids, EntityTypeColumn column, Boolean addBrackets) {
+    log.info("Getting label for ids: {}", ids);
     UUID sourceEntityTypeId = UUID.fromString(column.getSource().getEntityTypeId());
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
-    return resultSetService.getResultSet(executionContext.getTenantId(),
-        sourceEntityTypeId,
-        List.of("id", column.getSource().getColumnName()),
-        ids)
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(List.of("id", column.getSource().getColumnName()))
+      .ids(ids);
+    return queryClient.getContents(contentsRequest)
       .stream()
       .map(map -> map.get(column.getSource().getColumnName()).toString())
       .collect(collector);

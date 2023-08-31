@@ -6,9 +6,6 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.fql.FqlService;
 import org.folio.fql.model.Fql;
-import org.folio.fqm.lib.exception.EntityTypeNotFoundException;
-import org.folio.fqm.lib.service.FqmMetaDataService;
-import org.folio.fqm.lib.service.ResultSetService;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.domain.dto.ListDTO;
@@ -20,8 +17,10 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
 import org.folio.list.repository.ListContentsRepository;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
+import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
@@ -30,8 +29,8 @@ import org.folio.list.mapper.ListMapper;
 import org.folio.list.mapper.ListRefreshMapper;
 import org.folio.list.mapper.ListSummaryMapper;
 import org.folio.list.repository.ListRepository;
-import org.folio.list.rest.EntityTypeSummaryClient;
-import org.folio.list.rest.EntityTypeSummaryClient.EntityTypeSummary;
+import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.UsersClient;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
@@ -62,15 +61,14 @@ public class ListService {
   private final ListEntityMapper listEntityMapper;
   private final FolioExecutionContext executionContext;
   private final ListRefreshService listRefreshService;
-  private final ResultSetService resultSetService;
   private final ListValidationService validationService;
   private final UsersClient usersClient;
-  private final EntityTypeSummaryClient entityTypeSummaryClient;
-  private final FqmMetaDataService fqmMetaDataService;
+  private final EntityTypeClient entityTypeClient;
   private final FqlService fqlService;
   private final UserFriendlyQueryService userFriendlyQueryService;
   private final AppShutdownService appShutdownService;
   private final RefreshFailedCallback refreshFailedCallback;
+  private final QueryClient queryClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids,
                                            List<UUID> entityTypeIds, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf) {
@@ -212,11 +210,10 @@ public class ListService {
         .stream()
         .map(ListContent::getContentId)
         .toList();
-      sortedContents = resultSetService.getResultSet(
-        executionContext.getTenantId(),
-        list.getEntityTypeId(),
-        fields,
-        contentIds);
+      ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
+        .fields(fields)
+        .ids(contentIds);
+      sortedContents = queryClient.getContents(contentsRequest);
     }
     return new ResultsetPage().content(sortedContents).totalRecords(list.getRecordsCount());
   }
@@ -225,7 +222,7 @@ public class ListService {
     try {
       List<UUID> entityTypeIds = lists.stream().map(ListEntity::getEntityTypeId).distinct().toList();
       log.info("Getting entity type summary for entityTypeIds: {}", entityTypeIds);
-      return entityTypeSummaryClient.getEntityTypeSummary(entityTypeIds)
+      return entityTypeClient.getEntityTypeSummary(entityTypeIds)
         .stream()
         .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
     } catch (Exception exception) {
@@ -258,8 +255,7 @@ public class ListService {
   }
 
   private EntityType getEntityType(UUID entityTypeId) {
-    return fqmMetaDataService.getEntityTypeDefinition(executionContext.getTenantId(), entityTypeId)
-      .orElseThrow(() -> new EntityTypeNotFoundException(entityTypeId));
+    return entityTypeClient.getEntityType(entityTypeId);
   }
 
   private AppShutdownService.ShutdownTask registerShutdownTask(ListEntity list, String taskName) {
@@ -277,5 +273,4 @@ public class ListService {
       .forEach(col -> fields.add(col.getName()));
     return fields;
   }
-
 }

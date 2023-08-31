@@ -1,16 +1,21 @@
 package org.folio.list.service;
 
-import org.folio.fqm.lib.model.FqlQueryWithContext;
 import org.folio.fqm.lib.service.QueryResultsSorterService;
-import org.folio.fqm.lib.service.QueryProcessorService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
+import org.folio.list.services.refresh.RefreshFailedCallback;
+import org.folio.list.services.refresh.RefreshSuccessCallback;
 import org.folio.list.utils.TestDataFixture;
+import org.folio.querytool.domain.dto.QueryDetails;
+import org.folio.querytool.domain.dto.QueryIdentifier;
+import org.folio.querytool.domain.dto.SubmitQuery;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,7 +33,7 @@ import static org.mockito.Mockito.*;
 class ListRefreshServiceTest {
 
   @Mock
-  private QueryProcessorService queryProcessorService;
+  private QueryClient queryClient;
   @Mock
   private QueryResultsSorterService queryResultsService;
   @Mock
@@ -38,6 +43,10 @@ class ListRefreshServiceTest {
   @Mock
   private ListContentsRepository listContentsRepository;
   @Mock
+  private RefreshSuccessCallback refreshSuccessCallback;
+  @Mock
+  private RefreshFailedCallback refreshFailedCallback;
+  @Mock
   @Qualifier("listBatchCallbackSupplier")
   private Supplier<BiConsumer<ListEntity, List<UUID>>> listBatchCallbackSupplier;
   @InjectMocks
@@ -45,35 +54,55 @@ class ListRefreshServiceTest {
 
   @Test
   void shouldStartRefresh() {
-    String tenantId = "Tenant_01";
-    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    listRefreshService.doAsyncRefresh(entity, null);
-    FqlQueryWithContext fqlQueryWithContext = new FqlQueryWithContext(tenantId, entity.getEntityTypeId(), entity.getFqlQuery(), true);
-
-    verify(queryProcessorService, times(1)).getIdsInBatch(
-      eq(fqlQueryWithContext),
-      anyInt(),
-      any(),
-      any(),
-      any());
+    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
+    int totalRecords = 0;
+    ArgumentCaptor<SubmitQuery> submitQueryArgumentCaptor = ArgumentCaptor.forClass(SubmitQuery.class);
+    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.SUCCESS).totalRecords(totalRecords);
+    QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
+    when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
+    when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
+    listRefreshService.doAsyncRefresh(list, null);
+    verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords);
   }
 
   @Test
   void shouldStartAsyncSort() {
-    String tenantId = "Tenant_01";
     UUID queryId = UUID.randomUUID();
-    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    listRefreshService.doAsyncSorting(entity, queryId, null);
+    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
+    int totalRecords = 0;
+    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.SUCCESS).totalRecords(totalRecords);
+    when(queryClient.getQuery(queryId)).thenReturn(queryDetails);
+    listRefreshService.doAsyncSorting(list, queryId, null);
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords);
+  }
 
-    verify(queryResultsService, times(1)).streamSortedIds(
-      eq(tenantId),
-      eq(queryId),
-      eq(1000),
-      any(),
-      any(),
-      any());
+  @Test
+  void shouldHandleQueryCancelledDuringRefresh() {
+    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
+    int totalRecords = 0;
+    ArgumentCaptor<SubmitQuery> submitQueryArgumentCaptor = ArgumentCaptor.forClass(SubmitQuery.class);
+    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.CANCELLED).totalRecords(totalRecords);
+    QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
+    when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
+    when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
+    listRefreshService.doAsyncRefresh(list, null);
+    verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
+  }
+
+  @Test
+  void shouldHandleQueryFailedDuringRefresh() {
+    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
+    int totalRecords = 0;
+    ArgumentCaptor<SubmitQuery> submitQueryArgumentCaptor = ArgumentCaptor.forClass(SubmitQuery.class);
+    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.FAILED).totalRecords(totalRecords);
+    QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
+    when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
+    when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
+    listRefreshService.doAsyncRefresh(list, null);
+    verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
   }
 }
 

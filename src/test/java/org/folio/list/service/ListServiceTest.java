@@ -14,8 +14,9 @@ import org.folio.list.mapper.ListMapperImpl;
 import org.folio.list.mapper.ListRefreshMapperImpl;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
-import org.folio.list.rest.EntityTypeSummaryClient;
-import org.folio.list.rest.EntityTypeSummaryClient.EntityTypeSummary;
+import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
@@ -73,7 +74,7 @@ class ListServiceTest {
   private UsersClient usersClient;
 
   @Mock
-  private EntityTypeSummaryClient entityTypeSummaryClient;
+  private EntityTypeClient entityTypeClient;
 
   @Mock
   private ListValidationService validationService;
@@ -86,9 +87,6 @@ class ListServiceTest {
 
   @Mock
   private UserFriendlyQueryService userFriendlyQueryService;
-
-  @Mock
-  private FqmMetaDataService fqmMetaDataService;
 
   @Mock
   private FqlService fqlService;
@@ -108,8 +106,8 @@ class ListServiceTest {
 
     ListSummaryDTO listSummaryDto1 = TestDataFixture.getListSummaryDTO(entity1.getId()).entityTypeId(entityTypeId1);
     ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
-    EntityTypeSummary expectedSummary1 = new EntityTypeSummaryClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
-    EntityTypeSummary expectedSummary2 = new EntityTypeSummaryClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
 
     Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
     when(executionContext.getUserId()).thenReturn(currentUserId);
@@ -117,7 +115,7 @@ class ListServiceTest {
     ).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
-    when(entityTypeSummaryClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
+    when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
       listSummaryDto2.getEntityTypeId()))).thenReturn(List.of(expectedSummary1, expectedSummary2));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
@@ -135,7 +133,6 @@ class ListServiceTest {
   void testCreateList() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     UUID userId = UUID.randomUUID();
-    String tenantId = "tenant_01";
     String userFriendlyQuery = "some string";
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
@@ -145,10 +142,10 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -160,7 +157,6 @@ class ListServiceTest {
 
   @Test
   void testCreateListWithoutFqlQuery() {
-    String tenantId = "tenant_01";
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
     EntityType entityType = new EntityType().name("test-entity");
@@ -170,9 +166,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, listRequestDto.getEntityTypeId()))
-      .thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
 
     listService.createList(listRequestDto);
 
@@ -186,16 +180,14 @@ class ListServiceTest {
     UUID queryId = UUID.randomUUID();
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO().queryId(queryId);
     UUID userId = UUID.randomUUID();
-    String tenantId = "tenant_01";
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
-    EntityType entityType1 = new EntityType().id(entity.getEntityTypeId().toString());
+    EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.ofNullable(entityType1));
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(new EqualsCondition("item_status", "missing")));
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
@@ -210,7 +202,6 @@ class ListServiceTest {
   // This tests the UI-fields workaround and keeps sonar happy until the UI is updated to send fields in the request.
   @Test
   void shouldCreateListWithDefaultFieldsIfFieldsNotProvided() {
-    String tenantId = "tenant_01";
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
     listRequestDto.setFields(null);
@@ -225,10 +216,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, listRequestDto.getEntityTypeId()))
-      .thenReturn(Optional.of(entityType));
-
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
     listService.createList(listRequestDto);
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
@@ -242,7 +230,6 @@ class ListServiceTest {
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO();
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String tenantId = "tenant_01";
     String userFriendlyQuery = "some string";
 
     User user = new User(userId, Optional.of(new UsersClient.Personal(FIRSTNAME, LASTNAME)));
@@ -253,8 +240,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
@@ -272,7 +258,7 @@ class ListServiceTest {
     assertThat(entity.getIsActive()).isEqualTo(listUpdateRequestDto.getIsActive());
     assertThat(entity.getIsPrivate()).isEqualTo(listUpdateRequestDto.getIsPrivate());
     assertThat(entity.getUpdatedBy()).isEqualTo(userId);
-    assertThat(entity.getUpdatedByUsername()).isEqualTo(user.getFullName().get());
+    assertThat(user.getFullName()).contains(entity.getUpdatedByUsername());
     assertThat(entity.getVersion()).isEqualTo(previousVersion + 1);
     assertThat(entity.getUserFriendlyQuery()).isEqualTo(userFriendlyQuery);
   }
@@ -284,7 +270,6 @@ class ListServiceTest {
     listUpdateRequestDto.setFields(null);
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String tenantId = "tenant_01";
     String userFriendlyQuery = "some string";
     List<String> expectedFields = List.of("field1");
 
@@ -298,8 +283,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
@@ -313,7 +297,6 @@ class ListServiceTest {
 
   @Test
   void testDeactivateListShouldRemoveContents() {
-    String tenantId = "tenant_01";
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
     EntityType entityType = new EntityType().name("test-entity");
@@ -325,8 +308,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
     doNothing().when(validationService).validateUpdate(entity, deactivateRequest, entityType);
 
@@ -344,7 +326,6 @@ class ListServiceTest {
 
   @Test
   void testUpdateListFromQueryId() {
-    String tenantId = "tenant_01";
     EntityType entityType = new EntityType().name("test-entity");
     UUID queryId = UUID.randomUUID();
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO().queryId(queryId);
@@ -356,8 +337,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
     when(listRepository.save(entity)).thenReturn(entity);
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
@@ -372,7 +352,6 @@ class ListServiceTest {
 
   @Test
   void testUpdateInactiveListFromQueryIdDoesNotImportQueryData() {
-    String tenantId = "tenant_01";
     EntityType entityType = new EntityType().name("test-entity");
     UUID queryId = UUID.randomUUID();
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO()
@@ -391,8 +370,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
-    when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(fqmMetaDataService.getEntityTypeDefinition(tenantId, entity.getEntityTypeId())).thenReturn(Optional.of(entityType));
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
 
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
