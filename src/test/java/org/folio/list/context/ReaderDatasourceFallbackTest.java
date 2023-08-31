@@ -2,6 +2,7 @@ package org.folio.list.context;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 @ActiveProfiles("db-test")
 @SpringBootTest
+@ExtendWith(TestcontainerCallbackExtension.class)
 class ReaderDatasourceFallbackTest {
   @Autowired
   @Qualifier("readerDataSource")

@@ -1,7 +1,9 @@
 package org.folio.list.controller;
 
+import org.folio.list.context.TestcontainerCallbackExtension;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Using db-test profile here to prevent this test from waiting on the db connection timeout from application.yml
 // This allows the test to run much faster, since it doesn't get stuck waiting for a db connection
 @ActiveProfiles("db-test")
+@ExtendWith(TestcontainerCallbackExtension.class)
 class ListConfigurationControllerTest {
   private static final String TENANT_ID = "test-tenant";
 

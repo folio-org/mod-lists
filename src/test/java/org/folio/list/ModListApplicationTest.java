@@ -2,7 +2,9 @@ package org.folio.list;
 
 import javax.validation.Valid;
 
+import org.folio.list.context.TestcontainerCallbackExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
@@ -17,8 +19,9 @@ import org.folio.tenant.rest.resource.TenantApi;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ActiveProfiles({"test", "testcontainers-pg"})
+@ActiveProfiles({"test", "db-test"})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ExtendWith(TestcontainerCallbackExtension.class)
 class ModListApplicationTest {
 
   @EnableAutoConfiguration(exclude = {FolioLiquibaseConfiguration.class})
