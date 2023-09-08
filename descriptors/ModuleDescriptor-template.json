@@ -156,6 +156,10 @@
     {
       "id": "mod-fqm-manager",
       "version": "1.0"
+    },
+    {
+      "id": "users",
+      "version": "16.0"
     }
   ],
   "launchDescriptor": {
