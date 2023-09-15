@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.folio.list.exception.ExportNotFoundException.inProgressExportNotFound;
@@ -62,7 +63,8 @@ public class ListValidationService {
   }
 
   public void assertSharedOrOwnedByUser(ListEntity list, ListActions failedAction) {
-    if (Boolean.TRUE.equals(list.getIsPrivate()) && !list.getCreatedBy().equals(folioExecutionContext.getUserId())) {
+    UUID currentOwnerId = (list.getUpdatedBy() == null) ? list.getCreatedBy() : list.getUpdatedBy();
+    if (Boolean.TRUE.equals(list.getIsPrivate()) && ! currentOwnerId.equals(folioExecutionContext.getUserId())) {
       throw new PrivateListOfAnotherUserException(list, failedAction);
     }
   }

@@ -21,7 +21,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       FROM ListEntity l LEFT JOIN FETCH l.successRefresh s
       WHERE (COALESCE(:ids) IS NULL OR l.id IN (:ids))
       AND (COALESCE(:entityTypeIds) IS NULL OR l.entityTypeId IN (:entityTypeIds))
-      AND (l.createdBy = :currentUserId OR l.isPrivate = false)
+      AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
@@ -34,7 +34,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       FROM ListEntity l
       WHERE (COALESCE(:ids) IS NULL OR l.id IN (:ids))
       AND (COALESCE(:entityTypeIds) IS NULL OR l.entityTypeId IN (:entityTypeIds))
-      AND (l.createdBy = :currentUserId OR l.isPrivate = false)
+      AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
