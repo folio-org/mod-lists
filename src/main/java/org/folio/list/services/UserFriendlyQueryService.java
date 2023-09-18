@@ -29,8 +29,10 @@ public class UserFriendlyQueryService {
     GreaterThanCondition.class, (cnd, ent) -> handleGreaterThan((GreaterThanCondition) cnd),
     LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd),
     AndCondition.class, (cnd, ent) -> handleAnd((AndCondition) cnd, ent),
-    RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd)
-  );
+    RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd),
+    ContainsCondition.class, (cnd, ent) -> handleContains((ContainsCondition) cnd, ent),
+    NotContainsCondition.class, (cnd, ent) -> handleNotContains((NotContainsCondition) cnd, ent)
+    );
 
   public String getUserFriendlyQuery(FqlCondition<?> fqlCondition, EntityType entityType) {
     log.info("Computing user friendly query for fqlCondition: {}, entityType: {}", fqlCondition, entityType.getId());
@@ -86,6 +88,16 @@ public class UserFriendlyQueryService {
       return getLabel(ids, col, true);
     };
     return handleConditionWithPossibleIdValue(notInCondition, entityType, "not in", labelFn);
+  }
+
+  private String handleContains(ContainsCondition containsCondition, EntityType entityType) {
+    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    return handleConditionWithPossibleIdValue(containsCondition, entityType, "contains", labelFn);
+  }
+
+  private String handleNotContains(NotContainsCondition notContainsCondition, EntityType entityType) {
+    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    return handleConditionWithPossibleIdValue(notContainsCondition, entityType, "does not contain", labelFn);
   }
 
   private <T> String handleConditionWithPossibleIdValue(FieldCondition<T> condition,
