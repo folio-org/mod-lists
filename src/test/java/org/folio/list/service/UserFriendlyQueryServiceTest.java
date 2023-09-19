@@ -174,6 +174,78 @@ class UserFriendlyQueryServiceTest {
   }
 
   @Test
+  void shouldGetStringForFqlContainsConditionWithoutIdColumn() {
+    EntityType entityType = new EntityType();
+    ContainsCondition containsCondition = new ContainsCondition("field1", "value1");
+    String expectedContainsCondition = "field1 contains value1";
+    String actualContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(containsCondition, entityType);
+    assertEquals(expectedContainsCondition, actualContainsCondition);
+  }
+
+  @Test
+  void shouldGetStringForFqlContainsConditionWithIdColumn() {
+    List<Map<String, Object>> entityContents = List.of(
+      Map.of("field1", "value1")
+    );
+    UUID sourceEntityTypeId = UUID.randomUUID();
+    UUID value = UUID.randomUUID();
+    UUID entityTypeId = UUID.randomUUID();
+    List<String> fields = List.of("id", "field1");
+
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    EntityTypeColumn column = new EntityTypeColumn().name("field1");
+    EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
+    EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
+    ContainsCondition containsCondition = new ContainsCondition("field1", value.toString());
+    List<UUID> ids = List.of(UUID.fromString(containsCondition.value().toString()));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
+
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
+
+    String expectedContainsCondition = "field2 contains value1";
+    String actualContainsConditions = userFriendlyQueryService.getUserFriendlyQuery(containsCondition, entityType);
+    assertEquals(expectedContainsCondition, actualContainsConditions);
+  }
+
+  @Test
+  void shouldGetStringForFqlNotContainsConditionWithoutIdColumn() {
+    EntityType entityType = new EntityType();
+    NotContainsCondition notContainsCondition = new NotContainsCondition("field1", "value1");
+    String expectedNotContainsCondition = "field1 does not contain value1";
+    String actualNotContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(notContainsCondition, entityType);
+    assertEquals(expectedNotContainsCondition, actualNotContainsCondition);
+  }
+
+  @Test
+  void shouldGetStringForFqlNotContainsConditionWithIdColumn() {
+    List<Map<String, Object>> entityContents = List.of(
+      Map.of("field1", "value1")
+    );
+    UUID sourceEntityTypeId = UUID.randomUUID();
+    UUID value = UUID.randomUUID();
+    UUID entityTypeId = UUID.randomUUID();
+    List<String> fields = List.of("id", "field1");
+
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    EntityTypeColumn column = new EntityTypeColumn().name("field1");
+    EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
+    EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
+    NotContainsCondition notContainsCondition = new NotContainsCondition("field1", value.toString());
+    List<UUID> ids = List.of(UUID.fromString(notContainsCondition.value().toString()));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
+
+    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
+
+    String expectedNotContainsCondition = "field2 does not contain value1";
+    String actualNotContainsConditions = userFriendlyQueryService.getUserFriendlyQuery(notContainsCondition, entityType);
+    assertEquals(expectedNotContainsCondition, actualNotContainsConditions);
+  }
+
+  @Test
   void shouldGetStringForFqlGreaterThanCondition() {
     EntityType entityType = new EntityType();
     GreaterThanCondition greaterThanCondition = new GreaterThanCondition("field1", false, "some value");
