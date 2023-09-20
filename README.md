@@ -251,3 +251,42 @@ Response
 * Content Type: text/csv
 
 The response the csv of the downloaded list.
+
+## Additional information
+
+### Issue tracker
+
+See project [MODLISTS](https://issues.folio.org/browse/MODLISTS)
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
+
+### Code of Conduct
+
+Refer to the Wiki
+[FOLIO Code of Conduct](https://wiki.folio.org/display/COMMUNITY/FOLIO+Code+of+Conduct).
+
+### ModuleDescriptor
+
+See the [ModuleDescriptor](descriptors/ModuleDescriptor-template.json)
+for the interfaces that this module requires and provides, the permissions,
+and the additional module metadata.
+
+### API documentation
+
+API descriptions:
+
+* [OpenAPI](src/main/resources/swagger.api/list.yaml)
+* [Schemas](src/main/resources/swagger.api/schemas/)
+
+Generated [API documentation](https://dev.folio.org/reference/api/#mod-lists)
+
+### Code analysis
+
+[SonarQube analysis](https://sonarcloud.io/project/overview?id=org.folio%3Amod-lists).
+
+### Download and configuration
+
+The built artifacts for this module are available.
+See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-lists/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-lists/).
+
