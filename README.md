@@ -1,6 +1,11 @@
 # mod-lists
+Copyright (C) 2023 The Open Library Foundation
 
-mod-lists is responsible for persisting the meta-data and the contents (IDs) of the lists.
+This software is distributed under the terms of the Apache License,
+Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
+
+## Introduction
+mod-lists is responsible for persisting the metadata and the contents (IDs) of lists.
 
 ## Architecture
 The "mod-lists" module is responsible for handling lists within the system. It provides a set of REST endpoints that enable users to perform CRUD (Create, Read, Update, Delete) operations on lists. To efficiently query the data, the module leverages the "lib-fqm-query-processor" library, which streamlines the process of querying the underlying data storage, such as a database or file system.
