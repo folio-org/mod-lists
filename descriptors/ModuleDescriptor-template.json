@@ -149,7 +149,11 @@
   ],
   "requires": [
     {
-      "id": "mod-fqm-manager",
+      "id": "fqm-query",
+      "version": "1.0"
+    },
+    {
+      "id": "entity-types",
       "version": "1.0"
     },
     {
