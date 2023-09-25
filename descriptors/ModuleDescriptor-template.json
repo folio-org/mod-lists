@@ -3,11 +3,6 @@
   "name": "The module descriptor for mod-lists",
   "provides": [
     {
-      "id": "mod-lists",
-      "version": "1.0",
-      "handlers": []
-    },
-    {
       "id": "_tenant",
       "version": "1.2",
       "interfaceType": "system",
