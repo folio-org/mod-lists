@@ -7,7 +7,6 @@
       "description": "array of content",
       "type": "array",
       "items": {
-        "type": "object",
         "$ref": "#/ListSummaryDTO"
       }
     },

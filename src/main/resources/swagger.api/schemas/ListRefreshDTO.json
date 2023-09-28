@@ -47,7 +47,6 @@
     },
     "error": {
       "description": "Error encountered during list refresh",
-      "type": "object",
       "$ref": "ListAppError.json"
     }
   },
