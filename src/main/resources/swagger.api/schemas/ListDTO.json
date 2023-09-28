@@ -82,17 +82,14 @@
     },
     "successRefresh": {
       "description": "List Refresh Information",
-      "type": "object",
       "$ref": "ListRefreshDTO.json"
     },
     "inProgressRefresh": {
       "description": "List In-Progress Refresh Information",
-      "type": "object",
       "$ref": "ListRefreshDTO.json"
     },
     "failedRefresh": {
       "description": "List Failed Refresh Information",
-      "type": "object",
       "$ref": "ListRefreshDTO.json"
     },
     "version": {
