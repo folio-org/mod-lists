@@ -18,8 +18,6 @@ mvn clean install
 |-------------------------------------|--------------------------|---------------------------------------|
 | DB_HOST                             | localhost                | Postgres hostname                     |
 | DB_PORT                             | 5432                     | Postgres port                         |
-| DB_HOST_READER                      | localhost                | Postgres hostname                     |
-| DB_PORT_READER                      | 5432                     | Postgres port                         |
 | DB_USERNAME                         | postgres                 | Postgres username                     |
 | DB_PASSWORD                         | postgres                 | Postgres password                     |
 | DB_DATABASE                         | postgres                 | Postgres database name                |
