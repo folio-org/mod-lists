@@ -62,4 +62,4 @@ jobs:
             --types ${{ env.API_TYPES }} \
             --directories ${{ env.API_DIRECTORIES }} \
             --excludes ${{ env.API_EXCLUDES }} \
-            ${{ env.OPTION_WARNINGS }}
+            -w
