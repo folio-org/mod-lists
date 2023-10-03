@@ -96,7 +96,7 @@ paths:
               $ref: '#/components/schemas/ListRequestDTO'
       responses:
         '201':
-          description: 'returns if a list created successfully'
+          description: 'returns if list created successfully'
           content:
             application/json:
               schema:
