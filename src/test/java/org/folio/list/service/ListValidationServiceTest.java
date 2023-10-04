@@ -1,6 +1,7 @@
 package org.folio.list.service;
 
 import org.folio.list.domain.ListEntity;
+import org.folio.list.exception.ListInactiveException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ListValidationOwnershipServiceTest {
+class ListValidationServiceTest {
 
   @InjectMocks
   private ListValidationService listValidationService;
@@ -47,5 +48,13 @@ class ListValidationOwnershipServiceTest {
     ListEntity listEntity = TestDataFixture.getPrivateListEntity();
     listEntity.setIsPrivate(false);
     assertDoesNotThrow(() -> listValidationService.assertSharedOrOwnedByUser(listEntity, ListActions.READ));
+  }
+
+  @Test
+  void inactiveListsShouldNotBeExportable() {
+    ListEntity inactiveList = TestDataFixture.getInactiveListEntity();
+    assertFalse(inactiveList.getIsActive(), "The list should be inactive");
+
+    assertThrows(ListInactiveException.class, () -> listValidationService.validateCreateExport(inactiveList));
   }
 }

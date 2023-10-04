@@ -70,6 +70,7 @@ public class ListValidationService {
   }
 
   public void validateCreateExport(ListEntity list) {
+    assertListIsActive(list, EXPORT);
     assertSharedOrOwnedByUser(list, EXPORT);
     assertListNotRefreshing(list, EXPORT);
     assertUserNotExporting(list, EXPORT);
