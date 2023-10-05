@@ -1,4 +1,4 @@
-CREATE TABLE export_details
+CREATE TABLE IF NOT EXISTS export_details
 (
     export_id       UUID  NOT NULL PRIMARY KEY,
     list_id         UUID  NOT NULL,

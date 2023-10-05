@@ -1,4 +1,4 @@
-CREATE TABLE list_details
+CREATE TABLE IF NOT EXISTS list_details
 (
     id                      UUID            NOT NULL PRIMARY KEY,
     name                    VARCHAR(255)    NOT NULL,
