@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
@@ -197,6 +198,40 @@ class ListServiceTest {
     assertThat(actual).isEqualTo(expected);
     verify(listRefreshService, times(1)).doAsyncSorting(entity, queryId, null);
     verify(appShutdownService, times(1)).registerShutdownTask(eq(executionContext), any(Runnable.class), any(String.class));
+  }
+
+  @Test
+  void testCreateInactiveListShouldNotRefresh() {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    listRequestDto.setIsActive(false);
+
+    UUID userId = UUID.randomUUID();
+    UUID queryId = UUID.randomUUID();
+    String userFriendlyQuery = "some string";
+
+    User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
+    ListEntity entity = TestDataFixture.getInactiveListEntity();
+
+    ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
+    listRequestDto.setQueryId(queryId);
+
+    EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
+    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+
+    when(usersClient.getUser(userId)).thenReturn(user);
+    when(executionContext.getUserId()).thenReturn(userId);
+    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
+    when(listRepository.save(entity)).thenReturn(entity);
+
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
+    when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
+    when(listMapper.toListDTO(entity)).thenReturn(expected);
+    listService.createList(listRequestDto);
+    assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
+    assertNull(entity.getSuccessRefresh());
+    assertNull(entity.getFailedRefresh());
+    assertNull(entity.getInProgressRefresh());
   }
 
   // This tests the UI-fields workaround and keeps sonar happy until the UI is updated to send fields in the request.

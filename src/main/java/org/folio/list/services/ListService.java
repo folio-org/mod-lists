@@ -108,7 +108,7 @@ public class ListService {
       listEntity.setUserFriendlyQuery(userFriendlyQuery);
     }
     ListEntity savedEntity = listRepository.save(listEntity);
-    if (nonNull(listRequest.getQueryId())) {
+    if (nonNull(listRequest.getQueryId()) && listRequest.getIsActive()) {
       importListContentsFromAsyncQuery(savedEntity, currentUser, listRequest.getQueryId());
     }
     return listMapper.toListDTO(savedEntity);
