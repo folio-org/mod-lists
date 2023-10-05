@@ -1,4 +1,4 @@
-CREATE TABLE list_contents
+CREATE TABLE IF NOT EXISTS list_contents
 (
     list_id         UUID  NOT NULL,
     refresh_id      UUID NOT NULL,

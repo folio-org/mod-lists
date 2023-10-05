@@ -1,4 +1,4 @@
-CREATE TABLE list_refresh_details
+CREATE TABLE IF NOT EXISTS list_refresh_details
 (
     id                      UUID NOT NULL PRIMARY KEY,
     list_id                 UUID NOT NULL,
