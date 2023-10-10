@@ -30,5 +30,7 @@ INSERT INTO list_details
   true,
   1,
   '(loan_status == Open) AND (user_active == false)')
-  ON CONFLICT DO NOTHING
-  ;
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, entity_type_id = EXCLUDED.entity_type_id,
+  fql_query = EXCLUDED.fql_query, fields = EXCLUDED.fields, created_by = EXCLUDED.created_by, created_by_username = EXCLUDED.created_by_username,
+  created_date = EXCLUDED.created_date, is_active = EXCLUDED.is_active, is_private = EXCLUDED.is_private, is_canned = EXCLUDED.is_canned,
+  version = EXCLUDED.version, user_friendly_query = EXCLUDED.user_friendly_query ;
