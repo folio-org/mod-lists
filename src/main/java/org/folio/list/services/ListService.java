@@ -44,7 +44,6 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 import static java.util.stream.Collectors.toMap;
-import static java.util.Objects.nonNull;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -108,8 +107,9 @@ public class ListService {
       listEntity.setUserFriendlyQuery(userFriendlyQuery);
     }
     ListEntity savedEntity = listRepository.save(listEntity);
-    if (nonNull(listRequest.getQueryId()) && listRequest.getIsActive()) {
-      importListContentsFromAsyncQuery(savedEntity, currentUser, listRequest.getQueryId());
+    // refresh list if active
+    if (hasText(listRequest.getFqlQuery()) && listRequest.getIsActive()) {
+      performRefresh(savedEntity.getId());
     }
     return listMapper.toListDTO(savedEntity);
   }
@@ -131,13 +131,15 @@ public class ListService {
         request.setFields(getFieldsFromEntityType(entityType));
       }
       String userFriendlyQuery = "";
+      String originalFqlQuery = list.getFqlQuery();
       if (hasText(request.getFqlQuery())) {
         userFriendlyQuery = getUserFriendlyQuery(request.getFqlQuery(), entityType);
       }
       list.update(request, getCurrentUser(), userFriendlyQuery);
 
-      if (request.getQueryId() != null && request.getIsActive()) {
-        importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId());
+      // If list is active and FQL query has been changed, refresh list
+      if (hasText(request.getFqlQuery()) && request.getIsActive() && !originalFqlQuery.equals(request.getFqlQuery())) {
+        performRefresh(list.getId());
       }
     });
     return listEntity.map(listMapper::toListDTO);
@@ -239,14 +241,6 @@ public class ListService {
       log.error("Unexpected error while fetching user info for id " + executionContext.getUserId(), exception);
       return new UsersClient.User(executionContext.getUserId(), Optional.empty());
     }
-  }
-
-  private void importListContentsFromAsyncQuery(ListEntity savedEntity, UsersClient.User currentUser, UUID queryId) {
-    savedEntity.refreshStarted(currentUser);
-    // Save to ensure inProgressRefreshId is present
-    savedEntity = listRepository.save(savedEntity);
-    log.info("Attempting to refresh list with listId {}", savedEntity);
-    listRefreshService.doAsyncSorting(savedEntity, queryId, registerShutdownTask(savedEntity, "Cancel refresh for list " + savedEntity.getId()));
   }
 
   private String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {

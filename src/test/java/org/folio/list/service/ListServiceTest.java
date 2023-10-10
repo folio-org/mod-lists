@@ -3,7 +3,6 @@ package org.folio.list.service;
 import org.folio.fql.FqlService;
 import org.folio.fql.model.EqualsCondition;
 import org.folio.fql.model.Fql;
-import org.folio.fqm.lib.service.FqmMetaDataService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
@@ -16,7 +15,6 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
-import org.folio.list.rest.QueryClient;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
@@ -41,7 +39,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,6 +65,9 @@ class ListServiceTest {
 
   @Spy
   private ListEntityMapper listEntityMapper = new org.folio.list.mapper.ListEntityMapperImpl();
+
+  @Spy
+  private ListRefreshMapper listRefreshMapper = new ListRefreshMapperImpl(new MappingMethods());
 
   @Mock
   private FolioExecutionContext executionContext;
@@ -134,7 +135,7 @@ class ListServiceTest {
   void testCreateList() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     UUID userId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
+    String userFriendlyQuery = "item_status = missing";
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
@@ -150,10 +151,15 @@ class ListServiceTest {
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
+    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    doNothing().when(listRefreshService).doAsyncRefresh(eq(entity), any());
+    doNothing().when(validationService).validateCreate(listRequestDto, entityType);
+    when(listRepository.save(entity)).thenReturn(entity);
 
     var actual = listService.createList(listRequestDto);
     assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
     assertThat(actual).isEqualTo(expected);
+    verify(listRefreshService, times(1)).doAsyncRefresh(any(), any());
   }
 
   @Test
@@ -172,32 +178,9 @@ class ListServiceTest {
     listService.createList(listRequestDto);
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
+    verify(listRefreshService, never()).doAsyncRefresh(any(), any());
     ListEntity list = listEntityArgumentCaptor.getValue();
     assertFalse(hasText(list.getUserFriendlyQuery()));
-  }
-
-  @Test
-  void testCreateListFromQueryId() {
-    UUID queryId = UUID.randomUUID();
-    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO().queryId(queryId);
-    UUID userId = UUID.randomUUID();
-    User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
-    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
-    ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
-    EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-
-    when(usersClient.getUser(userId)).thenReturn(user);
-    when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(new EqualsCondition("item_status", "missing")));
-    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
-    when(listRepository.save(entity)).thenReturn(entity);
-    when(listMapper.toListDTO(entity)).thenReturn(expected);
-
-    var actual = listService.createList(listRequestDto);
-    assertThat(actual).isEqualTo(expected);
-    verify(listRefreshService, times(1)).doAsyncSorting(entity, queryId, null);
-    verify(appShutdownService, times(1)).registerShutdownTask(eq(executionContext), any(Runnable.class), any(String.class));
   }
 
   @Test
@@ -207,7 +190,7 @@ class ListServiceTest {
 
     UUID userId = UUID.randomUUID();
     UUID queryId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
+    String userFriendlyQuery = "item_status = missing";
 
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getInactiveListEntity();
@@ -232,6 +215,7 @@ class ListServiceTest {
     assertNull(entity.getSuccessRefresh());
     assertNull(entity.getFailedRefresh());
     assertNull(entity.getInProgressRefresh());
+    verify(listRefreshService, never()).doAsyncRefresh(any(), any());
   }
 
   // This tests the UI-fields workaround and keeps sonar happy until the UI is updated to send fields in the request.
@@ -244,7 +228,7 @@ class ListServiceTest {
     EntityType entityType = new EntityType().name("test-entity").columns(List.of(
       new EntityTypeColumn().name("column_01"),
       new EntityTypeColumn().name("column_02")
-      ));
+    ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
@@ -263,9 +247,11 @@ class ListServiceTest {
   @Test
   void testUpdateListForExistingList() {
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO();
+    String fqlQuery = "{\"item_status\" : {\"$eq\": \"missing\"}}";
+    listUpdateRequestDto.setFqlQuery(fqlQuery);
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
+    String userFriendlyQuery = "item_status = missing";
 
     User user = new User(userId, Optional.of(new UsersClient.Personal(FIRSTNAME, LASTNAME)));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
@@ -276,11 +262,13 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
+    when(fqlService.getFql(fqlQuery)).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(expected);
+    doNothing().when(listRefreshService).doAsyncRefresh(eq(entity), any());
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
+    when(listRepository.save(entity)).thenReturn(entity);
     int previousVersion = entity.getVersion();
 
     var actual = listService.updateList(listId, listUpdateRequestDto);
@@ -296,6 +284,7 @@ class ListServiceTest {
     assertThat(user.getFullName()).contains(entity.getUpdatedByUsername());
     assertThat(entity.getVersion()).isEqualTo(previousVersion + 1);
     assertThat(entity.getUserFriendlyQuery()).isEqualTo(userFriendlyQuery);
+    verify(listRefreshService, times(1)).doAsyncRefresh(any(), any());
   }
 
   // This test can be removed once the UI has been updated to allow fields to be sent in the list update request
@@ -305,7 +294,7 @@ class ListServiceTest {
     listUpdateRequestDto.setFields(null);
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
+    String userFriendlyQuery = "item_status = missing";
     List<String> expectedFields = List.of("field1");
 
     User user = new User(userId, Optional.of(new UsersClient.Personal(FIRSTNAME, LASTNAME)));
@@ -360,40 +349,14 @@ class ListServiceTest {
   }
 
   @Test
-  void testUpdateListFromQueryId() {
+  void testUpdateInactiveListWithNewQueryDoesNotImportQueryData() {
     EntityType entityType = new EntityType().name("test-entity");
-    UUID queryId = UUID.randomUUID();
-    ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO().queryId(queryId);
-    UUID userId = UUID.randomUUID();
-    listUpdateRequestDto.setFqlQuery("");
-
-    User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
-    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
-
-    when(usersClient.getUser(userId)).thenReturn(user);
-    when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
-    when(listRepository.save(entity)).thenReturn(entity);
-    int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
-    var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
-
-    assertThat(actual).map(ListDTO::getId).contains(entity.getId());
-    assertThat(actual).map(ListDTO::getSuccessRefresh).isNotEmpty();
-    assertThat(actual).map(ListDTO::getIsActive).contains(true);
-    assertThat(actual).map(ListDTO::getVersion).contains(oldVersion + 1);
-    verify(listRefreshService, times(1)).doAsyncSorting(entity, queryId, null);
-  }
-
-  @Test
-  void testUpdateInactiveListFromQueryIdDoesNotImportQueryData() {
-    EntityType entityType = new EntityType().name("test-entity");
-    UUID queryId = UUID.randomUUID();
+    String fqlQuery = "{\"item_status\" : {\"$eq\": \"missing\"}}";
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO()
-      .queryId(queryId)
+      .fqlQuery(fqlQuery)
       .isActive(false);
-    listUpdateRequestDto.setFqlQuery("");
     UUID userId = UUID.randomUUID();
+    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
 
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
@@ -406,11 +369,12 @@ class ListServiceTest {
     when(executionContext.getUserId()).thenReturn(userId);
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(fqlService.getFql(fqlQuery)).thenReturn(new Fql(equalsCondition));
 
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
 
-    verify(listRefreshService, never()).doAsyncSorting(entity, queryId, null);
+    verify(listRefreshService, never()).doAsyncRefresh(any(), any());
     assertThat(actual).map(ListDTO::getSuccessRefresh).isEmpty();
     assertThat(actual).map(ListDTO::getVersion).contains(oldVersion + 1);
     assertThat(actual).map(ListDTO::getIsActive).contains(expected.getIsActive());
