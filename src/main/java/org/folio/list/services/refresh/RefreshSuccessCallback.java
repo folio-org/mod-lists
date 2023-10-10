@@ -5,30 +5,30 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.util.TaskTimer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
-public class RefreshSuccessCallback implements ObjIntConsumer<ListEntity> {
+public class RefreshSuccessCallback implements SuccessCallback {
   private final ListRepository listRepository;
   private final ListContentsRepository listContentsRepository;
 
   @Transactional
-  public void accept(ListEntity entity, int recordsCount) {
-    saveSuccessRefresh(entity, recordsCount);
+  public void accept(ListEntity entity, int recordsCount, TaskTimer timer) {
+    saveSuccessRefresh(entity, recordsCount, timer);
   }
 
   /**
    * Compare this list's inProgressRefreshId with the up-to-date inProgressRefreshId from the database.
    * Save list with refresh details if they are the same.
    */
-  private void saveSuccessRefresh(ListEntity entity, Integer recordsCount) {
+  private void saveSuccessRefresh(ListEntity entity, Integer recordsCount, TaskTimer timer) {
     UUID currentRefreshId = entity.getInProgressRefreshId()
       .orElseThrow(() -> new IllegalStateException("List " + entity.getId() + " is not refreshing"));
     log.info("Refresh completed for list {}, refreshId {}. Total count: {}",
@@ -42,7 +42,7 @@ public class RefreshSuccessCallback implements ObjIntConsumer<ListEntity> {
           listContentsRepository.deleteContents(entity.getId(), entity.getSuccessRefresh().getId());
         }
         entity.refreshCompleted(recordsCount);
-        listRepository.save(entity);
+        timer.time(TimedStage.WRITE_END, () -> listRepository.save(entity));
     } else {
       listContentsRepository.deleteContents(entity.getId(), currentRefreshId);
     }

@@ -8,6 +8,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.RefreshCancelledException;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
+import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
 import org.folio.querytool.domain.dto.SubmitQuery;
@@ -40,7 +41,7 @@ public class ListRefreshService {
   // long time. Hence, do not run this method in a transaction. Start transactions programmatically in
   // call-back methods
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public void doAsyncRefresh(ListEntity list, ShutdownTask shutdownTask) {
+  public void doAsyncRefresh(ListEntity list, ShutdownTask shutdownTask, TaskTimer timer) {
     try (var autoCloseMe = shutdownTask) {
       log.info("Performing async refresh for list {}, refreshId {}", list.getId(),
         list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
@@ -48,41 +49,45 @@ public class ListRefreshService {
         .entityTypeId(list.getEntityTypeId())
         .fqlQuery(list.getFqlQuery())
         .fields(list.getFields());
-      QueryIdentifier queryIdentifier = queryClient.executeQuery(submitQuery);
-      waitForQueryCompletion(list, queryIdentifier.getQueryId());
+      QueryIdentifier queryIdentifier = timer.time(TimedStage.REQUEST_QUERY, () -> queryClient.executeQuery(submitQuery));
+      waitForQueryCompletion(list, queryIdentifier.getQueryId(), timer);
     } catch (Exception exception) {
       log.error("Unexpected error when performing async refresh for list with id " + list.getId()
         + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
       refreshFailedCallback.accept(list, exception);
     }
+    timer.stop(TimedStage.TOTAL);
   }
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public void doAsyncSorting(ListEntity list, UUID queryId, ShutdownTask shutdownTask) {
+  public void doAsyncSorting(ListEntity list, UUID queryId, ShutdownTask shutdownTask, TaskTimer timer) {
     try (var autoCloseMe = shutdownTask) {
       log.info("Performing async sorting for list {}, refreshId {}", list.getId(),
         list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
-      waitForQueryCompletion(list, queryId);
+      waitForQueryCompletion(list, queryId, timer);
     } catch (Exception exception) {
       log.error("Unexpected error when performing async refresh for list with id " + list.getId()
         + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
       refreshFailedCallback.accept(list, exception);
     }
+    timer.stop(TimedStage.TOTAL);
   }
 
-  private void waitForQueryCompletion(ListEntity list, UUID queryId) {
+  private void waitForQueryCompletion(ListEntity list, UUID queryId, TaskTimer timer) {
     log.info("Waiting for completion of query {} for list {}", queryId, list.getId());
-    Awaitility.with()
-      .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
-      .await()
-      .atMost(GET_QUERY_TIMEOUT_MINUTES, TimeUnit.MINUTES)
-      .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS);
+    timer.time(TimedStage.WAIT_FOR_QUERY_COMPLETION,
+      () -> Awaitility.with()
+        .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
+        .await()
+        .atMost(GET_QUERY_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+        .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));
+    log.info("Query {} completed for list {}", queryId, list.getId());
     QueryDetails queryDetails = queryClient.getQuery(queryId);
 
     if (queryDetails.getStatus() == QueryDetails.StatusEnum.SUCCESS) {
-      int resultCount = importQueryResults(list, queryId);
-      refreshSuccessCallback.accept(list, resultCount);
+      int resultCount = timer.time(TimedStage.IMPORT_RESULTS, () -> importQueryResults(list, queryId));
+      refreshSuccessCallback.accept(list, resultCount, timer);
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.FAILED) {
       refreshFailedCallback.accept(list, new RuntimeException(queryDetails.getFailureReason()));
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {

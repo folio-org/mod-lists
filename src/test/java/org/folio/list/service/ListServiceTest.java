@@ -3,7 +3,6 @@ package org.folio.list.service;
 import org.folio.fql.FqlService;
 import org.folio.fql.model.EqualsCondition;
 import org.folio.fql.model.Fql;
-import org.folio.fqm.lib.service.FqmMetaDataService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
@@ -16,7 +15,6 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
-import org.folio.list.rest.QueryClient;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
@@ -24,6 +22,7 @@ import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
@@ -196,7 +195,7 @@ class ListServiceTest {
 
     var actual = listService.createList(listRequestDto);
     assertThat(actual).isEqualTo(expected);
-    verify(listRefreshService, times(1)).doAsyncSorting(entity, queryId, null);
+    verify(listRefreshService, times(1)).doAsyncSorting(eq(entity), eq(queryId), isNull(), any(TaskTimer.class));
     verify(appShutdownService, times(1)).registerShutdownTask(eq(executionContext), any(Runnable.class), any(String.class));
   }
 
@@ -382,7 +381,7 @@ class ListServiceTest {
     assertThat(actual).map(ListDTO::getSuccessRefresh).isNotEmpty();
     assertThat(actual).map(ListDTO::getIsActive).contains(true);
     assertThat(actual).map(ListDTO::getVersion).contains(oldVersion + 1);
-    verify(listRefreshService, times(1)).doAsyncSorting(entity, queryId, null);
+    verify(listRefreshService, times(1)).doAsyncSorting(eq(entity), eq(queryId), isNull(), any(TaskTimer.class));
   }
 
   @Test
@@ -410,7 +409,7 @@ class ListServiceTest {
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
 
-    verify(listRefreshService, never()).doAsyncSorting(entity, queryId, null);
+    verify(listRefreshService, never()).doAsyncSorting(entity, queryId, null, new TaskTimer());
     assertThat(actual).map(ListDTO::getSuccessRefresh).isEmpty();
     assertThat(actual).map(ListDTO::getVersion).contains(oldVersion + 1);
     assertThat(actual).map(ListDTO::getIsActive).contains(expected.getIsActive());
