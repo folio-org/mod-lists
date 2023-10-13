@@ -26,9 +26,9 @@
     <!-- runtime dependencies -->
     <folio-spring-base.version>7.1.2</folio-spring-base.version>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <folio-service-tools.version>2.0.0-SNAPSHOT</folio-service-tools.version>
+    <folio-service-tools.version>3.1.0</folio-service-tools.version>
     <mapstruct.version>1.5.2.Final</mapstruct.version>
-    <lib-fqm-query-processor.version>0.0.1-SNAPSHOT</lib-fqm-query-processor.version>
+    <lib-fqm-query-processor.version>1.0.0</lib-fqm-query-processor.version>
     <jackson-dataformat-csv.version>2.14.2</jackson-dataformat-csv.version>
     <aws-sdk-java.version>2.19.2</aws-sdk-java.version>
     <folio-s3-client.version>1.1.0</folio-s3-client.version>
