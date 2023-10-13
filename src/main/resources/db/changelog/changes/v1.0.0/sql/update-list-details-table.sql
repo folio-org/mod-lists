@@ -6,7 +6,7 @@ INSERT INTO list_details
   'Missing Items List',
   '0cb79a4c-f7eb-4941-a104-745224ae0292',
   '{"item_status": {"$in": ["missing", "aged to lost", "claimed returned", "declared lost", "long missing" ] }}',
-  '{id, item_hrid, item_effective_call_number, item_effective_call_number_typeid, item_effective_call_number_type_name, item_holdings_record_id, item_status, item_copy_number, item_barcode, item_created_date, item_updated_date, item_effective_location_id, item_effective_location_name, item_effective_library_id, item_effective_library_name, item_effective_library_code, item_material_type_id, item_material_type, instance_id, instance_title, instance_created_date, instance_updated_date, instance_primary_contributor}',
+  '{id, item_hrid, holdings_id, item_effective_call_number, item_effective_call_number_typeid, item_effective_call_number_type_name, item_holdings_record_id, item_status, item_copy_number, item_barcode, item_created_date, item_updated_date, item_effective_location_id, item_effective_location_name, item_effective_library_id, item_effective_library_name, item_effective_library_code, item_material_type_id, item_material_type, instance_id, instance_title, instance_created_date, instance_updated_date, instance_primary_contributor, item_level_call_number, item_level_call_number_typeid, item_permanent_location_id, item_temporary_location_id, item_level_call_number_type_name, item_permanent_location_name, item_temporary_location_name}',
   '7eb41f7c-ec2f-4637-8ceb-2e9573666ad0',
   'SYSTEM',
   Now(),
