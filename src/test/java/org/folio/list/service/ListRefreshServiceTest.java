@@ -96,7 +96,7 @@ class ListRefreshServiceTest {
     timer.start(TimedStage.TOTAL);
     listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any());
   }
 
   @Test
@@ -112,7 +112,7 @@ class ListRefreshServiceTest {
     timer.start(TimedStage.TOTAL);
     listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any());
   }
 }
 

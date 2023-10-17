@@ -41,7 +41,7 @@ public class RefreshSuccessCallback implements SuccessCallback {
         if (entity.getSuccessRefresh() != null) {
           listContentsRepository.deleteContents(entity.getId(), entity.getSuccessRefresh().getId());
         }
-        entity.refreshCompleted(recordsCount);
+        entity.refreshCompleted(recordsCount, timer);
         timer.time(TimedStage.WRITE_END, () -> listRepository.save(entity));
     } else {
       listContentsRepository.deleteContents(entity.getId(), currentRefreshId);

@@ -54,7 +54,7 @@ public class ListRefreshService {
     } catch (Exception exception) {
       log.error("Unexpected error when performing async refresh for list with id " + list.getId()
         + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
-      refreshFailedCallback.accept(list, exception);
+      refreshFailedCallback.accept(list, timer, exception);
     }
     timer.stop(TimedStage.TOTAL);
   }
@@ -69,7 +69,7 @@ public class ListRefreshService {
     } catch (Exception exception) {
       log.error("Unexpected error when performing async refresh for list with id " + list.getId()
         + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
-      refreshFailedCallback.accept(list, exception);
+      refreshFailedCallback.accept(list, timer, exception);
     }
     timer.stop(TimedStage.TOTAL);
   }
@@ -89,9 +89,9 @@ public class ListRefreshService {
       int resultCount = timer.time(TimedStage.IMPORT_RESULTS, () -> importQueryResults(list, queryId));
       refreshSuccessCallback.accept(list, resultCount, timer);
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.FAILED) {
-      refreshFailedCallback.accept(list, new RuntimeException(queryDetails.getFailureReason()));
+      refreshFailedCallback.accept(list, timer, new RuntimeException(queryDetails.getFailureReason()));
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {
-      refreshFailedCallback.accept(list, new RefreshCancelledException(list));
+      refreshFailedCallback.accept(list, timer, new RefreshCancelledException(list));
     }
   }
 

@@ -274,7 +274,7 @@ public class ListService {
   }
 
   private AppShutdownService.ShutdownTask registerShutdownTask(ListEntity list, String taskName) {
-    Runnable shutDownTask = () -> refreshFailedCallback.accept(list, new RefreshInProgressDuringShutdownException(list));
+    Runnable shutDownTask = () -> refreshFailedCallback.accept(list, new TaskTimer(), new RefreshInProgressDuringShutdownException(list));
     return appShutdownService.registerShutdownTask(executionContext, shutDownTask, taskName);
   }
 

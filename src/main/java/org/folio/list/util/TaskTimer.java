@@ -4,9 +4,9 @@ import org.folio.list.services.refresh.TimedStage;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class TaskTimer {
   Map<TimedStage, Stopwatch> stopwatches = new EnumMap<>(TimedStage.class);
@@ -43,6 +43,13 @@ public class TaskTimer {
       task.run();
       return null;
     });
+  }
+
+  public Map<String, String> getSummary() {
+    return stopwatches
+      .entrySet()
+      .stream()
+      .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Objects.toString(e.getValue().getElapsedTime())));
   }
 
   private static class Stopwatch {

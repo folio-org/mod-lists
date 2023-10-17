@@ -4,6 +4,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.services.refresh.RefreshFailedCallback;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,7 @@ class RefreshFailedCallbackTest {
     String expectedErrorCode = "unexpected.error";
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
 
-    failedRefreshService.accept(entity, failureReason);
+    failedRefreshService.accept(entity, new TaskTimer(), failureReason);
     assertThat(entity.getFailedRefresh().getErrorMessage()).isEqualTo(failureReason.getMessage());
     assertThat(entity.getFailedRefresh().getErrorCode()).isEqualTo(expectedErrorCode);
     verify(listRepository, times(1)).save(entity);
