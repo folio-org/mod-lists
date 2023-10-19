@@ -4,6 +4,7 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.AbstractListException;
 import org.folio.list.exception.MaxListSizeExceededException;
 import org.folio.list.rest.UsersClient;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +21,7 @@ class ListEntityTest {
     int recordsCount = 5;
     ListEntity refreshingFirstTime = TestDataFixture.getListEntityWithInProgressRefresh();
 
-    refreshingFirstTime.refreshCompleted(recordsCount);
+    refreshingFirstTime.refreshCompleted(recordsCount, new TaskTimer());
 
     assertThat(refreshingFirstTime.getInProgressRefresh()).isNull();
     assertThat(refreshingFirstTime.getFailedRefresh()).isNull();
@@ -38,7 +39,7 @@ class ListEntityTest {
     alreadyRefreshedList.setSuccessRefresh(successRefresh);
 
 
-    alreadyRefreshedList.refreshCompleted(recordsCount);
+    alreadyRefreshedList.refreshCompleted(recordsCount, new TaskTimer());
 
     assertThat(alreadyRefreshedList.getInProgressRefresh()).isNull();
     assertThat(alreadyRefreshedList.getFailedRefresh()).isNull();
@@ -62,7 +63,7 @@ class ListEntityTest {
     String expectedErrorCode = "unexpected.error";
     Throwable failureReason = new RuntimeException("Something Went Wrong");
 
-    entity.refreshFailed(failureReason);
+    entity.refreshFailed(failureReason, new TaskTimer());
 
     assertThat(entity.getInProgressRefresh()).isNull();
     assertThat(entity.getFailedRefresh().getStatus()).isEqualTo(AsyncProcessStatus.FAILED);
@@ -77,7 +78,7 @@ class ListEntityTest {
     String expectedErrorCode = "refresh-max.list.size.exceeded";
     AbstractListException exception = new MaxListSizeExceededException(entity, 1000);
 
-    entity.refreshFailed(exception);
+    entity.refreshFailed(exception, new TaskTimer());
 
     assertThat(entity.getInProgressRefresh()).isNull();
     assertThat(entity.getFailedRefresh().getStatus()).isEqualTo(AsyncProcessStatus.FAILED);

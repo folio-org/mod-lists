@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.AbstractListException;
 import org.folio.list.rest.UsersClient.User;
+import org.folio.list.util.TaskTimer;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -133,18 +134,19 @@ public class ListEntity {
       .build();
   }
 
-  public void refreshCompleted(int recordsCount) {
+  public void refreshCompleted(int recordsCount, TaskTimer timer) {
     ListRefreshDetails refresh = this.inProgressRefresh;
     refresh.setStatus(AsyncProcessStatus.SUCCESS);
     refresh.setRefreshEndDate(OffsetDateTime.now());
     refresh.setRecordsCount(recordsCount);
     refresh.setContentVersion(getContentVersion() + 1);
+    refresh.setMetadata(timer.getSummary());
     successRefresh = refresh;
     failedRefresh = null;
     inProgressRefresh = null;
   }
 
-  public void refreshFailed(Throwable failureReason) {
+  public void refreshFailed(Throwable failureReason, TaskTimer timer) {
     ListRefreshDetails refresh = this.inProgressRefresh;
     String errorCode = failureReason instanceof AbstractListException exception ?
       exception.getError().getCode() : "unexpected.error";
@@ -152,6 +154,7 @@ public class ListEntity {
     refresh.setErrorMessage(failureReason.getMessage());
     refresh.setStatus(AsyncProcessStatus.FAILED);
     refresh.setRefreshEndDate(OffsetDateTime.now());
+    refresh.setMetadata(timer.getSummary());
     failedRefresh = refresh;
     inProgressRefresh = null;
   }

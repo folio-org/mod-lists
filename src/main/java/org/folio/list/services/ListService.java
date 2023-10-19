@@ -20,6 +20,8 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
+import org.folio.list.services.refresh.TimedStage;
+import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.ResultsetPage;
@@ -109,7 +111,9 @@ public class ListService {
     }
     ListEntity savedEntity = listRepository.save(listEntity);
     if (nonNull(listRequest.getQueryId()) && listRequest.getIsActive()) {
-      importListContentsFromAsyncQuery(savedEntity, currentUser, listRequest.getQueryId());
+      TaskTimer timer = new TaskTimer();
+      timer.start(TimedStage.TOTAL);
+      importListContentsFromAsyncQuery(savedEntity, currentUser, listRequest.getQueryId(), timer);
     }
     return listMapper.toListDTO(savedEntity);
   }
@@ -127,7 +131,7 @@ public class ListService {
       }
       // Once UI has been updated to support sending fields in the request, the below if-block
       // can be removed
-      if (CollectionUtils.isEmpty(request.getFields())) {
+      if (isEmpty(request.getFields())) {
         request.setFields(getFieldsFromEntityType(entityType));
       }
       String userFriendlyQuery = "";
@@ -137,7 +141,9 @@ public class ListService {
       list.update(request, getCurrentUser(), userFriendlyQuery);
 
       if (request.getQueryId() != null && request.getIsActive()) {
-        importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId());
+        TaskTimer timer = new TaskTimer();
+        timer.start(TimedStage.TOTAL);
+        importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId(), timer);
       }
     });
     return listEntity.map(listMapper::toListDTO);
@@ -158,8 +164,13 @@ public class ListService {
       .map(list -> {
         validationService.validateRefresh(list);
         list.refreshStarted(getCurrentUser());
-        ListEntity savedList = listRepository.save(list);
-        listRefreshService.doAsyncRefresh(savedList, registerShutdownTask(savedList, "Cancel refresh for list " + savedList.getId()));
+        TaskTimer timer = new TaskTimer();
+        timer.start(TimedStage.TOTAL);
+        ListEntity savedList = timer.time(TimedStage.WRITE_START, () -> listRepository.save(list));
+        listRefreshService.doAsyncRefresh(
+          savedList,
+          registerShutdownTask(savedList, "Cancel refresh for list " + savedList.getId()),
+          timer);
         ListRefreshDetails refreshDetails = savedList.getInProgressRefresh();
         return refreshMapper.toListRefreshDTO(refreshDetails);
       });
@@ -241,12 +252,16 @@ public class ListService {
     }
   }
 
-  private void importListContentsFromAsyncQuery(ListEntity savedEntity, UsersClient.User currentUser, UUID queryId) {
+  private void importListContentsFromAsyncQuery(ListEntity savedEntity, UsersClient.User currentUser, UUID queryId, TaskTimer timer) {
     savedEntity.refreshStarted(currentUser);
     // Save to ensure inProgressRefreshId is present
     savedEntity = listRepository.save(savedEntity);
     log.info("Attempting to refresh list with listId {}", savedEntity);
-    listRefreshService.doAsyncSorting(savedEntity, queryId, registerShutdownTask(savedEntity, "Cancel refresh for list " + savedEntity.getId()));
+    listRefreshService.doAsyncSorting(
+      savedEntity,
+      queryId,
+      registerShutdownTask(savedEntity, "Cancel refresh for list " + savedEntity.getId()),
+      timer);
   }
 
   private String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {
@@ -259,7 +274,7 @@ public class ListService {
   }
 
   private AppShutdownService.ShutdownTask registerShutdownTask(ListEntity list, String taskName) {
-    Runnable shutDownTask = () -> refreshFailedCallback.accept(list, new RefreshInProgressDuringShutdownException(list));
+    Runnable shutDownTask = () -> refreshFailedCallback.accept(list, new TaskTimer(), new RefreshInProgressDuringShutdownException(list));
     return appShutdownService.registerShutdownTask(executionContext, shutDownTask, taskName);
   }
 

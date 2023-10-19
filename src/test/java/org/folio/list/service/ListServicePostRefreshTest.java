@@ -12,6 +12,7 @@ import org.folio.list.services.ListActions;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.exception.NotFoundException;
@@ -74,7 +75,7 @@ class ListServicePostRefreshTest {
     when(executionContext.getUserId()).thenReturn(userId);
 
     Optional<org.folio.list.domain.dto.ListRefreshDTO> refreshDetails = listService.performRefresh(savedEntity.getId());
-    verify(listRefreshService, times(1)).doAsyncRefresh(savedEntity, null);
+    verify(listRefreshService, times(1)).doAsyncRefresh(eq(savedEntity), isNull(), any(TaskTimer.class));
     assertThat(refreshDetails).contains(inProgressRefreshDTO);
     verify(appShutdownService, times(1)).registerShutdownTask(eq(executionContext), any(Runnable.class), any(String.class));
   }
