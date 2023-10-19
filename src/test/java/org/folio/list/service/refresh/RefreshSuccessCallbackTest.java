@@ -4,6 +4,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.services.refresh.RefreshSuccessCallback;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,7 @@ class RefreshSuccessCallbackTest {
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
 
-    successRefreshService.accept(entity, recordsCount);
+    successRefreshService.accept(entity, recordsCount, new TaskTimer());
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);
     // Delete contents should not be called if list has never been refreshed
     verify(listContentsRepository, times(0)).deleteContents(any(), any());
@@ -50,7 +51,7 @@ class RefreshSuccessCallbackTest {
     UUID originalRefreshId = entity.getSuccessRefresh().getId();
     when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
 
-    successRefreshService.accept(entity, recordsCount);
+    successRefreshService.accept(entity, recordsCount, new TaskTimer());
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);
     verify(listContentsRepository, times(1)).deleteContents(entity.getId(), originalRefreshId);
     verify(listRepository, times(1)).save(entity);

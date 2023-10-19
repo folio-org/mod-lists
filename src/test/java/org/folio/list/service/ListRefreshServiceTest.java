@@ -8,6 +8,8 @@ import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
 import org.folio.list.services.refresh.RefreshSuccessCallback;
+import org.folio.list.services.refresh.TimedStage;
+import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
@@ -61,9 +63,11 @@ class ListRefreshServiceTest {
     QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
     when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
     when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
-    listRefreshService.doAsyncRefresh(list, null);
+    var timer = new TaskTimer();
+    timer.start(TimedStage.TOTAL);
+    listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords);
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer);
   }
 
   @Test
@@ -73,8 +77,10 @@ class ListRefreshServiceTest {
     int totalRecords = 0;
     QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.SUCCESS).totalRecords(totalRecords);
     when(queryClient.getQuery(queryId)).thenReturn(queryDetails);
-    listRefreshService.doAsyncSorting(list, queryId, null);
-    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords);
+    var timer =  new TaskTimer();
+    timer.start(TimedStage.TOTAL);
+    listRefreshService.doAsyncSorting(list, queryId, null, timer);
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer);
   }
 
   @Test
@@ -86,9 +92,11 @@ class ListRefreshServiceTest {
     QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
     when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
     when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
-    listRefreshService.doAsyncRefresh(list, null);
+    var timer =  new TaskTimer();
+    timer.start(TimedStage.TOTAL);
+    listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any());
   }
 
   @Test
@@ -100,9 +108,11 @@ class ListRefreshServiceTest {
     QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
     when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
     when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
-    listRefreshService.doAsyncRefresh(list, null);
+    var timer =  new TaskTimer();
+    timer.start(TimedStage.TOTAL);
+    listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshFailedCallback, times(1)).accept(eq(list), any());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any());
   }
 }
 
