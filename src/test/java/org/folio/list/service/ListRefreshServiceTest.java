@@ -67,17 +67,6 @@ class ListRefreshServiceTest {
   }
 
   @Test
-  void shouldStartAsyncSort() {
-    UUID queryId = UUID.randomUUID();
-    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
-    int totalRecords = 0;
-    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.SUCCESS).totalRecords(totalRecords);
-    when(queryClient.getQuery(queryId)).thenReturn(queryDetails);
-    listRefreshService.doAsyncSorting(list, queryId, null);
-    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords);
-  }
-
-  @Test
   void shouldHandleQueryCancelledDuringRefresh() {
     ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
     int totalRecords = 0;

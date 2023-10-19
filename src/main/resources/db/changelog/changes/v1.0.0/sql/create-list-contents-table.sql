@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS list_contents
     list_id         UUID  NOT NULL,
     refresh_id      UUID NOT NULL,
     content_id      UUID  NOT NULL,
-    sort_seq        numeric NOT NULL,
+    sort_seq        INTEGER NOT NULL,
     CONSTRAINT  pk_composite PRIMARY KEY (list_id, refresh_id, content_id),
     CONSTRAINT fk_report_id FOREIGN KEY (list_id)
                 REFERENCES list_details (id) MATCH SIMPLE,

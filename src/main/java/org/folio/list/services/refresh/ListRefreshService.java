@@ -47,23 +47,10 @@ public class ListRefreshService {
       SubmitQuery submitQuery = new SubmitQuery()
         .entityTypeId(list.getEntityTypeId())
         .fqlQuery(list.getFqlQuery())
-        .fields(list.getFields());
+        .fields(list.getFields())
+        .sortResults(true);
       QueryIdentifier queryIdentifier = queryClient.executeQuery(submitQuery);
       waitForQueryCompletion(list, queryIdentifier.getQueryId());
-    } catch (Exception exception) {
-      log.error("Unexpected error when performing async refresh for list with id " + list.getId()
-        + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
-      refreshFailedCallback.accept(list, exception);
-    }
-  }
-
-  @Async
-  @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public void doAsyncSorting(ListEntity list, UUID queryId, ShutdownTask shutdownTask) {
-    try (var autoCloseMe = shutdownTask) {
-      log.info("Performing async sorting for list {}, refreshId {}", list.getId(),
-        list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
-      waitForQueryCompletion(list, queryId);
     } catch (Exception exception) {
       log.error("Unexpected error when performing async refresh for list with id " + list.getId()
         + ", refreshId " + (list.getInProgressRefreshId().map(UUID::toString).orElse("NONE")), exception);
