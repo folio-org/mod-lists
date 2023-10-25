@@ -2,8 +2,12 @@
 <databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <include file="changes/v1.0.0/changelog-v1.0.0.xml" relativeToChangelogFile="true"/>
-  <include file="changes/v1.0.0/changelog-v1.0.1.xml" relativeToChangelogFile="true"/>
+  <changeSet id="add-metadata-to-list-refresh-details" author="mweaver@ebsco.com">
+    <sql>
+      ALTER TABLE list_refresh_details ADD COLUMN IF NOT EXISTS metadata JSONB;
+    </sql>
+  </changeSet>
+
 </databaseChangeLog>
