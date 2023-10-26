@@ -10,4 +10,6 @@
     </sql>
   </changeSet>
 
+  <include file="sql/update-list-details-table.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

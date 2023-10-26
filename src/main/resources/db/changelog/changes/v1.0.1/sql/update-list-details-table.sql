@@ -1,0 +1,3 @@
+UPDATE list_details SET fields =
+  '{user_id, user_first_name, user_last_name, user_full_name, user_active, user_barcode, user_expiration_date, user_patron_group_id, user_patron_group, id, loan_status, loan_checkout_date, loan_due_date, loan_policy_id, loan_policy_name, loan_checkout_servicepoint_id, loan_checkout_servicepoint_name, instance_id, instance_title, instance_primary_contributor, item_id, item_barcode, item_status, item_material_type_id, item_material_type, holdings_id, loan_checkin_servicepoint_id, loan_checkin_servicepoint_name, loan_return_date, item_call_number}'
+  where id = '97f5829f-1510-47bc-8454-ae7fa849baef'
