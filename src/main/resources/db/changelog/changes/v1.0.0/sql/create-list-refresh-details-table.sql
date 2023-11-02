@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS list_refresh_details
     content_version         NUMERIC,
     error_code              VARCHAR(64),
     error_message           VARCHAR(1024),
-    metadata                JSONB,
     CONSTRAINT fk_report_id FOREIGN KEY (list_id)
        REFERENCES list_details (id) MATCH SIMPLE ON DELETE CASCADE
 );
-
-ALTER TABLE list_refresh_details ADD COLUMN IF NOT EXISTS metadata JSONB;
