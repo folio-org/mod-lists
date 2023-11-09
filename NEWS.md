@@ -1,5 +1,8 @@
 # 1.0.x
 
+## 1.0.3
+- Handle IllegalArgumentExceptions in requests
+
 ## 1.0.2
 - Rename canned reports and update their descriptions
 - Update the provided `_tenant` interface in the module descriptor to 2.0
