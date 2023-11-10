@@ -1,5 +1,8 @@
 # 1.0.x
 
+## 1.0.4
+- Bump the folio-s3-client dependency version to 2.0.5
+
 ## 1.0.3
 - Handle IllegalArgumentExceptions in requests
 
