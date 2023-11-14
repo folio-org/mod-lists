@@ -49,8 +49,8 @@ public class ListExceptionHandler {
     return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ListAppError> handleValidationExceptions2(HttpMessageNotReadableException exception,
+  @ExceptionHandler({HttpMessageNotReadableException.class, IllegalArgumentException.class})
+  public ResponseEntity<ListAppError> handleValidationExceptions2(Exception exception,
                                                                   ServletWebRequest webRequest) {
     String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
     log.error(INVALID_REQUEST_MESSAGE, url, exception.getMessage());
