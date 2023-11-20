@@ -1,9 +1,6 @@
 package org.folio.list.configuration;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.fql.FqlService;
-import org.folio.fqm.lib.service.FqlValidationService;
-import org.folio.fqm.lib.FQM;
 import org.folio.list.domain.dto.ListConfiguration;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRefreshRepository;
@@ -22,16 +19,6 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class ListAppConfiguration {
   private final ListExportProperties listExportProperties;
-
-  @Bean
-  public FqlService fqlService() {
-    return new FqlService();
-  }
-
-  @Bean
-  public FqlValidationService fqlValidationService() {
-    return FQM.fqlValidationService();
-  }
 
   @Bean
   @Lazy // Do not connect to S3 when the application starts
