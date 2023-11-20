@@ -68,7 +68,7 @@
       <version>${folio-spring-base.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.folio</groupId>
+      <groupId>com.github.folio-org</groupId>
       <artifactId>lib-fqm-query-processor</artifactId>
       <version>${lib-fqm-query-processor.version}</version>
     </dependency>
