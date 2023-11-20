@@ -1,6 +1,6 @@
 package org.folio.list.service;
 
-import org.folio.fql.FqlService;
+import org.folio.fql.service.FqlService;
 import org.folio.fql.model.EqualsCondition;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListEntity;

@@ -1,6 +1,6 @@
 package org.folio.list.service;
 
-import org.folio.fql.FqlValidationService;
+import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.*;
