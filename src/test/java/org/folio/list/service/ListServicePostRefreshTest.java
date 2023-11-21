@@ -1,5 +1,6 @@
 package org.folio.list.service;
 
+import jakarta.persistence.EntityManager;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListRefreshDetails;
@@ -8,10 +9,11 @@ import org.folio.list.mapper.ListRefreshMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.services.AppShutdownService;
+import org.folio.list.services.EntityManagerFlushService;
 import org.folio.list.services.ListActions;
-import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -57,6 +59,8 @@ class ListServicePostRefreshTest {
   @Mock
   private AppShutdownService appShutdownService;
 
+  private final EntityManagerFlushService entityManagerFlushService = spy(new EntityManagerFlushService(mock(EntityManager.class)));
+
   @Test
   void shouldPerformRefresh() {
     UUID userId = UUID.randomUUID();
@@ -76,6 +80,7 @@ class ListServicePostRefreshTest {
 
     Optional<org.folio.list.domain.dto.ListRefreshDTO> refreshDetails = listService.performRefresh(savedEntity.getId());
     verify(listRefreshService, times(1)).doAsyncRefresh(eq(savedEntity), isNull(), any(TaskTimer.class));
+    verify(entityManagerFlushService, atLeastOnce()).flush();
     assertThat(refreshDetails).contains(inProgressRefreshDTO);
     verify(appShutdownService, times(1)).registerShutdownTask(eq(executionContext), any(Runnable.class), any(String.class));
   }

@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.services.EntityManagerFlushService;
 import org.folio.list.util.TaskTimer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.function.Predicate;
 public class RefreshSuccessCallback implements SuccessCallback {
   private final ListRepository listRepository;
   private final ListContentsRepository listContentsRepository;
+  private final EntityManagerFlushService entityManagerFlushService;
 
   @Transactional
   public void accept(ListEntity entity, int recordsCount, TaskTimer timer) {
@@ -43,6 +45,7 @@ public class RefreshSuccessCallback implements SuccessCallback {
         }
         entity.refreshCompleted(recordsCount, timer);
         timer.time(TimedStage.WRITE_END, () -> listRepository.save(entity));
+        entityManagerFlushService.flush();
     } else {
       listContentsRepository.deleteContents(entity.getId(), currentRefreshId);
     }

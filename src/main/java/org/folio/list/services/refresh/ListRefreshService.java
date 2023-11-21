@@ -8,6 +8,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.RefreshCancelledException;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
+import org.folio.list.services.EntityManagerFlushService;
 import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
@@ -35,6 +36,7 @@ public class ListRefreshService {
   private final RefreshFailedCallback refreshFailedCallback;
   private final Supplier<DataBatchCallback> dataBatchCallbackSupplier;
   private final QueryClient queryClient;
+  private final EntityManagerFlushService entityManagerFlushService;
 
   @Async
   // Long-running method. Running this method within a transaction boundary will hog db connection for
@@ -93,6 +95,7 @@ public class ListRefreshService {
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {
       refreshFailedCallback.accept(list, timer, new RefreshCancelledException(list));
     }
+    entityManagerFlushService.flush();
   }
 
   private int importQueryResults(ListEntity list, UUID queryId) {

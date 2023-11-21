@@ -3,6 +3,7 @@ package org.folio.list.service.refresh;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.services.EntityManagerFlushService;
 import org.folio.list.services.refresh.RefreshSuccessCallback;
 import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
@@ -27,6 +28,9 @@ class RefreshSuccessCallbackTest {
 
   @Mock
   private ListContentsRepository listContentsRepository;
+
+  @Mock
+  private EntityManagerFlushService entityManagerFlushService;
 
   @InjectMocks
   private RefreshSuccessCallback successRefreshService;

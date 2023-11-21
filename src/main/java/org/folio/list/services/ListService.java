@@ -55,6 +55,7 @@ import static org.springframework.util.StringUtils.hasText;
 @Transactional
 @RequiredArgsConstructor
 public class ListService {
+  private final EntityManagerFlushService entityManagerFlushService;
   private final ListRepository listRepository;
   private final ListContentsRepository listContentsRepository;
   private final ListMapper listMapper;
@@ -166,7 +167,15 @@ public class ListService {
         list.refreshStarted(getCurrentUser());
         TaskTimer timer = new TaskTimer();
         timer.start(TimedStage.TOTAL);
-        ListEntity savedList = timer.time(TimedStage.WRITE_START, () -> listRepository.save(list));
+        ListEntity savedList = timer.time(TimedStage.WRITE_START, () -> {
+          var tempSavedList = listRepository.save(list);
+          // Occasionally, the JPA entity manager doesn't flush the list refresh details INSERT before the async refresh method
+          // runs. This results in a race condition where the async method tries to write refresh contents before the refresh
+          // details are there, resulting in a foreign key constraint violation. This method manually flushes the entity manager
+          // to ensure the INSERTs happen in the right order
+          entityManagerFlushService.flush();
+          return tempSavedList;
+        });
         listRefreshService.doAsyncRefresh(
           savedList,
           registerShutdownTask(savedList, "Cancel refresh for list " + savedList.getId()),

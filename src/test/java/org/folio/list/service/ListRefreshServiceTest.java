@@ -5,6 +5,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.QueryClient;
+import org.folio.list.services.EntityManagerFlushService;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
 import org.folio.list.services.refresh.RefreshSuccessCallback;
@@ -53,6 +54,8 @@ class ListRefreshServiceTest {
   private Supplier<BiConsumer<ListEntity, List<UUID>>> listBatchCallbackSupplier;
   @InjectMocks
   private ListRefreshService listRefreshService;
+  @Mock
+  private EntityManagerFlushService entityManagerFlushService;
 
   @Test
   void shouldStartRefresh() {
