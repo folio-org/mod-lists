@@ -1,7 +1,7 @@
 package org.folio.list.services;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.fqm.lib.service.FqlValidationService;
+import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.domain.ListEntity;

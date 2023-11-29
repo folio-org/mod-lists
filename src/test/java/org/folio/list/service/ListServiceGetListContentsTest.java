@@ -1,6 +1,6 @@
 package org.folio.list.service;
 
-import org.folio.fql.FqlService;
+import org.folio.fql.service.FqlService;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListRefreshDetails;

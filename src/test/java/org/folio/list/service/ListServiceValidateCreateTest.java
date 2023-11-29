@@ -1,6 +1,6 @@
 package org.folio.list.service;
 
-import org.folio.fqm.lib.service.FqlValidationService;
+import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.exception.InvalidFqlException;
 import org.folio.list.services.ListValidationService;

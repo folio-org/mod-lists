@@ -15,5 +15,4 @@ public class ModListsApplication {
   public static void main(String[] args) {
     SpringApplication.run(ModListsApplication.class, args);
   }
-
 }

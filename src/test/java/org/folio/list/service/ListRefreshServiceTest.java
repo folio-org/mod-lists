@@ -1,6 +1,5 @@
 package org.folio.list.service;
 
-import org.folio.fqm.lib.service.QueryResultsSorterService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
@@ -36,8 +35,6 @@ class ListRefreshServiceTest {
 
   @Mock
   private QueryClient queryClient;
-  @Mock
-  private QueryResultsSorterService queryResultsService;
   @Mock
   private FolioExecutionContext executionContext;
   @Mock

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.fql.FqlService;
+import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
