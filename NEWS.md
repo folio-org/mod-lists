@@ -1,5 +1,8 @@
 # 1.0.x
 
+## 1.0.5
+- [MODLISTS-66](https://issues.folio.org/browse/MODLISTS-66) Fix a rare race condition in list refreshes when the server is under heavy load
+
 ## 1.0.4
 - Bump the folio-s3-client dependency version to 2.0.5
 
