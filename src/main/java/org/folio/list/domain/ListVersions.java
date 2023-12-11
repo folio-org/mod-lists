@@ -69,4 +69,7 @@ public class ListVersions {
   @NotNull
   private int version;
 
+  @Column(name = "user_friendly_query")
+  private String userFriendlyQuery;
+
 }

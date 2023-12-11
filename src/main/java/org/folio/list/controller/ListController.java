@@ -90,4 +90,9 @@ public class ListController implements ListApi {
     listService.cancelRefresh(listId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
+
+  @Override
+  public ResponseEntity<org.folio.list.domain.dto.ListVersionsDTO> getListVersions(UUID listId) {
+    return ResponseEntity.ok(listService.getListVersions(listId).get());
+  }
 }
