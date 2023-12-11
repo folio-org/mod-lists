@@ -8,6 +8,7 @@ import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
+import org.folio.list.domain.ListVersions;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
@@ -17,6 +18,7 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
 import org.folio.list.repository.ListContentsRepository;
+import org.folio.list.repository.ListVersionsRepository;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
@@ -72,6 +74,8 @@ public class ListService {
   private final AppShutdownService appShutdownService;
   private final RefreshFailedCallback refreshFailedCallback;
   private final QueryClient queryClient;
+
+  private final ListVersionsRepository listVersionsRepository;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids,
                                            List<UUID> entityTypeIds, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf) {
@@ -296,5 +300,39 @@ public class ListService {
       .getColumns()
       .forEach(col -> fields.add(col.getName()));
     return fields;
+  }
+
+  public void updateListVersions(UUID listId, String name, String description) {
+    Optional<ListEntity> optionalListEntity = listRepository.findById(listId);
+
+    if (optionalListEntity.isPresent()) {
+      ListEntity list = optionalListEntity.get();
+
+      // Save the current version to list_versions
+      saveListVersion(list);
+
+      // Update the current version
+      list.setName(name);
+      list.setDescription(description);
+
+      listRepository.save(list);
+    }
+//    else {
+//      throw new EntityNotFoundException("List not found with id: " + listDetailsId);
+//    }
+  }
+
+
+  private void saveListVersion(ListEntity listEntity) {
+    ListVersions listVersions = new ListVersions();
+    listVersions.setList(listEntity);
+    listVersions.setName(listEntity.getName());
+    listVersions.setDescription(listEntity.getDescription());
+
+    listVersionsRepository.save(listVersions);
+  }
+
+  public Optional<org.folio.list.domain.dto.ListVersionsDTO> getListVersions(UUID listId) {
+    return listVersionsRepository.findByListDetailsIdOrderByCreatedAtDesc(listId);
   }
 }

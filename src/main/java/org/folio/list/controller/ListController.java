@@ -1,11 +1,13 @@
 package org.folio.list.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.list.domain.ListVersions;
+import org.folio.list.domain.dto.*;
+import org.folio.list.domain.dto.*;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
-import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.rest.resource.ListApi;
 import org.folio.list.services.ListActions;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -89,5 +92,11 @@ public class ListController implements ListApi {
   public ResponseEntity<Void> cancelRefresh(UUID listId) {
     listService.cancelRefresh(listId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<org.folio.list.domain.dto.ListVersionsDTO> getListVersions(UUID listDetailsId) {
+    var listVersionDto = listService.getListVersions(listDetailsId);
+    return new ResponseEntity<>(listVersionDto.get(), HttpStatus.CREATED);
   }
 }
