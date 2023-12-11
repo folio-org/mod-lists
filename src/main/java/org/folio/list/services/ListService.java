@@ -8,6 +8,7 @@ import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
+import org.folio.list.domain.ListVersions;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
@@ -16,7 +17,9 @@ import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
+import org.folio.list.mapper.*;
 import org.folio.list.repository.ListContentsRepository;
+import org.folio.list.repository.ListVersionsRepository;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
@@ -26,10 +29,6 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.mapper.ListEntityMapper;
-import org.folio.list.mapper.ListMapper;
-import org.folio.list.mapper.ListRefreshMapper;
-import org.folio.list.mapper.ListSummaryMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
@@ -72,6 +71,9 @@ public class ListService {
   private final AppShutdownService appShutdownService;
   private final RefreshFailedCallback refreshFailedCallback;
   private final QueryClient queryClient;
+  private final ListVersionsRepository listVersionsRepository;
+
+  private final ListVersionsMapper listVersionsMapper;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids,
                                            List<UUID> entityTypeIds, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf) {
@@ -99,6 +101,7 @@ public class ListService {
     validationService.validateCreate(listRequest, entityType);
     UsersClient.User currentUser = getCurrentUser();
     ListEntity listEntity = listEntityMapper.toListEntity(listRequest, currentUser);
+    //saveListVersion(savedEntity);
 
     // Once UI has been updated to support sending fields in the request, the below if-block
     // can be removed
@@ -116,6 +119,7 @@ public class ListService {
       timer.start(TimedStage.TOTAL);
       importListContentsFromAsyncQuery(savedEntity, currentUser, listRequest.getQueryId(), timer);
     }
+    saveListVersion(savedEntity);
     return listMapper.toListDTO(savedEntity);
   }
 
@@ -147,6 +151,7 @@ public class ListService {
         importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId(), timer);
       }
     });
+    saveListVersion(listEntity.get());
     return listEntity.map(listMapper::toListDTO);
   }
 
@@ -297,4 +302,22 @@ public class ListService {
       .forEach(col -> fields.add(col.getName()));
     return fields;
   }
+
+  private void saveListVersion(ListEntity listEntity) {
+    ListVersions listVersions = new ListVersions();
+    listVersions.setList(listEntity);
+    listEntity.setName(listEntity.getName());
+    listEntity.setDescription(listEntity.getDescription());
+
+    // Set other fields as needed
+
+    listVersionsRepository.save(listVersions);
+  }
+
+  public Optional<org.folio.list.domain.dto.ListVersionsDTO> getListVersions(UUID listId) {
+    // Retrieve versions from list_versions table
+   ListVersions listVersions = listVersionsRepository.findByListId(listId).get();
+    return Optional.ofNullable(listVersionsMapper.toListVersionsDTO(listVersions));
+  }
+
 }

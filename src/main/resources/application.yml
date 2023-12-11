@@ -12,7 +12,7 @@ mod-lists:
       access-key: ${S3_ACCESS_KEY_ID:}
       secret-key: ${S3_SECRET_ACCESS_KEY:}
 server:
-  port: 8081
+  port: 8082
 spring:
   application:
     name: mod-lists
