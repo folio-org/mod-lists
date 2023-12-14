@@ -350,6 +350,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/versions:
+    get:
+      operationId: getListVersions
+      tags:
+        - list
+      description: Get all the versions of the specified list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '201':
+          description: 'Getting all the versions of the list'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListVersionDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
 components:
   parameters:
     id:
@@ -381,6 +402,8 @@ components:
       $ref: schemas/ListExportDTO.json
     ListSummaryResultsDTO:
       $ref: schemas/ListSummaryResultsDTO.json
+    ListVersionDTO:
+      $ref: schemas/ListVersionDTO.json
     ResultsetPage:
       type: object
     ContentItem:
