@@ -6,6 +6,7 @@ import org.folio.list.domain.dto.ListRefreshDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
+import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.rest.resource.ListApi;
 import org.folio.list.services.ListActions;
@@ -89,5 +90,14 @@ public class ListController implements ListApi {
   public ResponseEntity<Void> cancelRefresh(UUID listId) {
     listService.cancelRefresh(listId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<List<ListVersionDTO>> getListVersions(UUID listId) {
+    var listVersionDto = listService.getListVersions(listId);
+    if (listVersionDto == null || listVersionDto.isEmpty()) {
+      throw new ListNotFoundException(listId, ListActions.READ);
+    }
+    return new ResponseEntity<>(listVersionDto, HttpStatus.OK);
   }
 }

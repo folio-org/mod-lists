@@ -8,15 +8,19 @@ import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
+import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListSummaryDTO;
+import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
+import org.folio.list.mapper.*;
 import org.folio.list.repository.ListContentsRepository;
+import org.folio.list.repository.ListVersionRepository;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
@@ -26,10 +30,6 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.mapper.ListEntityMapper;
-import org.folio.list.mapper.ListMapper;
-import org.folio.list.mapper.ListRefreshMapper;
-import org.folio.list.mapper.ListSummaryMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
@@ -72,6 +72,8 @@ public class ListService {
   private final AppShutdownService appShutdownService;
   private final RefreshFailedCallback refreshFailedCallback;
   private final QueryClient queryClient;
+  private final ListVersionRepository listVersionRepository;
+  private final ListVersionMapper listVersionMapper;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids,
                                            List<UUID> entityTypeIds, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf) {
@@ -123,6 +125,9 @@ public class ListService {
     log.info("Attempting to update a list with id : {}", id);
     Optional<ListEntity> listEntity = listRepository.findById(id);
     listEntity.ifPresent(list -> {
+      ListVersion previousVersions = new ListVersion();
+      previousVersions.setDataFromListEntity(listEntity.get(), getCurrentUser());
+      listVersionRepository.save(previousVersions);
       EntityType entityType = getEntityType(list.getEntityTypeId());
       validationService.validateUpdate(list, request, entityType);
       if (!request.getIsActive()) {
@@ -146,7 +151,9 @@ public class ListService {
         timer.start(TimedStage.TOTAL);
         importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId(), timer);
       }
+      listRepository.save(list);
     });
+
     return listEntity.map(listMapper::toListDTO);
   }
 
@@ -208,6 +215,15 @@ public class ListService {
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.CANCEL_REFRESH));
     validationService.validateCancelRefresh(list);
     list.refreshCancelled(executionContext.getUserId());
+  }
+
+  public List<ListVersionDTO> getListVersions(UUID listId) {
+    log.info("Getting versions of the list {}", listId);
+    return listVersionRepository
+      .findByListId(listId)
+      .stream()
+      .map(listVersionMapper::toListVersionDTO)
+      .toList();
   }
 
   private void deleteListAndContents(ListEntity list) {
