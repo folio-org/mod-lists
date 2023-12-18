@@ -374,6 +374,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/versions/{versionNumber}:
+    get:
+      operationId: getListVersion
+      tags:
+        - list
+      description: Get a specific version of the specified list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/versionNumber'
+      responses:
+        '200':
+          description: 'Get the requested list version'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListVersionDTO"
+        '404':
+          description: List or version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
 components:
   parameters:
     id:
@@ -392,6 +420,14 @@ components:
       schema:
         type: string
         format: UUID
+    versionNumber:
+      name: versionNumber
+      in: path
+      required: true
+      description: Integer number of the requested version
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     ListDTO:
       $ref: schemas/ListDTO.json

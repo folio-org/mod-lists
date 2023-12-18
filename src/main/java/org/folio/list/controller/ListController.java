@@ -94,10 +94,11 @@ public class ListController implements ListApi {
 
   @Override
   public ResponseEntity<List<ListVersionDTO>> getListVersions(UUID listId) {
-    var listVersionDto = listService.getListVersions(listId);
-    if (listVersionDto == null || listVersionDto.isEmpty()) {
-      throw new ListNotFoundException(listId, ListActions.READ);
-    }
-    return new ResponseEntity<>(listVersionDto, HttpStatus.OK);
+    return new ResponseEntity<>(listService.getListVersions(listId), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ListVersionDTO> getListVersion(UUID listId, Integer version) {
+    return new ResponseEntity<>(listService.getListVersion(listId, version), HttpStatus.OK);
   }
 }

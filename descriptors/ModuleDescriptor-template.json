@@ -46,6 +46,14 @@
           "permissionsRequired": ["lists.item.contents.get"]
         },{
           "methods": ["GET"],
+          "pathPattern": "/lists/{id}/versions",
+          "permissionsRequired": ["lists.item.versions.collection.get"]
+        },{
+          "methods": ["GET"],
+          "pathPattern": "/lists/{id}/versions/{versionNumber}",
+          "permissionsRequired": ["lists.item.versions.item.get"]
+        },{
+          "methods": ["GET"],
           "pathPattern": "/lists/{id}/exports/{exportId}/download",
           "permissionsRequired": ["lists.item.export.download.get"]
         }, {
@@ -148,6 +156,16 @@
       "permissionName": "lists.configuration.get",
       "displayName": "Lists: Get configuration of list application",
       "description": "Get configuration of lists application"
+    },
+    {
+      "permissionName": "lists.item.versions.collection.get",
+      "displayName": "Lists: Get previous versions of a list",
+      "description": "Get the previous versions of a list"
+    },
+    {
+      "permissionName": "lists.item.contents.get",
+      "displayName": "Lists: Get a previous version of a list",
+      "description": "Get a previous version of a list"
     }
   ],
   "requires": [
