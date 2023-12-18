@@ -10,6 +10,7 @@ import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
+import org.folio.list.exception.VersionNotFoundException;
 import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.mapper.*;
@@ -455,7 +456,8 @@ class ListServiceTest {
     verify(listRepository, times(1)).findById(listId);
     verify(listVersionRepository, times(1)).findByListId(listId);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
-    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper);
+    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper, validationService);
 
     assertEquals(1, result.size());
     assertEquals(listVersionDTO, result.get(0));
@@ -517,7 +519,8 @@ class ListServiceTest {
     verify(listRepository, times(1)).findById(listId);
     verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
-    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper);
+    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper, validationService);
   }
 
   @Test
@@ -555,5 +558,27 @@ class ListServiceTest {
     
     verifyNoMoreInteractions(listRepository);
     verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
+  }
+
+  @Test
+  void testGetSingleListVersionVersionDoesNotExist() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+    int versionNumber = 3;
+
+    // prepare the list we want to fetch
+    // must be shared as the method verifies access
+    ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
+    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+
+    // no version found
+    when(listVersionRepository.findByListIdAndVersion(listId, versionNumber)).thenReturn(Optional.empty());
+
+    assertThrows(VersionNotFoundException.class, () -> listService.getListVersion(listId, versionNumber));
+
+    verify(listRepository, times(1)).findById(listId);
+    verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
+    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);
+    verifyNoInteractions(listVersionMapper);
   }
 }
