@@ -355,12 +355,12 @@ paths:
       operationId: getListVersions
       tags:
         - list
-      description: Get all the versions of the specified list.
+      description: Get all the historic versions of the specified list.
       parameters:
         - $ref: '#/components/parameters/id'
       responses:
         '200':
-          description: 'Getting all the versions of the list'
+          description: 'Getting all the historic versions of the list'
           content:
             application/json:
               schema:
@@ -379,13 +379,13 @@ paths:
       operationId: getListVersion
       tags:
         - list
-      description: Get a specific version of the specified list.
+      description: Get a specific historic version of the specified list.
       parameters:
         - $ref: '#/components/parameters/id'
         - $ref: '#/components/parameters/versionNumber'
       responses:
         '200':
-          description: 'Get the requested list version'
+          description: 'Get the requested historic list version'
           content:
             application/json:
               schema:
