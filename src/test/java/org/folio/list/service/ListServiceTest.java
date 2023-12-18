@@ -49,7 +49,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -311,6 +310,11 @@ class ListServiceTest {
     assertThat(user.getFullName()).contains(entity.getUpdatedByUsername());
     assertThat(entity.getVersion()).isEqualTo(previousVersion + 1);
     assertThat(entity.getUserFriendlyQuery()).isEqualTo(userFriendlyQuery);
+
+    // ensure we saved the previous version correctly
+    ArgumentCaptor<ListVersion> oldVersion = ArgumentCaptor.forClass(ListVersion.class);
+    verify(listVersionRepository, times(1)).save(oldVersion.capture());
+    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion);
   }
 
   // This test can be removed once the UI has been updated to allow fields to be sent in the list update request
