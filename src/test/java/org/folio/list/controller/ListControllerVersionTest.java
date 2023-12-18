@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.exception.ListNotFoundException;
+import org.folio.list.exception.VersionNotFoundException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.utils.TestDataFixture;
@@ -22,14 +23,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @WebMvcTest(ListController.class)
 class ListControllerVersionTest {
 
   private static final String TENANT_ID = "test-tenant";
 
-  private static final UUID TEST_LIST_ID = UUID.fromString("ca08e0e4-ceef-5456-821f-b44309f0f77e");
-  private static final UUID TEST_USER_ID = UUID.fromString("f3ed39d2-b0da-571a-9917-0e6d31e144aa");
+  private static final UUID TEST_LIST_ID = UUID.fromString(
+    "ca08e0e4-ceef-5456-821f-b44309f0f77e"
+  );
+  private static final UUID TEST_USER_ID = UUID.fromString(
+    "f3ed39d2-b0da-571a-9917-0e6d31e144aa"
+  );
+  private static final int TEST_VERSION_NUMBER = 7;
 
   @Autowired
   private MockMvc mockMvc;
@@ -38,7 +45,7 @@ class ListControllerVersionTest {
   private ListService listService;
 
   @Test
-  void testListVersion() throws Exception {
+  void testGetAllListVersions() throws Exception {
     ListVersionDTO listVersionDTO1 = TestDataFixture.getListVersionDTO();
     ListVersionDTO listVersionDTO2 = TestDataFixture.getListVersionDTO();
     List<ListVersionDTO> listVersionDTO = List.of(
@@ -46,7 +53,9 @@ class ListControllerVersionTest {
       listVersionDTO2
     );
 
-    var requestBuilder = get("/lists/" + TEST_LIST_ID + "/versions")
+    MockHttpServletRequestBuilder requestBuilder = get(
+      "/lists/" + TEST_LIST_ID + "/versions"
+    )
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID)
       .header(USER_ID, TEST_USER_ID);
@@ -80,8 +89,10 @@ class ListControllerVersionTest {
   }
 
   @Test
-  void testListsVersionsNotFound() throws Exception {
-    var requestBuilder = get("/lists/" + TEST_LIST_ID + "/versions")
+  void testGetAllListsVersionsErrorListNotFound() throws Exception {
+    MockHttpServletRequestBuilder requestBuilder = get(
+      "/lists/" + TEST_LIST_ID + "/versions"
+    )
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
@@ -92,5 +103,68 @@ class ListControllerVersionTest {
       .perform(requestBuilder)
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.code", is("read-list.not.found")));
+  }
+
+  @Test
+  void testGetSingleListVersion() throws Exception {
+    ListVersionDTO expected = TestDataFixture.getListVersionDTO();
+
+    MockHttpServletRequestBuilder requestBuilder = get(
+      "/lists/" + TEST_LIST_ID + "/versions/" + TEST_VERSION_NUMBER
+    )
+      .contentType(APPLICATION_JSON)
+      .header(XOkapiHeaders.TENANT, TENANT_ID)
+      .header(USER_ID, TEST_USER_ID);
+
+    when(listService.getListVersion(TEST_LIST_ID, TEST_VERSION_NUMBER))
+      .thenReturn(expected);
+    mockMvc
+      .perform(requestBuilder)
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.id", Matchers.is(expected.getId().toString())))
+      .andExpect(
+        jsonPath("$.listId", Matchers.is(expected.getListId().toString()))
+      )
+      .andExpect(jsonPath("$.name", Matchers.is(expected.getName())));
+  }
+
+  @Test
+  void testGetSingleListVersionErrorListNotFound() throws Exception {
+    MockHttpServletRequestBuilder requestBuilder = get(
+      "/lists/" + TEST_LIST_ID + "/versions/" + TEST_VERSION_NUMBER
+    )
+      .contentType(APPLICATION_JSON)
+      .header(XOkapiHeaders.TENANT, TENANT_ID);
+
+    when(listService.getListVersion(TEST_LIST_ID, TEST_VERSION_NUMBER))
+      .thenThrow(new ListNotFoundException(TEST_LIST_ID, ListActions.READ));
+
+    mockMvc
+      .perform(requestBuilder)
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.code", is("read-list.not.found")));
+  }
+
+  @Test
+  void testGetSingleListVersionErrorVersionNotFound() throws Exception {
+    MockHttpServletRequestBuilder requestBuilder = get(
+      "/lists/" + TEST_LIST_ID + "/versions/" + TEST_VERSION_NUMBER
+    )
+      .contentType(APPLICATION_JSON)
+      .header(XOkapiHeaders.TENANT, TENANT_ID);
+
+    when(listService.getListVersion(TEST_LIST_ID, TEST_VERSION_NUMBER))
+      .thenThrow(
+        new VersionNotFoundException(
+          TEST_LIST_ID,
+          TEST_VERSION_NUMBER,
+          ListActions.READ
+        )
+      );
+
+    mockMvc
+      .perform(requestBuilder)
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.code", is("read-version.not.found")));
   }
 }
