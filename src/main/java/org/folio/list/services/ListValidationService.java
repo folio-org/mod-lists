@@ -64,7 +64,6 @@ public class ListValidationService {
 
   public void assertSharedOrOwnedByUser(ListEntity list, ListActions failedAction) {
     UUID currentOwnerId = (list.getUpdatedBy() == null) ? list.getCreatedBy() : list.getUpdatedBy();
-    System.out.println(folioExecutionContext.getUserId());
     if (Boolean.TRUE.equals(list.getIsPrivate()) && ! currentOwnerId.equals(folioExecutionContext.getUserId())) {
       throw new PrivateListOfAnotherUserException(list, failedAction);
     }
