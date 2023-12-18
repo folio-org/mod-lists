@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.SneakyThrows;
 import org.folio.list.domain.ExportDetails;
+import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
@@ -169,5 +170,17 @@ public class TestDataFixture {
   public static ListExportDTO getListExportDTO() {
     var resource = TestDataFixture.class.getResource("/json/list/list-export-details.json");
     return objectMapper.readValue(resource, ListExportDTO.class);
+  }
+
+  @SneakyThrows
+  public static org.folio.list.domain.dto.ListVersionDTO getListVersionDTO() {
+    var resource = TestDataFixture.class.getResource("/json/list/list-version.json");
+    return objectMapper.readValue(resource, org.folio.list.domain.dto.ListVersionDTO.class);
+  }
+
+  @SneakyThrows
+  public static ListVersion getListVersion() {
+    var resource = TestDataFixture.class.getResource("/json/list/list-version.json");
+    return objectMapper.readValue(resource, ListVersion.class);
   }
 }

@@ -359,12 +359,15 @@ paths:
       parameters:
         - $ref: '#/components/parameters/id'
       responses:
-        '201':
+        '200':
           description: 'Getting all the versions of the list'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListVersionDTO'
+                type: array
+                items:
+                  type:
+                  $ref: "#/components/schemas/ListVersionDTO"
         default:
           description: unexpected error
           content:

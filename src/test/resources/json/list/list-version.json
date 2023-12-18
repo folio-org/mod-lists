@@ -1,0 +1,14 @@
+{
+  "id": "0cb79a4c-f7eb-4941-a104-745224ae0294",
+  "listId": "0cb79a6c-f7eb-4941-a104-745224ae0292",
+  "name": "Missing Items",
+  "description": "Missing Items List",
+  "fqlQuery": "item_status = 'missing'",
+  "fields": [
+    "id",
+    "item_status"
+  ],
+  "isActive": true,
+  "isPrivate": true,
+  "version": 1
+}

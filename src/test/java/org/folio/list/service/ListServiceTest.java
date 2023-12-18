@@ -4,8 +4,10 @@ import org.folio.fql.service.FqlService;
 import org.folio.fql.model.EqualsCondition;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
+import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.mapper.*;
@@ -13,6 +15,7 @@ import org.folio.list.mapper.ListMapperImpl;
 import org.folio.list.mapper.ListRefreshMapperImpl;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.repository.ListVersionRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.UsersClient;
@@ -93,6 +96,12 @@ class ListServiceTest {
 
   @Mock
   private AppShutdownService appShutdownService;
+
+  @Mock
+  private ListVersionRepository listVersionRepository;
+
+  @Mock
+  private ListVersionMapper listVersionMapper;
 
   @Test
   void testGetAllLists() {
@@ -243,7 +252,7 @@ class ListServiceTest {
     EntityType entityType = new EntityType().name("test-entity").columns(List.of(
       new EntityTypeColumn().name("column_01"),
       new EntityTypeColumn().name("column_02")
-      ));
+    ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
@@ -271,6 +280,7 @@ class ListServiceTest {
     ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
     EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+    ListVersion previousVersions = new ListVersion();
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -278,6 +288,7 @@ class ListServiceTest {
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
+    when(listVersionRepository.save(any(ListVersion.class))).thenReturn(previousVersions);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
     int previousVersion = entity.getVersion();
@@ -413,5 +424,21 @@ class ListServiceTest {
     assertThat(actual).map(ListDTO::getSuccessRefresh).isEmpty();
     assertThat(actual).map(ListDTO::getVersion).contains(oldVersion + 1);
     assertThat(actual).map(ListDTO::getIsActive).contains(expected.getIsActive());
+  }
+
+  @Test
+  void testGetListVersions() {
+    UUID listId = UUID.randomUUID();
+    ListVersion listVersion = TestDataFixture.getListVersion();
+    ListVersionDTO listVersionDTO = new ListVersionDTO();
+    when(listVersionRepository.findByListId(listId)).thenReturn(List.of(listVersion));
+    when(listVersionMapper.toListVersionDTO(any())).thenReturn(listVersionDTO);
+    List<ListVersionDTO> result = listService.getListVersions(listId);
+
+    verify(listVersionRepository, times(1)).findByListId(listId);
+    verify(listVersionMapper, times(1)).toListVersionDTO(any());
+
+    assertEquals(1, result.size());
+    assertEquals(listVersionDTO, result.get(0));
   }
 }
