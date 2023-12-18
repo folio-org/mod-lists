@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.exception.ListNotFoundException;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.integration.XOkapiHeaders;
@@ -27,6 +28,9 @@ class ListControllerVersionTest {
 
   private static final String TENANT_ID = "test-tenant";
 
+  private static final UUID TEST_LIST_ID = UUID.fromString("ca08e0e4-ceef-5456-821f-b44309f0f77e");
+  private static final UUID TEST_USER_ID = UUID.fromString("f3ed39d2-b0da-571a-9917-0e6d31e144aa");
+
   @Autowired
   private MockMvc mockMvc;
 
@@ -35,8 +39,6 @@ class ListControllerVersionTest {
 
   @Test
   void testListVersion() throws Exception {
-    UUID listId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
     ListVersionDTO listVersionDTO1 = TestDataFixture.getListVersionDTO();
     ListVersionDTO listVersionDTO2 = TestDataFixture.getListVersionDTO();
     List<ListVersionDTO> listVersionDTO = List.of(
@@ -44,12 +46,12 @@ class ListControllerVersionTest {
       listVersionDTO2
     );
 
-    var requestBuilder = get("/lists/" + listId + "/versions")
+    var requestBuilder = get("/lists/" + TEST_LIST_ID + "/versions")
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID)
-      .header(USER_ID, userId);
+      .header(USER_ID, TEST_USER_ID);
 
-    when(listService.getListVersions(listId)).thenReturn(listVersionDTO);
+    when(listService.getListVersions(TEST_LIST_ID)).thenReturn(listVersionDTO);
     mockMvc
       .perform(requestBuilder)
       .andExpect(status().isOk())
@@ -78,13 +80,13 @@ class ListControllerVersionTest {
   }
 
   @Test
-  void shouldReturnHttp404WhenListNotFound() throws Exception {
-    var requestBuilder = get("/lists/" + UUID.randomUUID() + "/versions")
+  void testListsVersionsNotFound() throws Exception {
+    var requestBuilder = get("/lists/" + TEST_LIST_ID + "/versions")
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    when(listService.getListVersions(UUID.randomUUID()))
-      .thenThrow(ListNotFoundException.class);
+    when(listService.getListVersions(TEST_LIST_ID))
+      .thenThrow(new ListNotFoundException(TEST_LIST_ID, ListActions.READ));
 
     mockMvc
       .perform(requestBuilder)

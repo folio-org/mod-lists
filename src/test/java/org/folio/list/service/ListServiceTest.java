@@ -8,6 +8,8 @@ import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
+import org.folio.list.exception.ListNotFoundException;
+import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.mapper.*;
@@ -21,6 +23,7 @@ import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
@@ -46,6 +49,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.util.StringUtils.hasText;
@@ -427,18 +432,124 @@ class ListServiceTest {
   }
 
   @Test
-  void testGetListVersions() {
-    UUID listId = UUID.randomUUID();
+  void testGetAllListVersions() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+
+    // prepare the list we want to fetch
+    // must be shared as the method verifies access
+    ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
+    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+
+    // prepare the list versions we want to return
     ListVersion listVersion = TestDataFixture.getListVersion();
     ListVersionDTO listVersionDTO = new ListVersionDTO();
     when(listVersionRepository.findByListId(listId)).thenReturn(List.of(listVersion));
-    when(listVersionMapper.toListVersionDTO(any())).thenReturn(listVersionDTO);
+    when(listVersionMapper.toListVersionDTO(listVersion)).thenReturn(listVersionDTO);
+
     List<ListVersionDTO> result = listService.getListVersions(listId);
 
+    verify(listRepository, times(1)).findById(listId);
     verify(listVersionRepository, times(1)).findByListId(listId);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
+    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper);
 
     assertEquals(1, result.size());
     assertEquals(listVersionDTO, result.get(0));
+  }
+
+  @Test
+  void testGetAllListVersionsPrivate() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+
+    // prepare the list we want to fetch
+    // must be shared as the method verifies access
+    ListEntity listEntity = TestDataFixture.getPrivateListEntity();
+    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
+      .when(validationService)
+      .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+
+    assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersions(listId));
+
+    verify(listRepository, times(1)).findById(listId);
+    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    
+    verifyNoMoreInteractions(listRepository, validationService);
+    verifyNoInteractions(listVersionRepository, listVersionMapper);
+  }
+
+  @Test
+  void testGetAllListVersionsListDoesNotExist() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+
+    when(listRepository.findById(listId)).thenReturn(Optional.empty());
+
+    assertThrows(ListNotFoundException.class, () -> listService.getListVersions(listId));
+
+    verify(listRepository, times(1)).findById(listId);
+    
+    verifyNoMoreInteractions(listRepository);
+    verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
+  }
+
+  @Test
+  void testGetSingleListVersion() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+    int versionNumber = 3;
+
+    // prepare the list we want to fetch
+    // must be shared as the method verifies access
+    ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
+    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+
+    // prepare the list versions we want to return
+    ListVersion listVersion = TestDataFixture.getListVersion();
+    ListVersionDTO listVersionDTO = new ListVersionDTO();
+    when(listVersionRepository.findByListIdAndVersion(listId, versionNumber)).thenReturn(Optional.of(listVersion));
+    when(listVersionMapper.toListVersionDTO(listVersion)).thenReturn(listVersionDTO);
+
+    assertEquals(listVersionDTO, listService.getListVersion(listId, versionNumber));
+
+    verify(listRepository, times(1)).findById(listId);
+    verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
+    verify(listVersionMapper, times(1)).toListVersionDTO(any());
+    verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper);
+  }
+
+  @Test
+  void testGetSingleListVersionPrivate() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+    int versionNumber = 3;
+
+    // prepare the list we want to fetch
+    // must be shared as the method verifies access
+    ListEntity listEntity = TestDataFixture.getPrivateListEntity();
+    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
+      .when(validationService)
+      .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+
+    assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersion(listId, versionNumber));
+
+    verify(listRepository, times(1)).findById(listId);
+    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    
+    verifyNoMoreInteractions(listRepository, validationService);
+    verifyNoInteractions(listVersionRepository, listVersionMapper);
+  }
+
+  @Test
+  void testGetSingleListVersionListDoesNotExist() {
+    UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
+    int versionNumber = 3;
+
+    when(listRepository.findById(listId)).thenReturn(Optional.empty());
+
+    assertThrows(ListNotFoundException.class, () -> listService.getListVersion(listId, versionNumber));
+
+    verify(listRepository, times(1)).findById(listId);
+    
+    verifyNoMoreInteractions(listRepository);
+    verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
   }
 }
