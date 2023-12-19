@@ -18,6 +18,7 @@ import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
+import org.folio.list.exception.VersionNotFoundException;
 import org.folio.list.mapper.*;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListVersionRepository;
@@ -41,6 +42,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -217,13 +219,35 @@ public class ListService {
     list.refreshCancelled(executionContext.getUserId());
   }
 
+  @Nonnull
   public List<ListVersionDTO> getListVersions(UUID listId) {
-    log.info("Getting versions of the list {}", listId);
+    log.info("Checking that list {} is accessible and exists before getting versions", listId);
+
+    ListEntity list = listRepository.findById(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
+    validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+
+    log.info("Getting all versions of the list {}", listId);
+
     return listVersionRepository
       .findByListId(listId)
       .stream()
       .map(listVersionMapper::toListVersionDTO)
       .toList();
+  }
+
+  @Nonnull
+  public ListVersionDTO getListVersion(UUID listId, int version) {
+    log.info("Checking that list {} is accessible and exists before getting version {}", listId, version);
+
+    ListEntity list = listRepository.findById(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
+    validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+
+    log.info("Getting version {} of the list {}", version, listId);
+
+    return listVersionRepository
+      .findByListIdAndVersion(listId, version)
+      .map(listVersionMapper::toListVersionDTO)
+      .orElseThrow(() -> new VersionNotFoundException(listId, version, ListActions.READ));
   }
 
   private void deleteListAndContents(ListEntity list) {

@@ -355,12 +355,12 @@ paths:
       operationId: getListVersions
       tags:
         - list
-      description: Get all the versions of the specified list.
+      description: Get all the historic versions of the specified list.
       parameters:
         - $ref: '#/components/parameters/id'
       responses:
         '200':
-          description: 'Getting all the versions of the list'
+          description: 'Getting all the historic versions of the list'
           content:
             application/json:
               schema:
@@ -368,6 +368,34 @@ paths:
                 items:
                   type:
                   $ref: "#/components/schemas/ListVersionDTO"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
+  /lists/{id}/versions/{versionNumber}:
+    get:
+      operationId: getListVersion
+      tags:
+        - list
+      description: Get a specific historic version of the specified list.
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/versionNumber'
+      responses:
+        '200':
+          description: 'Get the requested historic list version'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListVersionDTO"
+        '404':
+          description: List or version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAppError"
         default:
           description: unexpected error
           content:
@@ -392,6 +420,14 @@ components:
       schema:
         type: string
         format: UUID
+    versionNumber:
+      name: versionNumber
+      in: path
+      required: true
+      description: Integer number of the requested version
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     ListDTO:
       $ref: schemas/ListDTO.json
