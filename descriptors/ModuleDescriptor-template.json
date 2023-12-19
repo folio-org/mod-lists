@@ -163,7 +163,7 @@
       "description": "Get the previous versions of a list"
     },
     {
-      "permissionName": "lists.item.contents.get",
+      "permissionName": "lists.item.versions.item.get",
       "displayName": "Lists: Get a previous version of a list",
       "description": "Get a previous version of a list"
     }
