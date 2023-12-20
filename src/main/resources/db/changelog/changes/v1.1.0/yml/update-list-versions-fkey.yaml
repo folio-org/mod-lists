@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-list-versions-fkey
+      author: novercash@ebsco.com
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: list_versions
+            constraintName: fk_report_id
+        - addForeignKeyConstraint:
+            constraintName: fk_list_id
+            baseTableName: list_versions
+            baseColumnNames: list_id
+            referencedTableName: list_details
+            referencedColumnNames: id
+            onDelete: CASCADE
