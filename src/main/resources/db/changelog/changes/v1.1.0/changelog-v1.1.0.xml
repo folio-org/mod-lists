@@ -6,4 +6,5 @@
 
   <include file="sql/create-list-versions-table.sql" relativeToChangelogFile="true"/>
   <include file="yml/update-list-versions-fkey.yaml" relativeToChangelogFile="true"/>
+  <include file="yml/alter-list-details-updated-metadata-add-not-null-constraint.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: alter-list-details-updated-metadata-add-not-null-constraint
+      author: novercash@ebsco.com
+      changes:
+        # backfill default values
+        - addDefaultValue:
+            tableName: list_details
+            columnName: updated_by
+            defaultValueComputed: created_by
+        - addDefaultValue:
+            tableName: list_details
+            columnName: updated_by_username
+            defaultValueComputed: created_by_username
+        - addDefaultValue:
+            tableName: list_details
+            columnName: updated_date
+            defaultValueComputed: created_date
+
+        # add new constraints
+        - addNotNullConstraint:
+            columnName: updated_by
+            tableName: list_details
+        - addNotNullConstraint:
+            columnName: updated_by_username
+            tableName: list_details
+        - addNotNullConstraint:
+            columnName: updated_date
+            tableName: list_details
