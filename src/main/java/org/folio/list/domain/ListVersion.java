@@ -1,18 +1,19 @@
 package org.folio.list.domain;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
-import org.folio.list.rest.UsersClient.User;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
@@ -66,7 +67,6 @@ public class ListVersion {
   @NotNull
   private Boolean isPrivate;
 
-
   @Column(name = "version")
   @NotNull
   private int version;
@@ -74,19 +74,18 @@ public class ListVersion {
   @Column(name = "user_friendly_query")
   private String userFriendlyQuery;
 
-  public void setDataFromListEntity(ListEntity listEntity, User user) {
+  public void setDataFromListEntity(ListEntity listEntity) {
     listId = listEntity.getId();
     name = listEntity.getName();
     fqlQuery = listEntity.getFqlQuery();
     description = listEntity.getDescription();
     userFriendlyQuery = listEntity.getUserFriendlyQuery();
     fields = listEntity.getFields();
-    updatedBy = user.id();
-    updatedByUsername = user.getFullName().orElse(user.id().toString());
-    updatedDate = OffsetDateTime.now();
+    updatedBy = listEntity.getUpdatedBy();
+    updatedByUsername = listEntity.getUpdatedByUsername();
+    updatedDate = listEntity.getUpdatedDate();
     version = listEntity.getVersion();
     isActive = listEntity.getIsActive();
     isPrivate = listEntity.getIsPrivate();
   }
-
 }

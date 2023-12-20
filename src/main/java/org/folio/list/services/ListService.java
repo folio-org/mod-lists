@@ -128,8 +128,8 @@ public class ListService {
     Optional<ListEntity> listEntity = listRepository.findById(id);
     listEntity.ifPresent(list -> {
       ListVersion previousVersions = new ListVersion();
-      previousVersions.setDataFromListEntity(listEntity.get(), getCurrentUser());
-      listVersionRepository.save(previousVersions);
+      previousVersions.setDataFromListEntity(listEntity.get());
+
       EntityType entityType = getEntityType(list.getEntityTypeId());
       validationService.validateUpdate(list, request, entityType);
       if (!request.getIsActive()) {
@@ -153,6 +153,8 @@ public class ListService {
         timer.start(TimedStage.TOTAL);
         importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId(), timer);
       }
+
+      listVersionRepository.save(previousVersions);
       listRepository.save(list);
     });
 
