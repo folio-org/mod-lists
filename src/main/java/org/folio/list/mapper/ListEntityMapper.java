@@ -18,6 +18,9 @@ public interface ListEntityMapper {
   @Mapping(target = "createdDate", expression = "java(java.time.OffsetDateTime.now())")
   @Mapping(target = "createdBy", expression = "java(createdBy.id())")
   @Mapping(target = "createdByUsername", expression = "java(createdBy.getFullName().orElse(createdBy.id().toString()))")
+  @Mapping(target = "updatedDate", expression = "java(java.time.OffsetDateTime.now())")
+  @Mapping(target = "updatedBy", expression = "java(createdBy.id())")
+  @Mapping(target = "updatedByUsername", expression = "java(createdBy.getFullName().orElse(createdBy.id().toString()))")
   @Mapping(target = "isCanned", constant = "false")
   @Mapping(target = "version", constant = "1")
   ListEntity toListEntity(ListRequestDTO request, UsersClient.User createdBy);
