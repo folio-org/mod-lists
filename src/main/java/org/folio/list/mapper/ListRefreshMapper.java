@@ -18,6 +18,7 @@ public interface ListRefreshMapper {
   @Mapping(target = "recordsCount", source = "listRefreshDetails.recordsCount")
   @Mapping(target = "contentVersion", source = "listRefreshDetails.contentVersion")
   @Mapping(target = "error", expression = "java(convertToListAppError(listRefreshDetails))")
+  @Mapping(target = "listVersion", source = "listRefreshDetails.listVersion")
   ListRefreshDTO toListRefreshDTO(ListRefreshDetails listRefreshDetails);
 
   default ListAppError convertToListAppError(ListRefreshDetails listRefreshDetails) {

@@ -131,6 +131,7 @@ public class ListEntity {
       .refreshedBy(startedBy.id())
       .refreshedByUsername(startedBy.getFullName().orElse(startedBy.id().toString()))
       .refreshStartDate(OffsetDateTime.now())
+      .listVersion(getVersion())
       .build();
   }
 

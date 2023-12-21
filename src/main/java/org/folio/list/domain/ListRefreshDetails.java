@@ -56,6 +56,10 @@ public class ListRefreshDetails {
   @Column(name = "error_message")
   @Size(max = 1024)
   private String errorMessage;
+
+  @Column(name = "list_version")
+  private Integer listVersion;
+
   @Column(name = "metadata")
   @JdbcTypeCode(SqlTypes.JSON)
   private Map<String, String> metadata;
