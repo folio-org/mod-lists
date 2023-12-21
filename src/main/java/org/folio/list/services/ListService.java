@@ -128,7 +128,7 @@ public class ListService {
     Optional<ListEntity> listEntity = listRepository.findById(id);
     listEntity.ifPresent(list -> {
       ListVersion previousVersions = new ListVersion();
-      previousVersions.setDataFromListEntity(listEntity.get());
+      previousVersions.setDataFromListEntity(list);
 
       EntityType entityType = getEntityType(list.getEntityTypeId());
       validationService.validateUpdate(list, request, entityType);
