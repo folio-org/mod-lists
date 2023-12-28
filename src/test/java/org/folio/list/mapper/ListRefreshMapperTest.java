@@ -30,6 +30,7 @@ class ListRefreshMapperTest {
       listRefreshDetails.getRefreshEndDate()));
     assertEquals(dto.getRefreshedBy(), listRefreshDetails.getRefreshedBy());
     assertEquals(dto.getRefreshedByUsername(), listRefreshDetails.getRefreshedByUsername());
+    assertEquals(dto.getListVersion(), listRefreshDetails.getListVersion());
     assertEquals(dto.getRecordsCount(), listRefreshDetails.getRecordsCount());
   }
 }

@@ -48,6 +48,10 @@
     "error": {
       "description": "Error encountered during list refresh",
       "$ref": "ListAppError.json"
+    },
+    "listVersion": {
+      "description": "Contains the version of the list",
+      "type": "integer"
     }
   },
   "additionalProperties": false,
