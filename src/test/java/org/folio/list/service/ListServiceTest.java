@@ -177,10 +177,13 @@ class ListServiceTest {
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
+    ListEntity entity = new ListEntity();
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
+    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
+    when(listRepository.save(entity)).thenReturn(entity);
 
     listService.createList(listRequestDto);
 
@@ -260,11 +263,14 @@ class ListServiceTest {
     ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
+    ListEntity entity = new ListEntity();
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
+    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
+    when(listRepository.save(entity)).thenReturn(entity);
     listService.createList(listRequestDto);
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
@@ -315,7 +321,7 @@ class ListServiceTest {
     // ensure we saved the previous version correctly
     ArgumentCaptor<ListVersion> oldVersion = ArgumentCaptor.forClass(ListVersion.class);
     verify(listVersionRepository, times(1)).save(oldVersion.capture());
-    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion);
+    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion+1);
   }
 
   // This test can be removed once the UI has been updated to allow fields to be sent in the list update request
@@ -479,7 +485,7 @@ class ListServiceTest {
 
     verify(listRepository, times(1)).findById(listId);
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
-    
+
     verifyNoMoreInteractions(listRepository, validationService);
     verifyNoInteractions(listVersionRepository, listVersionMapper);
   }
@@ -493,7 +499,7 @@ class ListServiceTest {
     assertThrows(ListNotFoundException.class, () -> listService.getListVersions(listId));
 
     verify(listRepository, times(1)).findById(listId);
-    
+
     verifyNoMoreInteractions(listRepository);
     verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
   }
@@ -540,7 +546,7 @@ class ListServiceTest {
 
     verify(listRepository, times(1)).findById(listId);
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
-    
+
     verifyNoMoreInteractions(listRepository, validationService);
     verifyNoInteractions(listVersionRepository, listVersionMapper);
   }
@@ -555,7 +561,7 @@ class ListServiceTest {
     assertThrows(ListNotFoundException.class, () -> listService.getListVersion(listId, versionNumber));
 
     verify(listRepository, times(1)).findById(listId);
-    
+
     verifyNoMoreInteractions(listRepository);
     verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
   }
