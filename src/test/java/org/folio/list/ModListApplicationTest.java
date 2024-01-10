@@ -1,8 +1,12 @@
 package org.folio.list;
 
-import javax.validation.Valid;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import jakarta.validation.Valid;
 import org.folio.list.context.TestcontainerCallbackExtension;
+import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
+import org.folio.tenant.domain.dto.TenantAttributes;
+import org.folio.tenant.rest.resource.TenantApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -12,12 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.RestController;
-
-import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
-import org.folio.tenant.domain.dto.TenantAttributes;
-import org.folio.tenant.rest.resource.TenantApi;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ActiveProfiles({"test", "db-test"})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

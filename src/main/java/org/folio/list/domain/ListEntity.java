@@ -1,6 +1,20 @@
 package org.folio.list.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,19 +23,13 @@ import org.folio.list.exception.AbstractListException;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.util.TaskTimer;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "list_details")
 public class ListEntity {
+
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Column(updatable = false)
@@ -80,15 +88,15 @@ public class ListEntity {
   @Column(name = "updated_date")
   private OffsetDateTime updatedDate;
 
-  @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
   @JoinColumn(name = "in_progress_refresh_id")
   private ListRefreshDetails inProgressRefresh;
 
-  @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
   @JoinColumn(name = "success_refresh_id")
   private ListRefreshDetails successRefresh;
 
-  @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
   @JoinColumn(name = "failed_refresh_id")
   private ListRefreshDetails failedRefresh;
 
@@ -120,19 +128,25 @@ public class ListEntity {
   }
 
   public Optional<UUID> getInProgressRefreshId() {
-    return isRefreshing() ? Optional.of(getInProgressRefresh().getId()) : Optional.empty();
+    return isRefreshing()
+      ? Optional.of(getInProgressRefresh().getId())
+      : Optional.empty();
   }
 
   public void refreshStarted(User startedBy) {
-    this.inProgressRefresh = ListRefreshDetails.builder()
-      .id(UUID.randomUUID())
-      .status(AsyncProcessStatus.IN_PROGRESS)
-      .listId(id)
-      .refreshedBy(startedBy.id())
-      .refreshedByUsername(startedBy.getFullName().orElse(startedBy.id().toString()))
-      .refreshStartDate(OffsetDateTime.now())
-      .listVersion(getVersion())
-      .build();
+    this.inProgressRefresh =
+      ListRefreshDetails
+        .builder()
+        .id(UUID.randomUUID())
+        .status(AsyncProcessStatus.IN_PROGRESS)
+        .listId(id)
+        .refreshedBy(startedBy.id())
+        .refreshedByUsername(
+          startedBy.getFullName().orElse(startedBy.id().toString())
+        )
+        .refreshStartDate(OffsetDateTime.now())
+        .listVersion(getVersion())
+        .build();
   }
 
   public void refreshCompleted(int recordsCount, TaskTimer timer) {
@@ -149,8 +163,9 @@ public class ListEntity {
 
   public void refreshFailed(Throwable failureReason, TaskTimer timer) {
     ListRefreshDetails refresh = this.inProgressRefresh;
-    String errorCode = failureReason instanceof AbstractListException exception ?
-      exception.getError().getCode() : "unexpected.error";
+    String errorCode = failureReason instanceof AbstractListException exception
+      ? exception.getError().getCode()
+      : "unexpected.error";
     refresh.setErrorCode(errorCode);
     refresh.setErrorMessage(failureReason.getMessage());
     refresh.setStatus(AsyncProcessStatus.FAILED);
@@ -166,8 +181,11 @@ public class ListEntity {
     setInProgressRefresh(null);
   }
 
-  public void update(ListUpdateRequestDTO request,
-                     User newUpdatedBy, String newUserFriendlyQuery) {
+  public void update(
+    ListUpdateRequestDTO request,
+    User newUpdatedBy,
+    String newUserFriendlyQuery
+  ) {
     name = request.getName();
     description = request.getDescription();
     fqlQuery = request.getFqlQuery();
@@ -176,7 +194,8 @@ public class ListEntity {
     isActive = request.getIsActive();
     isPrivate = request.getIsPrivate();
     updatedBy = newUpdatedBy.id();
-    updatedByUsername = newUpdatedBy.getFullName().orElse(newUpdatedBy.id().toString());
+    updatedByUsername =
+      newUpdatedBy.getFullName().orElse(newUpdatedBy.id().toString());
     updatedDate = OffsetDateTime.now();
     version = version + 1;
   }

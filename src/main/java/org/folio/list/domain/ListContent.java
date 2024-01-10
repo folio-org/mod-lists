@@ -1,13 +1,16 @@
 package org.folio.list.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Persistable;
-
-import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,6 +20,7 @@ import java.util.UUID;
 @Table(name = "list_contents")
 // Implements Persistable so that we can explicitly mark each object as new in the DB
 public class ListContent implements Persistable<ListContentId> {
+
   public static final int SORT_SEQUENCE_START_NUMBER = 0;
 
   @Column(name = "list_id")
