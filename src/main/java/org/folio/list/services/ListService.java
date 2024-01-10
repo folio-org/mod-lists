@@ -115,6 +115,10 @@ public class ListService {
       listEntity.setUserFriendlyQuery(userFriendlyQuery);
     }
     ListEntity savedEntity = listRepository.save(listEntity);
+    ListVersion previousVersions = new ListVersion();
+    previousVersions.setDataFromListEntity(savedEntity);
+    listVersionRepository.save(previousVersions);
+
     if (nonNull(listRequest.getQueryId()) && listRequest.getIsActive()) {
       TaskTimer timer = new TaskTimer();
       timer.start(TimedStage.TOTAL);
@@ -127,9 +131,6 @@ public class ListService {
     log.info("Attempting to update a list with id : {}", id);
     Optional<ListEntity> listEntity = listRepository.findById(id);
     listEntity.ifPresent(list -> {
-      ListVersion previousVersions = new ListVersion();
-      previousVersions.setDataFromListEntity(list);
-
       EntityType entityType = getEntityType(list.getEntityTypeId());
       validationService.validateUpdate(list, request, entityType);
       if (!request.getIsActive()) {
@@ -153,7 +154,8 @@ public class ListService {
         timer.start(TimedStage.TOTAL);
         importListContentsFromAsyncQuery(list, getCurrentUser(), request.getQueryId(), timer);
       }
-
+      ListVersion previousVersions = new ListVersion();
+      previousVersions.setDataFromListEntity(list);
       listVersionRepository.save(previousVersions);
       listRepository.save(list);
     });
