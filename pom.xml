@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.2</version>
+    <version>3.2.0</version>
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
   <groupId>org.folio</groupId>
@@ -23,7 +23,7 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>7.1.2</folio-spring-base.version>
+    <folio-spring-base.version>7.3.0-SNAPSHOT</folio-spring-base.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <folio-service-tools.version>3.1.0</folio-service-tools.version>
     <mapstruct.version>1.5.2.Final</mapstruct.version>
@@ -414,9 +414,9 @@
   </distributionManagement>
 
   <scm>
-    <url>https://github.com/folio-org/${artifactId}</url>
-    <connection>scm:git:git://github.com/folio-org/${artifactId}.git</connection>
-    <developerConnection>scm:git:git@github.com:folio-org/${artifactId}.git</developerConnection>
+    <url>https://github.com/folio-org/${project.artifactId}</url>
+    <connection>scm:git:git://github.com/folio-org/${project.artifactId}.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/${project.artifactId}.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 

@@ -1,13 +1,21 @@
 package org.folio.list.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotNull;
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -15,6 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table(name = "export_details")
 public class ExportDetails {
+
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Column(name = "export_id", updatable = false)
