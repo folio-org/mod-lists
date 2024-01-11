@@ -37,11 +37,11 @@ public class ListEntity {
 
   @Column(name = "name")
   @NotNull
-  @Size(min = 4, max = 255)
+  @Size(min = 1, max = 255)
   private String name;
 
   @Column(name = "description")
-  @Size(min = 4, max = 255)
+  @Size(max = 1024)
   private String description;
 
   @Column(name = "entity_type_id")
@@ -49,7 +49,6 @@ public class ListEntity {
   private UUID entityTypeId;
 
   @Column(name = "fql_query")
-  @Size(min = 4, max = 1024)
   private String fqlQuery;
 
   @Column(name = "fields")
@@ -61,7 +60,7 @@ public class ListEntity {
 
   @Column(name = "created_by_username")
   @NotNull
-  @Size(min = 4, max = 64)
+  @Size(min = 1, max = 64)
   private String createdByUsername;
 
   @Column(name = "created_date")
@@ -83,6 +82,7 @@ public class ListEntity {
   private UUID updatedBy;
 
   @Column(name = "updated_by_username")
+  @Size(min = 1, max = 64)
   private String updatedByUsername;
 
   @Column(name = "updated_date")

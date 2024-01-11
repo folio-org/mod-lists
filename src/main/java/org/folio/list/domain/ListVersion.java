@@ -33,15 +33,14 @@ public class ListVersion {
 
   @Column(name = "name")
   @NotNull
-  @Size(min = 4, max = 255)
+  @Size(min = 1, max = 255)
   private String name;
 
   @Column(name = "description")
-  @Size(min = 4, max = 255)
+  @Size(max = 1024)
   private String description;
 
   @Column(name = "fql_query")
-  @Size(min = 4, max = 1024)
   private String fqlQuery;
 
   @Column(name = "fields")
@@ -53,7 +52,7 @@ public class ListVersion {
 
   @Column(name = "updated_by_username")
   @NotNull
-  @Size(min = 4, max = 1024)
+  @Size(min = 1, max = 1024)
   private String updatedByUsername;
 
   @Column(name = "updated_date")
