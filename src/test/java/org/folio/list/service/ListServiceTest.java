@@ -132,7 +132,7 @@ class ListServiceTest {
       any(UUID.class),
       Mockito.eq(true),
       Mockito.eq(false),
-      Mockito.isNull(),
+      Mockito.eq(false),
       any()
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));

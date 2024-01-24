@@ -56,7 +56,7 @@ class ListControllerGetListsTest {
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-     isNull(), isNull(), isNull(), isNull())).thenReturn(listSummaryResultsDto);
+     isNull(), isNull(), any(), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
