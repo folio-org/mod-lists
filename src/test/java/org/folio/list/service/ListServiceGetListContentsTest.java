@@ -84,7 +84,7 @@ class ListServiceGetListContentsTest {
     expectedEntity.getSuccessRefresh().setRecordsCount(2);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
@@ -126,7 +126,7 @@ class ListServiceGetListContentsTest {
     expectedEntity.getSuccessRefresh().setRecordsCount(2);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
@@ -168,7 +168,7 @@ class ListServiceGetListContentsTest {
     expectedEntity.getSuccessRefresh().setRecordsCount(2);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
@@ -209,7 +209,7 @@ class ListServiceGetListContentsTest {
     expectedEntity.getSuccessRefresh().setRecordsCount(2);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(expectedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, offset, size);
@@ -221,7 +221,7 @@ class ListServiceGetListContentsTest {
     UUID listId = UUID.randomUUID();
     Optional<ResultsetPage> emptyContent = Optional.of(new ResultsetPage().content(List.of()).totalRecords(0));
     ListEntity neverRefreshedList = TestDataFixture.getNeverRefreshedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(neverRefreshedList));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(neverRefreshedList));
     Optional<ResultsetPage> actualContent = listService.getListContents(listId, 0, 100);
     assertThat(actualContent).isEqualTo(emptyContent);
   }
@@ -230,7 +230,7 @@ class ListServiceGetListContentsTest {
   void shouldThrowExceptionWhenValidationFailed() {
     UUID listId = UUID.randomUUID();
     ListEntity listEntity = TestDataFixture.getNeverRefreshedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(listValidationService).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
     Assertions.assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListContents(listId, 0, 100));

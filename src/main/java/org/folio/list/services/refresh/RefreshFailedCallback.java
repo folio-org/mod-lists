@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 @Service
@@ -51,7 +50,7 @@ public class RefreshFailedCallback {
    * inProgressRefreshId for this list in database.
    */
   private boolean isActiveRefresh(UUID listId, UUID refreshId) {
-    return listRepository.findById(listId)
+    return listRepository.findByIdAndIsDeletedFalse(listId)
       .flatMap(ListEntity::getInProgressRefreshId)
       .filter(Predicate.isEqual(refreshId))
       .isPresent();

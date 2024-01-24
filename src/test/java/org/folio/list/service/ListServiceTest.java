@@ -125,8 +125,16 @@ class ListServiceTest {
 
     Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
     when(executionContext.getUserId()).thenReturn(currentUserId);
-    when(listRepository.searchList(any(Pageable.class), Mockito.eq(List.of(entity1.getId(), entity2.getId())), Mockito.eq(List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId())), any(UUID.class), Mockito.eq(true), Mockito.eq(false), any())
-    ).thenReturn(listEntities);
+    when(listRepository.searchList(
+      any(Pageable.class),
+      Mockito.eq(List.of(entity1.getId(), entity2.getId())),
+      Mockito.eq(List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId())),
+      any(UUID.class),
+      Mockito.eq(true),
+      Mockito.eq(false),
+      Mockito.isNull(),
+      any()
+    )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
     when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
@@ -134,12 +142,15 @@ class ListServiceTest {
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
 
-    var actual = listService.getAllLists(Pageable.ofSize(100),
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
       List.of(entity1.getId(), entity2.getId()),
       List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId()),
       true,
       false,
-      null);
+      null,
+      null
+    );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
   }
 
@@ -298,7 +309,7 @@ class ListServiceTest {
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listVersionRepository.save(any(ListVersion.class))).thenReturn(previousVersions);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
@@ -347,7 +358,7 @@ class ListServiceTest {
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
 
@@ -370,7 +381,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     doNothing().when(validationService).validateUpdate(entity, deactivateRequest, entityType);
 
     assertThat(entity.getIsActive())
@@ -399,7 +410,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     when(listRepository.save(entity)).thenReturn(entity);
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
@@ -430,7 +441,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
 
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
@@ -449,7 +460,7 @@ class ListServiceTest {
     // prepare the list we want to fetch
     // must be shared as the method verifies access
     ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
 
     // prepare the list versions we want to return
     ListVersion listVersion = TestDataFixture.getListVersion();
@@ -459,7 +470,7 @@ class ListServiceTest {
 
     List<ListVersionDTO> result = listService.getListVersions(listId);
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListId(listId);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
@@ -476,14 +487,14 @@ class ListServiceTest {
     // prepare the list we want to fetch
     // must be shared as the method verifies access
     ListEntity listEntity = TestDataFixture.getPrivateListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(validationService)
       .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
 
     assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersions(listId));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
 
     verifyNoMoreInteractions(listRepository, validationService);
@@ -494,11 +505,11 @@ class ListServiceTest {
   void testGetAllListVersionsListDoesNotExist() {
     UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
 
-    when(listRepository.findById(listId)).thenReturn(Optional.empty());
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.empty());
 
     assertThrows(ListNotFoundException.class, () -> listService.getListVersions(listId));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
 
     verifyNoMoreInteractions(listRepository);
     verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
@@ -512,7 +523,7 @@ class ListServiceTest {
     // prepare the list we want to fetch
     // must be shared as the method verifies access
     ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
 
     // prepare the list versions we want to return
     ListVersion listVersion = TestDataFixture.getListVersion();
@@ -522,7 +533,7 @@ class ListServiceTest {
 
     assertEquals(listVersionDTO, listService.getListVersion(listId, versionNumber));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
@@ -537,14 +548,14 @@ class ListServiceTest {
     // prepare the list we want to fetch
     // must be shared as the method verifies access
     ListEntity listEntity = TestDataFixture.getPrivateListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(validationService)
       .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
 
     assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersion(listId, versionNumber));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
 
     verifyNoMoreInteractions(listRepository, validationService);
@@ -556,11 +567,11 @@ class ListServiceTest {
     UUID listId = UUID.fromString("19a2569b-524e-51f3-a5df-c3877a1eec93");
     int versionNumber = 3;
 
-    when(listRepository.findById(listId)).thenReturn(Optional.empty());
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.empty());
 
     assertThrows(ListNotFoundException.class, () -> listService.getListVersion(listId, versionNumber));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
 
     verifyNoMoreInteractions(listRepository);
     verifyNoInteractions(validationService, listVersionRepository, listVersionMapper);
@@ -574,14 +585,14 @@ class ListServiceTest {
     // prepare the list we want to fetch
     // must be shared as the method verifies access
     ListEntity listEntity = TestDataFixture.getSharedNonCannedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
 
     // no version found
     when(listVersionRepository.findByListIdAndVersion(listId, versionNumber)).thenReturn(Optional.empty());
 
     assertThrows(VersionNotFoundException.class, () -> listService.getListVersion(listId, versionNumber));
 
-    verify(listRepository, times(1)).findById(listId);
+    verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
     verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
     verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);

@@ -77,13 +77,21 @@ public class ListService {
   private final ListVersionRepository listVersionRepository;
   private final ListVersionMapper listVersionMapper;
 
-  public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids,
-                                           List<UUID> entityTypeIds, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf) {
+  public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
+                                           Boolean isPrivate, Boolean includeDeleted, OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
     UUID currentUserId = executionContext.getUserId();
-    Page<ListEntity> lists = listRepository.searchList(pageable, isEmpty(ids) ? null : ids,
-      isEmpty(entityTypeIds) ? null : entityTypeIds, currentUserId, active, isPrivate, updatedAsOf);
+    Page<ListEntity> lists = listRepository.searchList(
+      pageable,
+      isEmpty(ids) ? null : ids,
+      isEmpty(entityTypeIds) ? null : entityTypeIds,
+      currentUserId,
+      active,
+      isPrivate,
+      includeDeleted,
+      updatedAsOf
+    );
 
     // List database do not store entity type labels. Only entity type ID is available in List database.
     // Get the corresponding entity type labels from FQM
@@ -129,7 +137,7 @@ public class ListService {
 
   public Optional<ListDTO> updateList(UUID id, ListUpdateRequestDTO request) {
     log.info("Attempting to update a list with id : {}", id);
-    Optional<ListEntity> listEntity = listRepository.findById(id);
+    Optional<ListEntity> listEntity = listRepository.findByIdAndIsDeletedFalse(id);
     listEntity.ifPresent(list -> {
       EntityType entityType = getEntityType(list.getEntityTypeId());
       validationService.validateUpdate(list, request, entityType);
@@ -165,7 +173,7 @@ public class ListService {
 
   public Optional<ListDTO> getListById(UUID id) {
     log.info("Attempting to get specific list for id {}", id);
-    return listRepository.findById(id)
+    return listRepository.findByIdAndIsDeletedFalse(id)
       .map(list -> {
         validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
         return listMapper.toListDTO(list);
@@ -174,7 +182,7 @@ public class ListService {
 
   public Optional<ListRefreshDTO> performRefresh(UUID listId) {
     log.info("Attempting to refresh list with listId {}", listId);
-    return listRepository.findById(listId)
+    return listRepository.findByIdAndIsDeletedFalse(listId)
       .map(list -> {
         validationService.validateRefresh(list);
         list.refreshStarted(getCurrentUser());
@@ -201,7 +209,7 @@ public class ListService {
   public Optional<ResultsetPage> getListContents(UUID listId, Integer offset, Integer size) {
     log.info("Attempting to get contents for list with listId {}, tenantId {}, offset {}, size {}",
       listId, executionContext.getTenantId(), offset, size);
-    return listRepository.findById(listId)
+    return listRepository.findByIdAndIsDeletedFalse(listId)
       .map(list -> {
         validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
         return getListContents(list, offset, size);
@@ -209,7 +217,7 @@ public class ListService {
   }
 
   public void deleteList(UUID id) {
-    ListEntity list = listRepository.findById(id)
+    ListEntity list = listRepository.findByIdAndIsDeletedFalse(id)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.DELETE));
     validationService.validateDelete(list);
     deleteListAndContents(list);
@@ -217,7 +225,7 @@ public class ListService {
 
   public void cancelRefresh(UUID listId) {
     log.info("Cancelling refresh for list {}", listId);
-    ListEntity list = listRepository.findById(listId)
+    ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.CANCEL_REFRESH));
     validationService.validateCancelRefresh(list);
     list.refreshCancelled(executionContext.getUserId());
@@ -227,7 +235,7 @@ public class ListService {
   public List<ListVersionDTO> getListVersions(UUID listId) {
     log.info("Checking that list {} is accessible and exists before getting versions", listId);
 
-    ListEntity list = listRepository.findById(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
+    ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
     validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
 
     log.info("Getting all versions of the list {}", listId);
@@ -243,7 +251,9 @@ public class ListService {
   public ListVersionDTO getListVersion(UUID listId, int version) {
     log.info("Checking that list {} is accessible and exists before getting version {}", listId, version);
 
-    ListEntity list = listRepository.findById(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
+    ListEntity list = listRepository
+      .findByIdAndIsDeletedFalse(listId)
+      .orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
     validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
 
     log.info("Getting version {} of the list {}", version, listId);
@@ -256,7 +266,7 @@ public class ListService {
 
   private void deleteListAndContents(ListEntity list) {
     listContentsRepository.deleteContents(list.getId());
-    listRepository.deleteById(list.getId());
+    listRepository.save(list.withIsDeleted(true));
   }
 
   private ResultsetPage getListContents(ListEntity list, Integer offset, Integer limit) {

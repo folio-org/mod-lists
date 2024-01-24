@@ -32,7 +32,7 @@ class RefreshFailedCallbackTest {
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     Throwable failureReason = new RuntimeException("Something Went Wrong");
     String expectedErrorCode = "unexpected.error";
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
 
     failedRefreshService.accept(entity, new TaskTimer(), failureReason);
     assertThat(entity.getFailedRefresh().getErrorMessage()).isEqualTo(failureReason.getMessage());

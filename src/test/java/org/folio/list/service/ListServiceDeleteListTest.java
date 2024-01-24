@@ -39,7 +39,7 @@ class ListServiceDeleteListTest {
   @Test
   void shouldDeleteList() {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     listValidationService.validateDelete(entity);
     listService.deleteList(entity.getId());
     verify(listRepository, times(1)).deleteById(entity.getId());
@@ -49,7 +49,7 @@ class ListServiceDeleteListTest {
   @Test
   void shouldNotDeleteIfValidationFailed() {
     ListEntity entity = TestDataFixture.getPrivateListEntity();
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     doThrow(new PrivateListOfAnotherUserException(entity, ListActions.DELETE))
       .when(listValidationService).validateDelete(entity);
     UUID entityId = entity.getId();

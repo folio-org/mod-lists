@@ -54,7 +54,7 @@ class ListControllerGetListsTest {
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    when(listService.getAllLists(any(Pageable.class), Mockito.eq(null),
+    when(listService.getAllLists(any(Pageable.class), Mockito.eq(null), Mockito.eq(null),
      Mockito.eq(null), Mockito.eq(null), Mockito.eq(null), Mockito.eq(null))).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
@@ -87,11 +87,12 @@ class ListControllerGetListsTest {
       .queryParam("entityTypeIds", listDto1.getEntityTypeId().toString(), listDto2.getEntityTypeId().toString())
       .queryParam("active", "true")
       .queryParam("private", "true")
+      .queryParam("includeDeleted", "false")
       .queryParam("updatedAsOf", "2023-01-27T20:54:41.528281+05:30");
 
 
     when(listService.getAllLists(any(Pageable.class), Mockito.eq(listIds),
-      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(providedTimestamp)))
+      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(false), Mockito.eq(providedTimestamp)))
       .thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
@@ -127,7 +128,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, null)).thenReturn(listSummaryResultsDto);
+      null, false, false, null, null)).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())

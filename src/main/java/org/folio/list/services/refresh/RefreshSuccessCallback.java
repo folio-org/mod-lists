@@ -56,7 +56,7 @@ public class RefreshSuccessCallback implements SuccessCallback {
    * inProgressRefreshId for this list in database.
    */
   private boolean isActiveRefresh(UUID listId, UUID refreshId) {
-    return listRepository.findById(listId)
+    return listRepository.findByIdAndIsDeletedFalse(listId)
       .flatMap(ListEntity::getInProgressRefreshId)
       .filter(Predicate.isEqual(refreshId))
       .isPresent();

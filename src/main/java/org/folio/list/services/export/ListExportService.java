@@ -44,7 +44,7 @@ public class ListExportService {
 
   @Transactional
   public ListExportDTO createExport(UUID listId) {
-    ListEntity list = listRepository.findById(listId)
+    ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     ExportDetails exportDetails = createExportDetails(list);

@@ -39,7 +39,7 @@ class RefreshSuccessCallbackTest {
   void shouldCompleteRefreshForNeverRefreshedList() {
     int recordsCount = 10;
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
 
     successRefreshService.accept(entity, recordsCount, new TaskTimer());
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);
@@ -53,7 +53,7 @@ class RefreshSuccessCallbackTest {
     int recordsCount = 10;
     ListEntity entity = TestDataFixture.getListEntityWithInProgressAndSuccessRefresh();
     UUID originalRefreshId = entity.getSuccessRefresh().getId();
-    when(listRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
 
     successRefreshService.accept(entity, recordsCount, new TaskTimer());
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);

@@ -66,6 +66,10 @@
       "description": "Indicates if a List is canned or not",
       "type": "boolean"
     },
+    "isDeleted" : {
+      "description": "Indicates if a List has been deleted",
+      "type": "boolean"
+    },
     "updatedBy": {
       "description": "ID of the user who last updated the record (when available)",
       "type": "string",
