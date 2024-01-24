@@ -42,5 +42,6 @@ class ListEntityMapperTest {
     assertEquals(user.id(), listEntity.getCreatedBy());
     assertNotNull(listEntity.getCreatedDate());
     assertFalse(listEntity.getIsCanned());
+    assertFalse(listEntity.getIsDeleted());
   }
 }
