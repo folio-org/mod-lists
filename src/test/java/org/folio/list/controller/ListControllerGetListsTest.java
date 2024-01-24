@@ -128,7 +128,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, null, null)).thenReturn(listSummaryResultsDto);
+      null, false, false, false, null)).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())

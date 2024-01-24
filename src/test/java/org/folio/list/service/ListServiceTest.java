@@ -148,7 +148,7 @@ class ListServiceTest {
       List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId()),
       true,
       false,
-      null,
+      false,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());

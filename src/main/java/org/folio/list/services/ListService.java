@@ -78,7 +78,7 @@ public class ListService {
   private final ListVersionMapper listVersionMapper;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
-                                           Boolean isPrivate, Boolean includeDeleted, OffsetDateTime updatedAsOf) {
+                                           Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
     UUID currentUserId = executionContext.getUserId();

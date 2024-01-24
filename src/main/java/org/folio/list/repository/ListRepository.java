@@ -27,7 +27,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
-      AND (:includeDeleted IS NULL OR :includeDeleted = true OR l.isDeleted = false)
+      AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
@@ -41,7 +41,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
-      AND (:includeDeleted IS NULL OR :includeDeleted = true OR l.isDeleted = false)
+      AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
@@ -54,7 +54,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
     UUID currentUserId,
     Boolean active,
     Boolean isPrivate,
-    Boolean includeDeleted,
+    boolean includeDeleted,
     OffsetDateTime updatedAsOf
   );
 

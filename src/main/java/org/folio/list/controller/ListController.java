@@ -44,7 +44,17 @@ public class ListController implements ListApi {
     // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
     providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
     Pageable pageable = new OffsetRequest(offset, size);
-    return ResponseEntity.ok(listService.getAllLists(pageable, ids, entityTypeIds, active, isPrivate, includeDeleted, providedTimestamp));
+    return ResponseEntity.ok(
+      listService.getAllLists(
+        pageable,
+        ids,
+        entityTypeIds,
+        active,
+        isPrivate,
+        Boolean.TRUE.equals(includeDeleted),
+        providedTimestamp
+      )
+    );
   }
 
   @Override
