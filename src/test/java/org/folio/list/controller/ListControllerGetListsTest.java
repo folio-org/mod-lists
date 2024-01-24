@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,8 +55,8 @@ class ListControllerGetListsTest {
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    when(listService.getAllLists(any(Pageable.class), Mockito.eq(null), Mockito.eq(null),
-     Mockito.eq(null), Mockito.eq(null), Mockito.eq(null), Mockito.eq(null))).thenReturn(listSummaryResultsDto);
+    when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
+     isNull(), isNull(), isNull(), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
