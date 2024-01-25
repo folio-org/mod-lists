@@ -76,7 +76,7 @@ class ListExportServiceTest {
     ListEntity fetchedEntity = TestDataFixture.getListExportDetails().getList();
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
@@ -112,7 +112,7 @@ class ListExportServiceTest {
     ListEntity fetchedEntity = TestDataFixture.getListExportDetails().getList();
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
@@ -239,7 +239,7 @@ class ListExportServiceTest {
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     ListEntity fetchedEntity = exportDetails.getList();
     UUID listId = fetchedEntity.getId();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(any(ExportDetails.class))).thenReturn(exportDetails);
     when(listExportMapper.toListExportDTO(exportDetails)).thenReturn(mock(ListExportDTO.class));
     when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(null));

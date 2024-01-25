@@ -10,10 +10,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ListRepository extends CrudRepository<ListEntity, UUID>, PagingAndSortingRepository<ListEntity, UUID> {
+
+  Optional<ListEntity> findByIdAndIsDeletedFalse(UUID id);
 
   @Query(
     value = """
@@ -24,6 +27,7 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
+      AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
@@ -37,12 +41,22 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (l.isPrivate = false OR l.updatedBy = :currentUserId OR ( l.updatedBy IS NULL AND l.createdBy = :currentUserId))
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:active IS NULL OR l.isActive = :active)
+      AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
        """
- )
-  Page<ListEntity> searchList(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, UUID currentUserId, Boolean active, Boolean isPrivate, OffsetDateTime updatedAsOf);
+  )
+  Page<ListEntity> searchList(
+    Pageable pageable,
+    List<UUID> ids,
+    List<UUID> entityTypeIds,
+    UUID currentUserId,
+    Boolean active,
+    Boolean isPrivate,
+    boolean includeDeleted,
+    OffsetDateTime updatedAsOf
+  );
 
 }
 

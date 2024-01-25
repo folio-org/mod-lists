@@ -1,5 +1,9 @@
 package org.folio.list.controller;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
@@ -19,11 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.UUID;
-
 @RequiredArgsConstructor
 @RestController
 public class ListController implements ListApi {
@@ -34,8 +33,10 @@ public class ListController implements ListApi {
   public ResponseEntity<ListSummaryResultsDTO> getAllLists(List<UUID> ids,
                                                            List<UUID> entityTypeIds,
                                                            Integer offset,
-                                                           Integer size, Boolean active,
+                                                           Integer size,
+                                                           Boolean active,
                                                            Boolean isPrivate, // Note: query param name is "private"
+                                                           Boolean includeDeleted,
                                                            String updatedAsOf
   ) {
     OffsetDateTime providedTimestamp;
@@ -43,7 +44,17 @@ public class ListController implements ListApi {
     // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
     providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
     Pageable pageable = new OffsetRequest(offset, size);
-    return ResponseEntity.ok(listService.getAllLists(pageable, ids, entityTypeIds, active, isPrivate, providedTimestamp));
+    return ResponseEntity.ok(
+      listService.getAllLists(
+        pageable,
+        ids,
+        entityTypeIds,
+        active,
+        isPrivate,
+        Boolean.TRUE.equals(includeDeleted),
+        providedTimestamp
+      )
+    );
   }
 
   @Override

@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,8 +56,8 @@ class ListControllerGetListsTest {
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    when(listService.getAllLists(any(Pageable.class), Mockito.eq(null),
-     Mockito.eq(null), Mockito.eq(null), Mockito.eq(null), Mockito.eq(null))).thenReturn(listSummaryResultsDto);
+    when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
+     isNull(), isNull(), eq(false), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -87,11 +89,12 @@ class ListControllerGetListsTest {
       .queryParam("entityTypeIds", listDto1.getEntityTypeId().toString(), listDto2.getEntityTypeId().toString())
       .queryParam("active", "true")
       .queryParam("private", "true")
+      .queryParam("includeDeleted", "false")
       .queryParam("updatedAsOf", "2023-01-27T20:54:41.528281+05:30");
 
 
     when(listService.getAllLists(any(Pageable.class), Mockito.eq(listIds),
-      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(providedTimestamp)))
+      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(false), Mockito.eq(providedTimestamp)))
       .thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
@@ -127,7 +130,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, null)).thenReturn(listSummaryResultsDto);
+      null, false, false, false, null)).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())

@@ -45,7 +45,7 @@ class ListServiceGetListIdTest {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     ListDTO listDto = TestDataFixture.getListDTOSuccessRefresh(listId);
 
-    when(listRepository.findById(listId)).thenReturn(Optional.of(entity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(listDto);
     var actual = listService.getListById(listId);
     assertThat(actual).contains(listDto);
@@ -55,7 +55,7 @@ class ListServiceGetListIdTest {
   void shouldThrowExceptionWhenValidationFailed() {
     UUID listId = UUID.randomUUID();
     ListEntity listEntity = TestDataFixture.getNeverRefreshedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(listValidationService).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
     Assertions.assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListById(listId));

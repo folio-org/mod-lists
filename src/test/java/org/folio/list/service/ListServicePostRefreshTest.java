@@ -73,7 +73,7 @@ class ListServicePostRefreshTest {
 
     savedEntity.setInProgressRefresh(inProgressRefreshEntity);
 
-    when(listRepository.findById(savedEntity.getId())).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(savedEntity.getId())).thenReturn(Optional.of(fetchedEntity));
     when(listRepository.save(fetchedEntity)).thenReturn(savedEntity);
     when(refreshMapper.toListRefreshDTO(inProgressRefreshEntity)).thenReturn(inProgressRefreshDTO);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -94,7 +94,7 @@ class ListServicePostRefreshTest {
     ListEntity fetchedEntity = TestDataFixture.getListEntityWithSuccessRefresh();
 
     ArgumentCaptor<ListEntity> listEntityCaptor = ArgumentCaptor.forClass(ListEntity.class);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listRepository.save(listEntityCaptor.capture())).thenReturn(fetchedEntity);
     when(refreshMapper.toListRefreshDTO(any(ListRefreshDetails.class))).thenReturn(mock(org.folio.list.domain.dto.ListRefreshDTO.class));
     when(executionContext.getUserId()).thenReturn(userId);
@@ -115,7 +115,7 @@ class ListServicePostRefreshTest {
     ListEntity fetchedEntity = TestDataFixture.getListEntityWithSuccessRefresh();
 
     ArgumentCaptor<ListEntity> listEntityCaptor = ArgumentCaptor.forClass(ListEntity.class);
-    when(listRepository.findById(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listRepository.save(listEntityCaptor.capture())).thenReturn(fetchedEntity);
     when(refreshMapper.toListRefreshDTO(any(ListRefreshDetails.class))).thenReturn(mock(org.folio.list.domain.dto.ListRefreshDTO.class));
     when(executionContext.getUserId()).thenReturn(userId);
@@ -133,10 +133,9 @@ class ListServicePostRefreshTest {
   void shouldThrowExceptionWhenValidationFailed() {
     UUID listId = UUID.randomUUID();
     ListEntity listEntity = TestDataFixture.getNeverRefreshedListEntity();
-    when(listRepository.findById(listId)).thenReturn(Optional.of(listEntity));
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.REFRESH))
       .when(listValidationService).validateRefresh(listEntity);
     Assertions.assertThrows(PrivateListOfAnotherUserException.class, () -> listService.performRefresh(listId));
   }
 }
-

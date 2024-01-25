@@ -1,5 +1,10 @@
 package org.folio.list.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Optional;
+import java.util.UUID;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListRefreshDetails;
@@ -14,14 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class ListServiceCancelRefreshTest {
+
   @InjectMocks
   private ListService listService;
 
@@ -39,7 +39,8 @@ class ListServiceCancelRefreshTest {
     UUID userId = UUID.randomUUID();
     ListEntity list = TestDataFixture.getListEntityWithInProgressRefresh();
     ListRefreshDetails refreshDetails = list.getInProgressRefresh();
-    when(listRepository.findById(list.getId())).thenReturn(Optional.of(list));
+    when(listRepository.findByIdAndIsDeletedFalse(list.getId()))
+      .thenReturn(Optional.of(list));
     when(executionContext.getUserId()).thenReturn(userId);
     doNothing().when(listValidationService).validateCancelRefresh(list);
     listService.cancelRefresh(list.getId());

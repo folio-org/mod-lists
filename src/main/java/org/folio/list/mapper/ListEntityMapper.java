@@ -22,6 +22,7 @@ public interface ListEntityMapper {
   @Mapping(target = "updatedBy", expression = "java(createdBy.id())")
   @Mapping(target = "updatedByUsername", expression = "java(createdBy.getFullName().orElse(createdBy.id().toString()))")
   @Mapping(target = "isCanned", constant = "false")
+  @Mapping(target = "isDeleted", constant = "false")
   @Mapping(target = "version", constant = "1")
   ListEntity toListEntity(ListRequestDTO request, UsersClient.User createdBy);
 }

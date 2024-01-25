@@ -18,12 +18,15 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
+
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.AbstractListException;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.util.TaskTimer;
 
 @Data
+@With
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -101,11 +104,14 @@ public class ListEntity {
   private ListRefreshDetails failedRefresh;
 
   @Column(name = "version")
-  @NotNull
   private int version;
 
   @Column(name = "user_friendly_query")
   private String userFriendlyQuery;
+
+  @Column(name = "is_deleted")
+  @NotNull
+  private Boolean isDeleted;
 
   public boolean isRefreshing() {
     return inProgressRefresh != null;

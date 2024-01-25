@@ -57,6 +57,12 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: includeDeleted
+          in: query
+          description: Indicates if deleted lists should be included in the results (default false)
+          required: false
+          schema:
+            type: boolean
         - name: updatedAsOf
           in: query
           description: Indicates the minimum create/update timestamp to filter lists by
