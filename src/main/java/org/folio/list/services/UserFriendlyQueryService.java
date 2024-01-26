@@ -21,18 +21,19 @@ public class UserFriendlyQueryService {
 
   private final QueryClient queryClient;
 
-  private final Map<Class<? extends FqlCondition<?>>, BiFunction<FqlCondition<?>, EntityType, String>> userFriendlyQuery = Map.of(
-    EqualsCondition.class, (cnd, ent) -> handleEquals((EqualsCondition) cnd, ent),
-    NotEqualsCondition.class, (cnd, ent) -> handleNotEquals((NotEqualsCondition) cnd, ent),
-    InCondition.class, (cnd, ent) -> handleIn((InCondition) cnd, ent),
-    NotInCondition.class, (cnd, ent) -> handleNotIn((NotInCondition) cnd, ent),
-    GreaterThanCondition.class, (cnd, ent) -> handleGreaterThan((GreaterThanCondition) cnd),
-    LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd),
-    AndCondition.class, (cnd, ent) -> handleAnd((AndCondition) cnd, ent),
-    RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd),
-    ContainsCondition.class, (cnd, ent) -> handleContains((ContainsCondition) cnd, ent),
-    NotContainsCondition.class, (cnd, ent) -> handleNotContains((NotContainsCondition) cnd, ent)
-    );
+  private final Map<Class<? extends FqlCondition<?>>, BiFunction<FqlCondition<?>, EntityType, String>> userFriendlyQuery = Map.ofEntries(
+    Map.entry(EqualsCondition.class, (cnd, ent) -> handleEquals((EqualsCondition) cnd, ent)),
+    Map.entry(NotEqualsCondition.class, (cnd, ent) -> handleNotEquals((NotEqualsCondition) cnd, ent)),
+    Map.entry(InCondition.class, (cnd, ent) -> handleIn((InCondition) cnd, ent)),
+    Map.entry(NotInCondition.class, (cnd, ent) -> handleNotIn((NotInCondition) cnd, ent)),
+    Map.entry(GreaterThanCondition.class, (cnd, ent) -> handleGreaterThan((GreaterThanCondition) cnd)),
+    Map.entry(LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd)),
+    Map.entry(AndCondition.class, (cnd, ent) -> handleAnd((AndCondition) cnd, ent)),
+    Map.entry(RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd)),
+    Map.entry(ContainsCondition.class, (cnd, ent) -> handleContains((ContainsCondition) cnd, ent)),
+    Map.entry(NotContainsCondition.class, (cnd, ent) -> handleNotContains((NotContainsCondition) cnd, ent)),
+    Map.entry(EmptyCondition.class, (cnd, ent) -> handleEmpty((EmptyCondition) cnd))
+  );
 
   public String getUserFriendlyQuery(FqlCondition<?> fqlCondition, EntityType entityType) {
     log.info("Computing user friendly query for fqlCondition: {}, entityType: {}", fqlCondition, entityType.getId());
@@ -98,6 +99,14 @@ public class UserFriendlyQueryService {
   private String handleNotContains(NotContainsCondition notContainsCondition, EntityType entityType) {
     BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
     return handleConditionWithPossibleIdValue(notContainsCondition, entityType, "does not contain", labelFn);
+  }
+
+  private String handleEmpty(EmptyCondition emptyCondition) {
+    if (Boolean.TRUE.equals(emptyCondition.value())) {
+      return emptyCondition.fieldName() + " is empty";
+    } else {
+      return emptyCondition.fieldName() + " is not empty";
+    }
   }
 
   private <T> String handleConditionWithPossibleIdValue(FieldCondition<T> condition,
