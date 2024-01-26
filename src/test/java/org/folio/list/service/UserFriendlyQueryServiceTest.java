@@ -300,6 +300,24 @@ class UserFriendlyQueryServiceTest {
   }
 
   @Test
+  void shouldGetStringForFqlEmptyCondition() {
+    EntityType entityType = new EntityType();
+    EmptyCondition emptyCondition = new EmptyCondition("field1", true);
+    String expectedEmptyCondition = "field1 is empty";
+    String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(emptyCondition, entityType);
+    assertEquals(expectedEmptyCondition, actualRegexCondition);
+  }
+
+  @Test
+  void shouldGetStringForFqlNotEmptyCondition() {
+    EntityType entityType = new EntityType();
+    EmptyCondition notEmptyCondition = new EmptyCondition("field1", false);
+    String expectedNotEmptyCondition = "field1 is not empty";
+    String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(notEmptyCondition, entityType);
+    assertEquals(expectedNotEmptyCondition, actualRegexCondition);
+  }
+
+  @Test
   void shouldGetStringForFqlAndCondition() {
     EntityType entityType = new EntityType();
     RegexCondition regexCondition = new RegexCondition("field1", "^some value");
