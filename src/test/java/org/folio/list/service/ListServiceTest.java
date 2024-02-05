@@ -161,7 +161,6 @@ class ListServiceTest {
     String userFriendlyQuery = "some string";
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
-    ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
     EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
 
@@ -173,9 +172,32 @@ class ListServiceTest {
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
     when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(equalsCondition));
     when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
-    when(listMapper.toListDTO(entity)).thenReturn(expected);
 
     var actual = listService.createList(listRequestDto);
+    ListDTO expected = new ListDTO()
+      .id(actual.getId())
+      .name(listRequestDto.getName())
+      .description(listRequestDto.getDescription())
+      .entityTypeId(listRequestDto.getEntityTypeId())
+      .entityTypeName(null)
+      .userFriendlyQuery(userFriendlyQuery)
+      .fqlQuery(listRequestDto.getFqlQuery())
+      .fields(listRequestDto.getFields())
+      .createdBy(actual.getCreatedBy())
+      .createdByUsername("SYSTEM")
+      .createdDate(actual.getCreatedDate())
+      .isActive(listRequestDto.getIsActive())
+      .isPrivate(listRequestDto.getIsPrivate())
+      .isCanned(true)
+      .isDeleted(null)
+      .updatedBy(null)
+      .updatedByUsername(null)
+      .updatedDate(null)
+      .successRefresh(actual.getSuccessRefresh())
+      .inProgressRefresh(actual.getInProgressRefresh())
+      .failedRefresh(actual.getFailedRefresh())
+      .version(actual.getVersion());
+    
     assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
     assertThat(actual).isEqualTo(expected);
   }

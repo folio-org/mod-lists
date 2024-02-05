@@ -12,6 +12,7 @@ public interface ListEntityMapper {
   @Mapping(target = "name", source = "request.name")
   @Mapping(target = "entityTypeId", source = "request.entityTypeId")
   @Mapping(target = "description", source = "request.description")
+  @Mapping(target = "fields", source = "request.fields")
   @Mapping(target = "fqlQuery", source = "request.fqlQuery")
   @Mapping(target = "isActive", source = "request.isActive")
   @Mapping(target = "isPrivate", source = "request.isPrivate")
