@@ -47,7 +47,10 @@ class DataBatchCallbackTest {
   void shouldProcessBatch() {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
-    List<UUID> contentIds = List.of(id1, id2);
+    List<List<String>> contentIds = List.of(
+      List.of(id1.toString()),
+      List.of(id2.toString())
+    );
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     ArgumentCaptor<List<ListContent>> savedContentsCapture = ArgumentCaptor.forClass(List.class);
     when(listConfiguration.getMaxListSize()).thenReturn(1250000);
@@ -70,7 +73,12 @@ class DataBatchCallbackTest {
 
   @Test
   void shouldThrowExceptionWhenMaxListSizeIsExceeded() {
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    List<List<String>> contentIds = List.of(
+      List.of(id1.toString()),
+      List.of(id2.toString())
+    );
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     when(listConfiguration.getMaxListSize()).thenReturn(1);
     assertThrows(MaxListSizeExceededException.class, () -> dataBatchCallback.accept(entity, contentIds));
@@ -78,7 +86,12 @@ class DataBatchCallbackTest {
 
   @Test
   void shouldThrowExceptionWhenRefreshIsCancelled() {
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    List<List<String>> contentIds = List.of(
+      List.of(id1.toString()),
+      List.of(id2.toString())
+    );
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     ListRefreshDetails refreshDetails = entity.getInProgressRefresh();
     refreshDetails.setStatus(AsyncProcessStatus.CANCELLED);

@@ -1,5 +1,6 @@
 package org.folio.list.service;
 
+import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.fql.model.EqualsCondition;
 import org.folio.fql.model.Fql;
@@ -162,7 +163,7 @@ class ListServiceTest {
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -238,7 +239,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(new EqualsCondition("item_status", "missing")));
+    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql(new EqualsCondition(new FqlField("item_status"), "missing")));
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -265,7 +266,7 @@ class ListServiceTest {
     listRequestDto.setQueryId(queryId);
 
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -323,7 +324,7 @@ class ListServiceTest {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
     ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
     ListVersion previousVersions = new ListVersion();
 
     when(usersClient.getUser(userId)).thenReturn(user);
@@ -373,7 +374,7 @@ class ListServiceTest {
     EntityType entityType = new EntityType()
       .id(entity.getEntityTypeId().toString())
       .columns(List.of(new EntityTypeColumn().name("field1")));
-    EqualsCondition equalsCondition = new EqualsCondition("item_status", "missing");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);

@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +21,5 @@ public class ListContentId implements Serializable {
   private UUID refreshId;
 
   @NotNull
-  private UUID contentId;
+  private List<String> contentId;
 }

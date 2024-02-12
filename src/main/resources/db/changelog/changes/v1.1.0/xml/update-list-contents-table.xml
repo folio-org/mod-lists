@@ -1,0 +1,16 @@
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+  <changeSet id="MODLISTS-82" author="bsharp@ebsco.com">
+    <comment>Update content_id column from UUID to string array</comment>
+    <sql>
+      ALTER TABLE list_contents DROP CONSTRAINT IF EXISTS pk_composite;
+      ALTER TABLE list_contents ADD COLUMN new_content_id text[];
+      UPDATE list_contents SET new_content_id = ARRAY[content_id];
+      ALTER TABLE list_contents DROP COLUMN content_id;
+      ALTER TABLE list_contents RENAME COLUMN new_content_id TO content_id;
+      ALTER TABLE list_contents ADD PRIMARY KEY (list_id, refresh_id, content_id);
+    </sql>
+  </changeSet>
+</databaseChangeLog>

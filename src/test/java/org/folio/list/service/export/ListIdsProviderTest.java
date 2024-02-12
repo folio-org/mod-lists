@@ -26,13 +26,13 @@ class ListIdsProviderTest {
     UUID refreshId = UUID.randomUUID();
     ListIdsProvider listIdsProvider = new ListIdsProvider(repository, list);
     List<ListContent> batch1 = List.of(
-      new ListContent(list.getId(), refreshId, UUID.randomUUID(), 0),
-      new ListContent(list.getId(), refreshId, UUID.randomUUID(), 1),
-      new ListContent(list.getId(), refreshId, UUID.randomUUID(), 2)
+      new ListContent(list.getId(), refreshId, List.of(UUID.randomUUID().toString()), 0),
+      new ListContent(list.getId(), refreshId, List.of(UUID.randomUUID().toString()), 1),
+      new ListContent(list.getId(), refreshId, List.of(UUID.randomUUID().toString()), 2)
     );
     List<ListContent> batch2 = List.of(
-      new ListContent(list.getId(), refreshId, UUID.randomUUID(), 3),
-      new ListContent(list.getId(), refreshId, UUID.randomUUID(), 4)
+      new ListContent(list.getId(), refreshId, List.of(UUID.randomUUID().toString()), 3),
+      new ListContent(list.getId(), refreshId, List.of(UUID.randomUUID().toString()), 4)
     );
 
     when(repository.getContents(list.getId(), list.getSuccessRefresh().getId(), SORT_SEQUENCE_START_NUMBER - 1,
@@ -40,8 +40,8 @@ class ListIdsProviderTest {
     when(repository.getContents(list.getId(), list.getSuccessRefresh().getId(), batch1.get(batch1.size() - 1).getSortSequence(),
       Pageable.ofSize(batchSize))).thenReturn(batch2);
 
-    List<UUID> actualBatch1 = listIdsProvider.nextBatch(batchSize);
-    List<UUID> actualBatch2 = listIdsProvider.nextBatch(batchSize);
+    List<List<String>> actualBatch1 = listIdsProvider.nextBatch(batchSize);
+    List<List<String>> actualBatch2 = listIdsProvider.nextBatch(batchSize);
 
     assertEquals(batch1.stream().map(ListContent::getContentId).toList(), actualBatch1);
     assertEquals(batch2.stream().map(ListContent::getContentId).toList(), actualBatch2);

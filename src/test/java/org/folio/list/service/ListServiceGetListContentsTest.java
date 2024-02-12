@@ -54,7 +54,10 @@ class ListServiceGetListContentsTest {
     String tenantId = "tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    List<List<String>> contentIds = List.of(
+      List.of(UUID.randomUUID().toString()),
+      List.of(UUID.randomUUID().toString())
+    );
     int offset = 0;
     int size = 2;
     int contentVersion = 2;
@@ -96,7 +99,10 @@ class ListServiceGetListContentsTest {
     String tenantId = "tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    List<List<String>> contentIds = List.of(
+      List.of(UUID.randomUUID().toString()),
+      List.of(UUID.randomUUID().toString())
+    );
     int offset = 0;
     int size = 2;
     int contentVersion = 2;
@@ -138,7 +144,10 @@ class ListServiceGetListContentsTest {
     String tenantId = "tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    List<List<String>> contentIds = List.of(
+      List.of(UUID.randomUUID().toString()),
+      List.of(UUID.randomUUID().toString())
+    );
     int offset = 0;
     int size = 2;
     int contentVersion = 2;
@@ -180,7 +189,10 @@ class ListServiceGetListContentsTest {
     String tenantId = "tenant_01";
     UUID entityTypeId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    List<List<String>> contentIds = List.of(
+      List.of(UUID.randomUUID().toString()),
+      List.of(UUID.randomUUID().toString())
+    );
     int offset = 0;
     int size = 2;
     int contentVersion = 2;

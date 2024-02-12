@@ -7,7 +7,6 @@ import org.folio.list.repository.ListContentsRepository;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.folio.list.domain.ListContent.SORT_SEQUENCE_START_NUMBER;
 import static org.springframework.util.CollectionUtils.isEmpty;
@@ -26,7 +25,7 @@ public class ListIdsProvider {
     this.list = list;
   }
 
-  public List<UUID> nextBatch(int batchSize) {
+  public List<List<String>> nextBatch(int batchSize) {
     log.info("Fetching {} contents of list {} after sequence number {}", batchSize, list.getId(), previousSortSequence);
 
     List<ListContent> listContents = repository.getContents(list.getId(), list.getSuccessRefresh().getId(), previousSortSequence,

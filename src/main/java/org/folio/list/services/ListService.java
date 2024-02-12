@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
@@ -46,6 +47,7 @@ import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 import static java.util.Objects.nonNull;
@@ -274,13 +276,16 @@ public class ListService {
     List<String> fields = list.getFields();
     if (CollectionUtils.isEmpty(fields)) {
       Fql fql = fqlService.getFql(list.getFqlQuery());
-      fields = fqlService.getFqlFields(fql);
+      fields = fqlService.getFqlFields(fql)
+        .stream()
+        .map(FqlField::getColumnName)
+        .collect(Collectors.toList());
     }
     if (!fields.contains("id")) {
       fields.add("id");
     }
     if (list.isRefreshed()) {
-      List<UUID> contentIds = listContentsRepository.getContents(list.getId(), list.getSuccessRefresh().getId(), new OffsetRequest(offset, limit))
+      List<List<String>> contentIds = listContentsRepository.getContents(list.getId(), list.getSuccessRefresh().getId(), new OffsetRequest(offset, limit))
         .stream()
         .map(ListContent::getContentId)
         .toList();

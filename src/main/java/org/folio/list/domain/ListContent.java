@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,7 +38,7 @@ public class ListContent implements Persistable<ListContentId> {
   @Column(name = "content_id", updatable = false)
   @NotNull
   @Id
-  private UUID contentId;
+  private List<String> contentId;
 
   @Column(name = "sort_seq")
   private int sortSequence;

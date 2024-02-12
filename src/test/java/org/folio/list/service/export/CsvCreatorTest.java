@@ -56,7 +56,10 @@ class CsvCreatorTest {
     EntityType entityType = createEntityType(List.of(createColumn("col1"), createColumn("col2")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
 
-    List<UUID> contentIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+    List<List<String>> contentIds = List.of(
+      List.of(UUID.randomUUID().toString()),
+      List.of(UUID.randomUUID().toString())
+    );
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entity.getEntityTypeId())
       .fields(entity.getFields())
       .ids(contentIds);
