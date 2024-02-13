@@ -1,6 +1,7 @@
 mod-lists:
   general:
     max-list-size: ${MAX_LIST_SIZE:1250000}
+    refresh-query-timeout-minutes: 90
   list-export:
     data-fetch-properties:
       batch-size: ${LIST_EXPORT_BATCH_SIZE:1000}

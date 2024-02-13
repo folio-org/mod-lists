@@ -197,7 +197,7 @@ class ListServiceTest {
       .inProgressRefresh(actual.getInProgressRefresh())
       .failedRefresh(actual.getFailedRefresh())
       .version(actual.getVersion());
-    
+
     assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
     assertThat(actual).isEqualTo(expected);
   }

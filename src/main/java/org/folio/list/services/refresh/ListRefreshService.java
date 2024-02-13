@@ -13,6 +13,7 @@ import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
 import org.folio.querytool.domain.dto.SubmitQuery;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,7 +30,8 @@ import java.util.function.Supplier;
 public class ListRefreshService {
 
   private static final int GET_QUERY_TIME_DELAY_SECONDS = 10;
-  private static final int GET_QUERY_TIMEOUT_MINUTES = 30;
+  @Value("${mod-lists.general.refresh-query-timeout-minutes:90}")
+  private int getQueryTimeoutMinutes;
   private static final int DEFAULT_BATCH_SIZE = 1000;
 
   private final RefreshSuccessCallback refreshSuccessCallback;
@@ -82,7 +84,7 @@ public class ListRefreshService {
       () -> Awaitility.with()
         .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
         .await()
-        .atMost(GET_QUERY_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+        .atMost(getQueryTimeoutMinutes, TimeUnit.MINUTES)
         .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));
     log.info("Query {} completed for list {}", queryId, list.getId());
     QueryDetails queryDetails = queryClient.getQuery(queryId);
