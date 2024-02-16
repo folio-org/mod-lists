@@ -105,7 +105,7 @@ public class ListRefreshService {
       list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
     DataBatchCallback dataBatchCallback = dataBatchCallbackSupplier.get();
     int offset = 0;
-    List<UUID> ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
+    List<List<String>> ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
     while (!CollectionUtils.isEmpty(ids)) {
       offset += ids.size();
       dataBatchCallback.accept(list, ids);

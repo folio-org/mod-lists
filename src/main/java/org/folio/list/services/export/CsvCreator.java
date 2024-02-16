@@ -53,7 +53,7 @@ public class CsvCreator {
       var csvWriter = new ListCsvWriter(entityType, localStorageOutputStream);
       int batchSize = exportProperties.getBatchSize();
       int batchNumber = 0;
-      for (List<UUID> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
+      for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
         if (batchNumber % 10 == 0) {
           checkIfExportCancelled(list.getId(), exportDetails.getExportId());
         }

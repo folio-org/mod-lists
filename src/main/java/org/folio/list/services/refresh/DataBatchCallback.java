@@ -18,20 +18,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import static org.folio.list.domain.ListContent.SORT_SEQUENCE_START_NUMBER;
 
 @RequiredArgsConstructor
 @Log4j2
-public class DataBatchCallback implements BiConsumer<ListEntity, List<UUID>> {
+public class DataBatchCallback implements BiConsumer<ListEntity, List<List<String>>> {
   private final ListRefreshRepository listRefreshRepository;
   private final ListContentsRepository listContentsRepository;
   private final ListConfiguration listConfiguration;
   private int batchNumber = 0;
   private int sortSequence = SORT_SEQUENCE_START_NUMBER;
 
-  public void accept(ListEntity entity, List<UUID> contentIds) {
+  public void accept(ListEntity entity, List<List<String>> contentIds) {
     UUID refreshId = entity.getInProgressRefreshId().orElseThrow(() -> new ListNotRefreshingException(entity, ListActions.REFRESH));
     log.info("Received data batch for list {}, refreshId {}: {}", entity.getId(), refreshId, contentIds);
     if (batchNumber % 10 == 0) {

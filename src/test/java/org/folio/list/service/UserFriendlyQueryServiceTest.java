@@ -1,6 +1,7 @@
 package org.folio.list.service;
 
 import org.folio.fql.model.*;
+import org.folio.fql.model.field.FqlField;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.querytool.domain.dto.ContentsRequest;
@@ -31,7 +32,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlEqualsConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    EqualsCondition equalsCondition = new EqualsCondition("field1", "some value");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
     String expectedEqualsCondition = "field1 == some value";
     String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
     assertEquals(expectedEqualsCondition, actualEqualsConditions);
@@ -51,8 +52,10 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    EqualsCondition equalsCondition = new EqualsCondition("field1", value.toString());
-    List<UUID> ids = List.of(UUID.fromString(equalsCondition.value().toString()));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), value.toString());
+    List<List<String>> ids = List.of(
+      List.of(equalsCondition.value().toString())
+    );
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
@@ -67,7 +70,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlNotEqualsConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    NotEqualsCondition notEqualsCondition = new NotEqualsCondition("field1", "some value");
+    NotEqualsCondition notEqualsCondition = new NotEqualsCondition(new FqlField("field1"), "some value");
     String expectedNotEqualsCondition = "field1 != some value";
     String actualNotEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(notEqualsCondition, entityType);
     assertEquals(expectedNotEqualsCondition, actualNotEqualsConditions);
@@ -86,8 +89,10 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    NotEqualsCondition notEqualsCondition = new NotEqualsCondition("field1", value.toString());
-    List<UUID> ids = List.of(UUID.fromString(notEqualsCondition.value().toString()));
+    NotEqualsCondition notEqualsCondition = new NotEqualsCondition(new FqlField("field1"), value.toString());
+    List<List<String>> ids = List.of(
+      List.of(notEqualsCondition.value().toString())
+    );
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
@@ -102,7 +107,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlInConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    InCondition inCondition = new InCondition("field1", List.of("value1", "value2"));
+    InCondition inCondition = new InCondition(new FqlField("field1"), List.of("value1", "value2"));
     String expectedInCondition = "field1 in [value1, value2]";
     String actualInCondition = userFriendlyQueryService.getUserFriendlyQuery(inCondition, entityType);
     assertEquals(expectedInCondition, actualInCondition);
@@ -118,16 +123,20 @@ class UserFriendlyQueryServiceTest {
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value1 = UUID.randomUUID();
     UUID value2 = UUID.randomUUID();
-    List<UUID> ids = List.of(value1, value2);
+    List<List<String>> ids = List.of(
+      List.of(value1.toString()),
+      List.of(value2.toString())
+    );
     List<String> fields = List.of("id", "field1");
-    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(fields)
-      .ids(ids);
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    InCondition inCondition = new InCondition("field1", List.of(value1, value2));
+    InCondition inCondition = new InCondition(new FqlField("field1"), List.of(value1.toString(), value2.toString()));
+    var inConditionValue = inCondition.value();
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
 
     when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
@@ -139,7 +148,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlNotInConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    NotInCondition notInCondition = new NotInCondition("field1", List.of("value1", "value2"));
+    NotInCondition notInCondition = new NotInCondition(new FqlField("field1"), List.of("value1", "value2"));
     String expectedNotInCondition = "field1 not in [value1, value2]";
     String actualNotInCondition = userFriendlyQueryService.getUserFriendlyQuery(notInCondition, entityType);
     assertEquals(expectedNotInCondition, actualNotInCondition);
@@ -155,7 +164,10 @@ class UserFriendlyQueryServiceTest {
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value1 = UUID.randomUUID();
     UUID value2 = UUID.randomUUID();
-    List<UUID> ids = List.of(value1, value2);
+    List<List<String>> ids = List.of(
+      List.of(value1.toString()),
+      List.of(value2.toString())
+    );
     List<String> fields = List.of("id", "field1");
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
@@ -164,7 +176,7 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    NotInCondition notInCondition = new NotInCondition("field1", List.of(value1, value2));
+    NotInCondition notInCondition = new NotInCondition(new FqlField("field1"), List.of(value1, value2));
 
     when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
@@ -176,7 +188,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlContainsConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    ContainsCondition containsCondition = new ContainsCondition("field1", "value1");
+    ContainsCondition containsCondition = new ContainsCondition(new FqlField("field1"), "value1");
     String expectedContainsCondition = "field1 contains value1";
     String actualContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(containsCondition, entityType);
     assertEquals(expectedContainsCondition, actualContainsCondition);
@@ -196,8 +208,10 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    ContainsCondition containsCondition = new ContainsCondition("field1", value.toString());
-    List<UUID> ids = List.of(UUID.fromString(containsCondition.value().toString()));
+    ContainsCondition containsCondition = new ContainsCondition(new FqlField("field1"), value.toString());
+    List<List<String>> ids = List.of(
+      List.of(containsCondition.value().toString())
+    );
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
@@ -212,7 +226,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlNotContainsConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    NotContainsCondition notContainsCondition = new NotContainsCondition("field1", "value1");
+    NotContainsCondition notContainsCondition = new NotContainsCondition(new FqlField("field1"), "value1");
     String expectedNotContainsCondition = "field1 does not contain value1";
     String actualNotContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(notContainsCondition, entityType);
     assertEquals(expectedNotContainsCondition, actualNotContainsCondition);
@@ -232,8 +246,10 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    NotContainsCondition notContainsCondition = new NotContainsCondition("field1", value.toString());
-    List<UUID> ids = List.of(UUID.fromString(notContainsCondition.value().toString()));
+    NotContainsCondition notContainsCondition = new NotContainsCondition(new FqlField("field1"), value.toString());
+    List<List<String>> ids = List.of(
+      List.of(notContainsCondition.value().toString())
+    );
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
@@ -248,7 +264,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlGreaterThanCondition() {
     EntityType entityType = new EntityType();
-    GreaterThanCondition greaterThanCondition = new GreaterThanCondition("field1", false, "some value");
+    GreaterThanCondition greaterThanCondition = new GreaterThanCondition(new FqlField("field1"), false, "some value");
     String expectedGreaterThanCondition = "field1 > some value";
     String actualGreaterThanCondition = userFriendlyQueryService.getUserFriendlyQuery(greaterThanCondition, entityType);
     assertEquals(expectedGreaterThanCondition, actualGreaterThanCondition);
@@ -257,7 +273,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlGreaterThanEqualToCondition() {
     EntityType entityType = new EntityType();
-    GreaterThanCondition greaterThanEqualCondition = new GreaterThanCondition("field1", true, "some value");
+    GreaterThanCondition greaterThanEqualCondition = new GreaterThanCondition(new FqlField("field1"), true, "some value");
     String expectedGreaterThanEqualCondition = "field1 >= some value";
     String actualGreaterThanEqualCondition = userFriendlyQueryService.getUserFriendlyQuery(greaterThanEqualCondition, entityType);
     assertEquals(expectedGreaterThanEqualCondition, actualGreaterThanEqualCondition);
@@ -266,7 +282,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlLessThanCondition() {
     EntityType entityType = new EntityType();
-    LessThanCondition lessThanCondition = new LessThanCondition("field1", false, "some value");
+    LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "some value");
     String expectedLessThanCondition = "field1 < some value";
     String actualLessThanCondition = userFriendlyQueryService.getUserFriendlyQuery(lessThanCondition, entityType);
     assertEquals(expectedLessThanCondition, actualLessThanCondition);
@@ -275,7 +291,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlLessThanEqualToCondition() {
     EntityType entityType = new EntityType();
-    LessThanCondition lessThanEqualCondition = new LessThanCondition("field1", true, "some value");
+    LessThanCondition lessThanEqualCondition = new LessThanCondition(new FqlField("field1"), true, "some value");
     String expectedLessThanEqualCondition = "field1 <= some value";
     String actualLessThanEqualCondition = userFriendlyQueryService.getUserFriendlyQuery(lessThanEqualCondition, entityType);
     assertEquals(expectedLessThanEqualCondition, actualLessThanEqualCondition);
@@ -284,7 +300,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlRegexStartsWithCondition() {
     EntityType entityType = new EntityType();
-    RegexCondition regexCondition = new RegexCondition("field1", "^some value");
+    RegexCondition regexCondition = new RegexCondition(new FqlField("field1"), "^some value");
     String expectedRegexCondition = "field1 starts with some value";
     String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(regexCondition, entityType);
     assertEquals(expectedRegexCondition, actualRegexCondition);
@@ -293,7 +309,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlRegexContainsCondition() {
     EntityType entityType = new EntityType();
-    RegexCondition regexCondition = new RegexCondition("field1", "some value");
+    RegexCondition regexCondition = new RegexCondition(new FqlField("field1"), "some value");
     String expectedRegexCondition = "field1 contains some value";
     String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(regexCondition, entityType);
     assertEquals(expectedRegexCondition, actualRegexCondition);
@@ -302,7 +318,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlEmptyCondition() {
     EntityType entityType = new EntityType();
-    EmptyCondition emptyCondition = new EmptyCondition("field1", true);
+    EmptyCondition emptyCondition = new EmptyCondition(new FqlField("field1"), true);
     String expectedEmptyCondition = "field1 is empty";
     String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(emptyCondition, entityType);
     assertEquals(expectedEmptyCondition, actualRegexCondition);
@@ -311,7 +327,7 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlNotEmptyCondition() {
     EntityType entityType = new EntityType();
-    EmptyCondition notEmptyCondition = new EmptyCondition("field1", false);
+    EmptyCondition notEmptyCondition = new EmptyCondition(new FqlField("field1"), false);
     String expectedNotEmptyCondition = "field1 is not empty";
     String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(notEmptyCondition, entityType);
     assertEquals(expectedNotEmptyCondition, actualRegexCondition);
@@ -320,8 +336,8 @@ class UserFriendlyQueryServiceTest {
   @Test
   void shouldGetStringForFqlAndCondition() {
     EntityType entityType = new EntityType();
-    RegexCondition regexCondition = new RegexCondition("field1", "^some value");
-    LessThanCondition lessThanCondition = new LessThanCondition("field1", false, "some value");
+    RegexCondition regexCondition = new RegexCondition(new FqlField("field1"), "^some value");
+    LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "some value");
     AndCondition andCondition = new AndCondition(List.of(regexCondition, lessThanCondition));
     String expectedAndCondition = "(field1 starts with some value) AND (field1 < some value)";
     String actualAndCondition = userFriendlyQueryService.getUserFriendlyQuery(andCondition, entityType);

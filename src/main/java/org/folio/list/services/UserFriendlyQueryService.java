@@ -42,12 +42,12 @@ public class UserFriendlyQueryService {
 
   private String handleGreaterThan(GreaterThanCondition greaterThanCondition) {
     String operator = greaterThanCondition.orEqualTo() ? " >= " : " > ";
-    return greaterThanCondition.fieldName() + operator + greaterThanCondition.value();
+    return greaterThanCondition.field().getColumnName() + operator + greaterThanCondition.value();
   }
 
   private String handleLessThan(LessThanCondition lessThanCondition) {
     String operator = lessThanCondition.orEqualTo() ? " <= " : " < ";
-    return lessThanCondition.fieldName() + operator + lessThanCondition.value();
+    return lessThanCondition.field().getColumnName()  + operator + lessThanCondition.value();
   }
 
   private String handleAnd(AndCondition andCondition, EntityType entityType) {
@@ -60,9 +60,9 @@ public class UserFriendlyQueryService {
 
   private String handleRegEx(RegexCondition regExCondition) {
     if (regExCondition.value().startsWith("^")) {
-      return regExCondition.fieldName() + " starts with " + regExCondition.value().substring(1);
+      return regExCondition.field().getColumnName()  + " starts with " + regExCondition.value().substring(1);
     }
-    return regExCondition.fieldName() + " contains " + regExCondition.value();
+    return regExCondition.field().getColumnName()  + " contains " + regExCondition.value();
   }
 
   private String handleEquals(EqualsCondition equalsCondition, EntityType entityType) {
@@ -77,7 +77,7 @@ public class UserFriendlyQueryService {
 
   private String handleIn(InCondition inCondition, EntityType entityType) {
     BiFunction<EntityTypeColumn, List<Object>, String> labelFn = (col, val) -> {
-      List<UUID> ids = val.stream().map(uuidStr -> UUID.fromString(uuidStr.toString())).toList();
+      List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
     return handleConditionWithPossibleIdValue(inCondition, entityType, "in", labelFn);
@@ -85,7 +85,7 @@ public class UserFriendlyQueryService {
 
   private String handleNotIn(NotInCondition notInCondition, EntityType entityType) {
     BiFunction<EntityTypeColumn, List<Object>, String> labelFn = (col, val) -> {
-      List<UUID> ids = val.stream().map(uuidStr -> UUID.fromString(uuidStr.toString())).toList();
+      List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
     return handleConditionWithPossibleIdValue(notInCondition, entityType, "not in", labelFn);
@@ -103,9 +103,9 @@ public class UserFriendlyQueryService {
 
   private String handleEmpty(EmptyCondition emptyCondition) {
     if (Boolean.TRUE.equals(emptyCondition.value())) {
-      return emptyCondition.fieldName() + " is empty";
+      return emptyCondition.field().getColumnName()  + " is empty";
     } else {
-      return emptyCondition.fieldName() + " is not empty";
+      return emptyCondition.field().getColumnName()  + " is not empty";
     }
   }
 
@@ -117,21 +117,21 @@ public class UserFriendlyQueryService {
     try {
       return entityType.getColumns()
         .stream()
-        .filter(column -> column.getSource() != null && condition.fieldName().equals(column.getIdColumnName()))
+        .filter(column -> column.getSource() != null && condition.field().getColumnName().equals(column.getIdColumnName()))
         .findFirst()
         .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
-        .orElse(condition.fieldName() + operatorWithPadding + condition.value());
+        .orElse(condition.field().getColumnName() + operatorWithPadding + condition.value());
     } catch (Exception e) {
       log.error("Unexpected error when creating user friendly query for condition " + condition + ". Exception: " + e);
-      return condition.fieldName() + operatorWithPadding + condition.value();
+      return condition.field().getColumnName() + operatorWithPadding + condition.value();
     }
   }
 
   private String getLabel(UUID id, EntityTypeColumn column) {
-    return getLabel(List.of(id), column, false);
+    return getLabel(List.of(List.of(id.toString())), column, false);
   }
 
-  private String getLabel(List<UUID> ids, EntityTypeColumn column, Boolean addBrackets) {
+  private String getLabel(List<List<String>> ids, EntityTypeColumn column, Boolean addBrackets) {
     log.info("Getting label for ids: {}", ids);
     UUID sourceEntityTypeId = UUID.fromString(column.getSource().getEntityTypeId());
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
