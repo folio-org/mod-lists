@@ -384,4 +384,13 @@ class UserFriendlyQueryServiceTest {
     String actualAndCondition = userFriendlyQueryService.getUserFriendlyQuery(andCondition, entityType);
     assertEquals(expectedAndCondition, actualAndCondition);
   }
+
+  @Test
+  void shouldProperlySerializeNestedProperties() {
+    EntityType entityType = new EntityType();
+    EmptyCondition condition = new EmptyCondition(new FqlField("field1[*]->foo->bar->baz"), false);
+    String expectedCondition = "field1[*]->foo->bar->baz is not empty";
+    String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(condition, entityType);
+    assertEquals(expectedCondition, actualRegexCondition);
+  }
 }
