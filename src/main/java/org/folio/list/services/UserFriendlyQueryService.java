@@ -3,10 +3,11 @@ package org.folio.list.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.fql.model.*;
+import org.folio.fql.service.FqlValidationService;
 import org.folio.list.rest.QueryClient;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
-import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.Field;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -66,17 +67,17 @@ public class UserFriendlyQueryService {
   }
 
   private String handleEquals(EqualsCondition equalsCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
     return handleConditionWithPossibleIdValue(equalsCondition, entityType, "==", labelFn);
   }
 
   private String handleNotEquals(NotEqualsCondition notEqualsCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
     return handleConditionWithPossibleIdValue(notEqualsCondition, entityType, "!=", labelFn);
   }
 
   private String handleIn(InCondition inCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, List<Object>, String> labelFn = (col, val) -> {
+    BiFunction<Field, List<Object>, String> labelFn = (col, val) -> {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
@@ -84,7 +85,7 @@ public class UserFriendlyQueryService {
   }
 
   private String handleNotIn(NotInCondition notInCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, List<Object>, String> labelFn = (col, val) -> {
+    BiFunction<Field, List<Object>, String> labelFn = (col, val) -> {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
@@ -92,12 +93,12 @@ public class UserFriendlyQueryService {
   }
 
   private String handleContains(ContainsCondition containsCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
     return handleConditionWithPossibleIdValue(containsCondition, entityType, "contains", labelFn);
   }
 
   private String handleNotContains(NotContainsCondition notContainsCondition, EntityType entityType) {
-    BiFunction<EntityTypeColumn, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
+    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
     return handleConditionWithPossibleIdValue(notContainsCondition, entityType, "does not contain", labelFn);
   }
 
@@ -112,36 +113,52 @@ public class UserFriendlyQueryService {
   private <T> String handleConditionWithPossibleIdValue(FieldCondition<T> condition,
                                                         EntityType entityType,
                                                         String userFriendlyOperator,
-                                                        BiFunction<EntityTypeColumn, T, String> labelFn) {
+                                                        BiFunction<Field, T, String> labelFn) {
     String operatorWithPadding = " " + userFriendlyOperator + " ";
     try {
-      return entityType.getColumns()
-        .stream()
-        .filter(column -> column.getSource() != null && condition.field().getColumnName().equals(column.getIdColumnName()))
-        .findFirst()
-        .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
-        .orElse(condition.field().getColumnName() + operatorWithPadding + condition.value());
+      // the field referenced directly in the query. May or may not have a source or ID column
+      // e.g. user patron group, vendor code, vendor ID, etc
+      Field querySubjectField = FqlValidationService.findFieldDefinition(condition.field(), entityType).orElseThrow();
+      if (querySubjectField.getIdColumnName() != null) {
+        return condition.field().serialize() + operatorWithPadding + labelFn.apply(querySubjectField, condition.value());
+      } else {
+        // a column which uses our query subject as ID
+        // this will be found when querySubjectField is something like vendor_id, etc.; we would find something like vendor_code
+        Optional<Field> referencingField = entityType.getColumns()
+          .stream()
+          // finds the column referencing this
+          .filter(column -> column.getSource() != null && condition.field().getColumnName().equals(column.getIdColumnName()))
+          .findFirst()
+          .map(Field.class::cast);
+
+        return referencingField
+          // if we found this referencing column, use it as the basis for getting the label
+          .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
+          // sensible fallback
+          .orElse(condition.field().getColumnName() + operatorWithPadding + condition.value());
+      }
     } catch (Exception e) {
       log.error("Unexpected error when creating user friendly query for condition " + condition + ". Exception: " + e);
       return condition.field().getColumnName() + operatorWithPadding + condition.value();
     }
   }
 
-  private String getLabel(UUID id, EntityTypeColumn column) {
+  private String getLabel(UUID id, Field column) {
     return getLabel(List.of(List.of(id.toString())), column, false);
   }
 
-  private String getLabel(List<List<String>> ids, EntityTypeColumn column, Boolean addBrackets) {
-    log.info("Getting label for ids: {}", ids);
-    UUID sourceEntityTypeId = UUID.fromString(column.getSource().getEntityTypeId());
+  private String getLabel(List<List<String>> ids, Field field, Boolean addBrackets) {
+    log.info("Getting label for ids: {} on field {}", ids, field.getName());
+    UUID sourceEntityTypeId = UUID.fromString(field.getSource().getEntityTypeId());
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(List.of("id", column.getSource().getColumnName()))
+      .fields(List.of("id", field.getSource().getColumnName()))
       .ids(ids);
+    log.info("CR: {}", contentsRequest);
     return queryClient.getContents(contentsRequest)
       .stream()
-      .map(map -> map.get(column.getSource().getColumnName()).toString())
+      .map(map -> map.get(field.getSource().getColumnName()).toString())
       .collect(collector);
   }
 }

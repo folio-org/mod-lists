@@ -38,31 +38,72 @@ class UserFriendlyQueryServiceTest {
     assertEquals(expectedEqualsCondition, actualEqualsConditions);
   }
 
+  /**
+   * Indirectly querying an underlying ID column should continue to use the "nice" column, with proper value resolution
+   * (query of underlying == ID should map to friendly == some value)
+   */
   @Test
-  void shouldGetStringForFqlEqualsConditionWithIdColumn() {
-    List<Map<String, Object>> entityContents = List.of(
-      Map.of("field1", "some value")
-    );
-    UUID sourceEntityTypeId = UUID.randomUUID();
-    UUID value = UUID.randomUUID();
-    UUID entityTypeId = UUID.randomUUID();
-    List<String> fields = List.of("id", "field1");
+  void shouldGetStringForFqlEqualsConditionWithIdColumnIndirectlyReferenced() {
+    UUID entityTypeId = new UUID(0, 0);
+    UUID sourceEntityTypeId = new UUID(0, 1);
+    UUID searchValue = new UUID(0, 2);
 
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
-    EntityTypeColumn column = new EntityTypeColumn().name("field1");
-    EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
-    EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), value.toString());
-    List<List<String>> ids = List.of(
-      List.of(equalsCondition.value().toString())
-    );
+    EntityType entityType = new EntityType()
+      .id(entityTypeId.toString())
+      .columns(List.of(
+        new EntityTypeColumn().name("underlying"),
+        new EntityTypeColumn().name("friendly")
+          .idColumnName("underlying")
+          .source(new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("sourceField"))
+      ));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("friendly"), searchValue.toString());
+
+    List<String> fields = List.of("id", "sourceField");
+    List<List<String>> ids = List.of(List.of(searchValue.toString()));
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
+    List<Map<String, Object>> sourceEntityContents = List.of(
+      Map.of("sourceField", "some value")
+    );
+    when(queryClient.getContents(contentsRequest)).thenReturn(sourceEntityContents);
 
-    when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
+    String expectedEqualsCondition = "friendly == some value";
+    String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
+    assertEquals(expectedEqualsCondition, actualEqualsConditions);
+  }
 
-    String expectedEqualsCondition = "field2 == some value";
+  /**
+   * Directly querying an underlying ID column should get back to the original, "nice" column
+   * (query of underlying == ID should map to friendly == some value)
+   */
+  @Test
+  void shouldGetStringForFqlEqualsConditionWithIdColumnDirectlyReferenced() {
+    UUID entityTypeId = new UUID(0, 0);
+    UUID sourceEntityTypeId = new UUID(0, 1);
+    UUID searchValue = new UUID(0, 2);
+
+    EntityType entityType = new EntityType()
+      .id(entityTypeId.toString())
+      .columns(List.of(
+        new EntityTypeColumn().name("underlying"),
+        new EntityTypeColumn().name("friendly")
+          .idColumnName("underlying")
+          .source(new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("sourceField"))
+      ));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("underlying"), searchValue.toString());
+
+    List<String> fields = List.of("id", "sourceField");
+    List<List<String>> ids = List.of(List.of(searchValue.toString()));
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
+    List<Map<String, Object>> sourceEntityContents = List.of(
+      Map.of("sourceField", "some value")
+    );
+    when(queryClient.getContents(contentsRequest)).thenReturn(sourceEntityContents);
+
+    String expectedEqualsCondition = "friendly == some value";
     String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
     assertEquals(expectedEqualsCondition, actualEqualsConditions);
   }
