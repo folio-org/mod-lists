@@ -174,7 +174,6 @@ class UserFriendlyQueryServiceTest {
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
     InCondition inCondition = new InCondition(new FqlField("field1"), List.of(value1.toString(), value2.toString()));
-    var inConditionValue = inCondition.value();
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
@@ -227,79 +226,83 @@ class UserFriendlyQueryServiceTest {
   }
 
   @Test
-  void shouldGetStringForFqlContainsConditionWithoutIdColumn() {
+  void shouldGetStringForFqlContainsAllConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    ContainsCondition containsCondition = new ContainsCondition(new FqlField("field1"), "value1");
-    String expectedContainsCondition = "field1 contains value1";
+    ContainsAllCondition containsCondition = new ContainsAllCondition(new FqlField("field1"), List.of("value1"));
+    String expectedContainsCondition = "field1 contains all [value1]";
     String actualContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(containsCondition, entityType);
     assertEquals(expectedContainsCondition, actualContainsCondition);
   }
 
   @Test
-  void shouldGetStringForFqlContainsConditionWithIdColumn() {
+  void shouldGetStringForFqlContainsAllConditionWithIdColumn() {
     List<Map<String, Object>> entityContents = List.of(
-      Map.of("field1", "value1")
+      Map.of("field1", "value1"),
+      Map.of("field1", "value2")
     );
-    UUID sourceEntityTypeId = UUID.randomUUID();
-    UUID value = UUID.randomUUID();
     UUID entityTypeId = UUID.randomUUID();
+    UUID sourceEntityTypeId = UUID.randomUUID();
+    UUID value1 = UUID.randomUUID();
+    UUID value2 = UUID.randomUUID();
+    List<List<String>> ids = List.of(
+      List.of(value1.toString()),
+      List.of(value2.toString())
+    );
     List<String> fields = List.of("id", "field1");
-
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    ContainsCondition containsCondition = new ContainsCondition(new FqlField("field1"), value.toString());
-    List<List<String>> ids = List.of(
-      List.of(containsCondition.value().toString())
-    );
-    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(fields)
-      .ids(ids);
+    ContainsAllCondition containsAllCondition = new ContainsAllCondition(new FqlField("field1"), List.of(value1, value2));
 
     when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
-    String expectedContainsCondition = "field2 contains value1";
-    String actualContainsConditions = userFriendlyQueryService.getUserFriendlyQuery(containsCondition, entityType);
-    assertEquals(expectedContainsCondition, actualContainsConditions);
+    String expectedNotInCondition = "field2 contains all [value1, value2]";
+    String actualNotInCondition = userFriendlyQueryService.getUserFriendlyQuery(containsAllCondition, entityType);
+    assertEquals(expectedNotInCondition, actualNotInCondition);
   }
 
   @Test
-  void shouldGetStringForFqlNotContainsConditionWithoutIdColumn() {
+  void shouldGetStringForFqlNotContainsAllConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
-    NotContainsCondition notContainsCondition = new NotContainsCondition(new FqlField("field1"), "value1");
-    String expectedNotContainsCondition = "field1 does not contain value1";
+    NotContainsAllCondition notContainsCondition = new NotContainsAllCondition(new FqlField("field1"), List.of("value1"));
+    String expectedNotContainsCondition = "field1 does not contain all [value1]";
     String actualNotContainsCondition = userFriendlyQueryService.getUserFriendlyQuery(notContainsCondition, entityType);
     assertEquals(expectedNotContainsCondition, actualNotContainsCondition);
   }
 
   @Test
-  void shouldGetStringForFqlNotContainsConditionWithIdColumn() {
+  void shouldGetStringForFqlNotContainsAllConditionWithIdColumn() {
     List<Map<String, Object>> entityContents = List.of(
-      Map.of("field1", "value1")
+      Map.of("field1", "value1"),
+      Map.of("field1", "value2")
     );
-    UUID sourceEntityTypeId = UUID.randomUUID();
-    UUID value = UUID.randomUUID();
     UUID entityTypeId = UUID.randomUUID();
+    UUID sourceEntityTypeId = UUID.randomUUID();
+    UUID value1 = UUID.randomUUID();
+    UUID value2 = UUID.randomUUID();
+    List<List<String>> ids = List.of(
+      List.of(value1.toString()),
+      List.of(value2.toString())
+    );
     List<String> fields = List.of("id", "field1");
-
+    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
+      .fields(fields)
+      .ids(ids);
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
-    NotContainsCondition notContainsCondition = new NotContainsCondition(new FqlField("field1"), value.toString());
-    List<List<String>> ids = List.of(
-      List.of(notContainsCondition.value().toString())
-    );
-    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(fields)
-      .ids(ids);
+    NotContainsAllCondition notContainsAllCondition = new NotContainsAllCondition(new FqlField("field1"), List.of(value1, value2));
 
     when(queryClient.getContents(contentsRequest)).thenReturn(entityContents);
 
-    String expectedNotContainsCondition = "field2 does not contain value1";
-    String actualNotContainsConditions = userFriendlyQueryService.getUserFriendlyQuery(notContainsCondition, entityType);
-    assertEquals(expectedNotContainsCondition, actualNotContainsConditions);
+    String expectedNotInCondition = "field2 does not contain all [value1, value2]";
+    String actualNotInCondition = userFriendlyQueryService.getUserFriendlyQuery(notContainsAllCondition, entityType);
+    assertEquals(expectedNotInCondition, actualNotInCondition);
   }
 
   @Test
