@@ -31,8 +31,8 @@ public class UserFriendlyQueryService {
     Map.entry(LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd)),
     Map.entry(AndCondition.class, (cnd, ent) -> handleAnd((AndCondition) cnd, ent)),
     Map.entry(RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd)),
-    Map.entry(ContainsCondition.class, (cnd, ent) -> handleContains((ContainsCondition) cnd, ent)),
-    Map.entry(NotContainsCondition.class, (cnd, ent) -> handleNotContains((NotContainsCondition) cnd, ent)),
+    Map.entry(ContainsAllCondition.class, (cnd, ent) -> handleContainsAll((ContainsAllCondition) cnd, ent)),
+    Map.entry(NotContainsAllCondition.class, (cnd, ent) -> handleNotContainsAll((NotContainsAllCondition) cnd, ent)),
     Map.entry(EmptyCondition.class, (cnd, ent) -> handleEmpty((EmptyCondition) cnd))
   );
 
@@ -92,14 +92,20 @@ public class UserFriendlyQueryService {
     return handleConditionWithPossibleIdValue(notInCondition, entityType, "not in", labelFn);
   }
 
-  private String handleContains(ContainsCondition containsCondition, EntityType entityType) {
-    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
-    return handleConditionWithPossibleIdValue(containsCondition, entityType, "contains", labelFn);
+  private String handleContainsAll(ContainsAllCondition containsAllCondition, EntityType entityType) {
+    BiFunction<Field, List<Object>, String> labelFn = (col, val) -> {
+      List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
+      return getLabel(ids, col, true);
+    };
+    return handleConditionWithPossibleIdValue(containsAllCondition, entityType, "contains all", labelFn);
   }
 
-  private String handleNotContains(NotContainsCondition notContainsCondition, EntityType entityType) {
-    BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
-    return handleConditionWithPossibleIdValue(notContainsCondition, entityType, "does not contain", labelFn);
+  private String handleNotContainsAll(NotContainsAllCondition notContainsAllCondition, EntityType entityType) {
+    BiFunction<Field, List<Object>, String> labelFn = (col, val) -> {
+      List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
+      return getLabel(ids, col, true);
+    };
+    return handleConditionWithPossibleIdValue(notContainsAllCondition, entityType, "does not contain all", labelFn);
   }
 
   private String handleEmpty(EmptyCondition emptyCondition) {
