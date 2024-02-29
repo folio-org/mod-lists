@@ -4,10 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -22,10 +19,17 @@ import static java.nio.file.Files.size;
 public class ExportLocalStorage implements AutoCloseable {
   private static final String CSV_EXTENSION = ".csv";
 
-  private final Path localFile;
+  private Path localFile;
+  private final UUID exportId;
+
 
   @SneakyThrows
   public ExportLocalStorage(UUID exportId) {
+    this.exportId = exportId;
+    createTemporaryFile(exportId);
+  }
+
+  private void createTemporaryFile(UUID exportId) throws IOException {
     FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
     localFile = createTempFile(ExportUtils.getFileName(exportId), CSV_EXTENSION, attr);
     log.info("Created local file for export {}. Path: {}", exportId, localFile.getFileName());
@@ -48,11 +52,21 @@ public class ExportLocalStorage implements AutoCloseable {
 
   @Override
   public void close() {
+    deleteFile();
+  }
+
+  private void deleteFile() {
     boolean deleted = FileUtils.deleteQuietly(localFile.toFile());
     if (deleted) {
       log.info("Local file deleted {}", localFile.getFileName());
     } else {
       log.error("Failed to delete file {}", localFile.getFileName());
     }
+  }
+
+  @SneakyThrows
+  public void rotateFile() {
+    deleteFile();
+    createTemporaryFile(exportId);
   }
 }

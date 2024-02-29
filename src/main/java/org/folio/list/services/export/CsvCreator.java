@@ -19,6 +19,7 @@ import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.s3.client.FolioS3Client;
 import org.springframework.stereotype.Service;
 
 import java.io.OutputStream;
@@ -26,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 
 /**
  * Creates CSV file for the given export details.
@@ -41,32 +42,58 @@ public class CsvCreator {
   private final ListExportProperties exportProperties;
   private final QueryClient queryClient;
   private final EntityTypeClient entityTypeClient;
+  private final FolioS3Client folioS3Client;
 
   @SneakyThrows
-  public ExportLocalStorage createCSV(ExportDetails exportDetails) {
+  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
     EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId());
 
-    try (var localStorageOutputStream = localStorage.outputStream()) {
-      var csvWriter = new ListCsvWriter(entityType, localStorageOutputStream);
-      int batchSize = exportProperties.getBatchSize();
-      int batchNumber = 0;
-      for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
-        if (batchNumber % 10 == 0) {
-          checkIfExportCancelled(list.getId(), exportDetails.getExportId());
+    OutputStream localStorageOutputStream = localStorage.outputStream();
+    var csvWriter = new ListCsvWriter(entityType);
+    int batchSize = exportProperties.getBatchSize();
+    int batchNumber = 0;
+    int partNumber = 1;
+
+    boolean needUploadPart = false;
+    for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
+      if (batchNumber % 10 == 0) {
+        checkIfExportCancelled(list.getId(), exportDetails.getExportId());
+
+        if (needUploadPart) {
+          uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+
+          localStorage.rotateFile();
+          localStorageOutputStream = localStorage.outputStream();
+          partNumber++;
         }
-        log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
-        ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
-          .fields(list.getFields())
-          .ids(ids);
-        var sortedContents = queryClient.getContents(contentsRequest);
-        csvWriter.writeCsv(sortedContents);
-        batchNumber++;
       }
+      log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
+      ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
+        .fields(list.getFields())
+        .ids(ids);
+      var sortedContents = queryClient.getContents(contentsRequest);
+      csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+      batchNumber++;
+      needUploadPart = true;
+    }
+
+    //
+    if (needUploadPart) {
+      uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
     }
     return localStorage;
+
+
+  }
+
+  private void uploadCSVPart(String destinationFileName, String uploadId, int partNumber, String localStorage,
+                             List<String> partETags, ExportDetails exportDetails) {
+    String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
+    partETags.add(partETag);
+    log.info("Generated CSV file for exportID {}. Uploading to S3", exportDetails.getExportId());
   }
 
   private void checkIfExportCancelled(UUID listId, UUID exportId) {
@@ -80,7 +107,6 @@ public class CsvCreator {
 
   private static class ListCsvWriter {
     private final CsvSchema csvSchema;
-    private final OutputStream destination;
     private final ObjectWriter objectWriter;
     private boolean firstBatch;
 
@@ -90,15 +116,14 @@ public class CsvCreator {
       "arrayType", CsvSchema.ColumnType.ARRAY
     );
 
-    private ListCsvWriter(EntityType entityType, OutputStream destination) {
-      this.destination = destination;
+    private ListCsvWriter(EntityType entityType) {
       this.csvSchema = createSchema(entityType);
       this.objectWriter = new CsvMapper().writerFor(List.class);
       this.firstBatch = true;
     }
 
     @SneakyThrows
-    public void writeCsv(List<Map<String, Object>> listContents) {
+    public void writeCsv(List<Map<String, Object>> listContents, OutputStream destination) {
       objectWriter
         .with(firstBatch ? csvSchema.withHeader() : csvSchema)
         .writeValues(destination)

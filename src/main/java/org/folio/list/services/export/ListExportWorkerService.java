@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -27,19 +28,35 @@ public class ListExportWorkerService {
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
-    try (ExportLocalStorage exportLocalStorage = csvCreator.createCSV(exportDetails)) {
-      log.info("Generated CSV file for exportID {}. Uploading to S3", exportDetails.getExportId());
-      String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
-      folioS3Client.upload(exportLocalStorage.getAbsolutePath(), destinationFileName);
-      log.info("S3 upload complete for exportId {}", exportDetails.getExportId());
+    String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
+    String uploadId = null;
+    var partETags = new ArrayList<String>();
+    try {
+      uploadId = folioS3Client.initiateMultipartUpload(destinationFileName);
+      log.info("S3 multipart upload initialized for exportId {}", exportDetails.getExportId());
+
+      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags);
+      andUploadCSV.close();
+
+      folioS3Client.completeMultipartUpload(destinationFileName, uploadId, partETags);
+      log.info("S3 multipart upload complete for exportId {}", exportDetails.getExportId());
       return CompletableFuture.completedFuture(true);
     } catch (ExportCancelledException ex) {
       log.info("Export {} for list {} has been cancelled", exportDetails.getExportId(), exportDetails.getList().getId());
+      abortMultipartUpload(destinationFileName, uploadId, exportDetails);
       return CompletableFuture.failedFuture(ex);
     } catch (Exception ex) {
       log.error("Cannot complete the export for the list: " + exportDetails.getList().getId() +
         " with export Id: " + exportDetails.getExportId(), ex);
+      abortMultipartUpload(destinationFileName, uploadId, exportDetails);
       return CompletableFuture.failedFuture(ex);
+    }
+  }
+
+  private void abortMultipartUpload(String destinationFileName, String uploadId, ExportDetails exportDetails) {
+    if (uploadId != null) {
+      log.info("Abort s3 multipart upload for exportId {}", exportDetails.getExportId());
+      folioS3Client.abortMultipartUpload(destinationFileName, uploadId);
     }
   }
 }

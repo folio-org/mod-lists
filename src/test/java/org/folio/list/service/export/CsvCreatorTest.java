@@ -16,6 +16,7 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.StringType;
+import org.folio.s3.client.FolioS3Client;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,12 +26,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,12 +45,20 @@ class CsvCreatorTest {
   private ListExportRepository listExportRepository;
   @Mock(mockMaker = MockMakers.INLINE)
   private ListExportProperties exportProperties;
+  @Mock
+  private FolioS3Client folioS3Client;
   @InjectMocks
   private CsvCreator csvCreator;
 
   @Test
   void shouldCreateCsvFromList() throws IOException {
     int batchSize = 100;
+
+    String destinationFileName = "destinationFileName";
+    String uploadId = "uploadId";
+    var partETags = new ArrayList<String>();
+    String partETag = "partETag";
+    int partNumber = 1;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
     EntityType entityType = createEntityType(List.of(createColumn("col1"), createColumn("col2")));
@@ -83,8 +91,9 @@ class CsvCreatorTest {
       .thenReturn(contents);
     when(queryClient.getContents(contentsRequest)).thenReturn(contentsWithData);
     when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(partNumber), any())).thenReturn(partETag);
 
-    try (ExportLocalStorage csvStorage = csvCreator.createCSV(exportDetails)) {
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags)) {
       String actualCsv = new String(csvStorage.inputStream().readAllBytes());
       assertEquals(expectedCsv, actualCsv);
     }
