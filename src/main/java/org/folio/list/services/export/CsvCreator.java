@@ -57,14 +57,13 @@ public class CsvCreator {
     int batchNumber = 0;
     int partNumber = 1;
 
-    boolean needUploadPart = false;
     for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
       if (batchNumber % 10 == 0) {
         checkIfExportCancelled(list.getId(), exportDetails.getExportId());
 
-        if (needUploadPart) {
+        //Skip the first batch since we haven't generated any content yet.
+        if (batchNumber != 0) {
           uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
-
           localStorage.rotateFile();
           localStorageOutputStream = localStorage.outputStream();
           partNumber++;
@@ -77,13 +76,10 @@ public class CsvCreator {
       var sortedContents = queryClient.getContents(contentsRequest);
       csvWriter.writeCsv(sortedContents, localStorageOutputStream);
       batchNumber++;
-      needUploadPart = true;
     }
 
-    //
-    if (needUploadPart) {
-      uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
-    }
+    uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+
     return localStorage;
 
 
@@ -93,7 +89,7 @@ public class CsvCreator {
                              List<String> partETags, ExportDetails exportDetails) {
     String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
     partETags.add(partETag);
-    log.info("Generated CSV file for exportID {}. Uploading to S3", exportDetails.getExportId());
+    log.info("Generated CSV multipart file for exportID {}. Uploading to S3, Part Number {}", exportDetails.getExportId(), partNumber);
   }
 
   private void checkIfExportCancelled(UUID listId, UUID exportId) {
