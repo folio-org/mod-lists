@@ -30,6 +30,7 @@ import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListRepository;
@@ -346,14 +347,11 @@ public class ListService {
     return appShutdownService.registerShutdownTask(executionContext, shutDownTask, taskName);
   }
 
-  // The below method retrieves all fields from the entity type. We are using it as a
-  // temporary workaround to supply fields in the list request. This maintains compatibility
-  // until the UI has been updated to pass the fields parameter in a list request.
   private List<String> getFieldsFromEntityType(EntityType entityType) {
-    List<String> fields = new ArrayList<>();
-    entityType
+    return entityType
       .getColumns()
-      .forEach(col -> fields.add(col.getName()));
-    return fields;
+      .stream()
+      .map(Field::getName)
+      .toList();
   }
 }
