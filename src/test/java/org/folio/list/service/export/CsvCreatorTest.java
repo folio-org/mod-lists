@@ -16,6 +16,7 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.StringType;
+import org.folio.s3.client.FolioS3Client;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,12 +26,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +47,8 @@ class CsvCreatorTest {
   private ListExportRepository listExportRepository;
   @Mock(mockMaker = MockMakers.INLINE)
   private ListExportProperties exportProperties;
+  @Mock
+  private FolioS3Client folioS3Client;
   @InjectMocks
   private CsvCreator csvCreator;
 
@@ -52,41 +56,56 @@ class CsvCreatorTest {
   void shouldCreateCsvFromList() throws IOException {
     int batchSize = 100;
 
+    String destinationFileName = "destinationFileName";
+    String uploadId = "uploadId";
+    var partETags = new ArrayList<String>();
+    String partETag = "partETag";
+    int firstPartNumber = 1;
+    int secondPartNumber = 2;
+    int numberOfBatch = 11;
+
     ListEntity entity = TestDataFixture.getPrivateListEntity();
     EntityType entityType = createEntityType(List.of(createColumn("col1"), createColumn("col2")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
-
-    List<List<String>> contentIds = List.of(
-      List.of(UUID.randomUUID().toString()),
-      List.of(UUID.randomUUID().toString())
-    );
-    ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entity.getEntityTypeId())
-      .fields(entity.getFields())
-      .ids(contentIds);
-    List<ListContent> contents = contentIds.stream()
-      .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, 1))
-      .toList();
+    List<List<String>> contentIds = new ArrayList<>();
+    // generate content ids for ten batches
+    IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(UUID.randomUUID().toString())));
     List<Map<String, Object>> contentsWithData = List.of(
       Map.of("col1", "col1-value1", "col2", "col2-value1"),
       Map.of("col1", "col1-value2", "col2", "col2-value2")
     );
+    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
+      new ContentsRequest().entityTypeId(entity.getEntityTypeId())
+        .fields(entity.getFields())
+        .ids(contentIds.stream().skip((long) i * batchSize).limit(batchSize).toList()))).thenReturn(contentsWithData));
+
+    AtomicInteger indexBatch = new AtomicInteger(0);
+    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i ->
+      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize)-1, PageRequest.ofSize(batchSize)))
+        .thenReturn(contentIds.stream().skip((long) i * batchSize).limit(batchSize)
+          .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
+          .toList()));
+
+
 
     String expectedCsv = """
-      col1,col2
       col1-value1,col2-value1
       col1-value2,col2-value2
       """;
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), -1, PageRequest.ofSize(batchSize)))
-      .thenReturn(contents);
-    when(queryClient.getContents(contentsRequest)).thenReturn(contentsWithData);
-    when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
 
-    try (ExportLocalStorage csvStorage = csvCreator.createCSV(exportDetails)) {
+
+    when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any())).thenReturn(partETag);
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(secondPartNumber), any())).thenReturn(partETag);
+
+
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags)) {
       String actualCsv = new String(csvStorage.inputStream().readAllBytes());
       assertEquals(expectedCsv, actualCsv);
+      assertEquals(2, partETags.size());
     }
   }
 
