@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
@@ -48,7 +47,6 @@ import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 import static java.util.Objects.nonNull;
@@ -209,13 +207,13 @@ public class ListService {
       });
   }
 
-  public Optional<ResultsetPage> getListContents(UUID listId, Integer offset, Integer size) {
+  public Optional<ResultsetPage> getListContents(UUID listId, List<String> fields, Integer offset, Integer size) {
     log.info("Attempting to get contents for list with listId {}, tenantId {}, offset {}, size {}",
       listId, executionContext.getTenantId(), offset, size);
     return listRepository.findByIdAndIsDeletedFalse(listId)
       .map(list -> {
         validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
-        return getListContents(list, offset, size);
+        return getListContents(list, fields, offset, size);
       });
   }
 
@@ -272,19 +270,13 @@ public class ListService {
     listRepository.save(list.withIsDeleted(true));
   }
 
-  private ResultsetPage getListContents(ListEntity list, Integer offset, Integer limit) {
+  private ResultsetPage getListContents(ListEntity list, List<String> fields, Integer offset, Integer limit) {
+    // If fields are not provided, retrieve all fields from the entity type definition
+    if (isEmpty(fields)) {
+      EntityType entityType = getEntityType(list.getEntityTypeId());
+      fields = getFieldsFromEntityType(entityType);
+    }
     List<Map<String, Object>> sortedContents = List.of();
-    List<String> fields = list.getFields();
-    if (CollectionUtils.isEmpty(fields)) {
-      Fql fql = fqlService.getFql(list.getFqlQuery());
-      fields = fqlService.getFqlFields(fql)
-        .stream()
-        .map(FqlField::getColumnName)
-        .collect(Collectors.toList());
-    }
-    if (!fields.contains("id")) {
-      fields.add("id");
-    }
     if (list.isRefreshed()) {
       List<List<String>> contentIds = listContentsRepository.getContents(list.getId(), list.getSuccessRefresh().getId(), new OffsetRequest(offset, limit))
         .stream()

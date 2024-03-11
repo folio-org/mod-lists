@@ -219,6 +219,15 @@ paths:
       description: gets the list contents (if exists).
       parameters:
         - $ref: '#/components/parameters/id'
+        - name: fields
+          in: query
+          description: List of fields to retrieve content for
+          required: false
+          schema:
+            type: array
+            items:
+              type:
+                string
         - name: offset
           in: query
           description: Offset to start retrieving items from
