@@ -85,8 +85,8 @@ public class ListController implements ListApi {
   }
 
   @Override
-  public ResponseEntity<ResultsetPage> getListContents(UUID id, Integer offset, Integer size) {
-    return listService.getListContents(id, offset, size)
+  public ResponseEntity<ResultsetPage> getListContents(UUID id, List<String> fields, Integer offset, Integer size) {
+    return listService.getListContents(id, fields, offset, size)
       .map(ResponseEntity::ok)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.READ));
   }

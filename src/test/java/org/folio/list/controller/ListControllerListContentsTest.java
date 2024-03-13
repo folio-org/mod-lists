@@ -37,14 +37,15 @@ class ListControllerListContentsTest {
     UUID listId = UUID.randomUUID();
     Integer offset = 0;
     Integer size = 2;
-    var requestBuilder = get("/lists/" + listId + "/contents?size=2&offset=0")
+    List<String> fields = List.of("key1", "key2", "key3", "key4");
+    var requestBuilder = get("/lists/" + listId + "/contents?size=2&offset=0&fields=key1,key2,key3,key4")
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, listId);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("key1", "value1", "key2", "value2"),
       Map.of("key3", "value3", "key4", "value4"));
     Optional<ResultsetPage> expectedContent = Optional.of(new ResultsetPage().content(expectedList).totalRecords(expectedList.size()));
-    when(listService.getListContents(listId, offset, size)).thenReturn(expectedContent);
+    when(listService.getListContents(listId, fields, offset, size)).thenReturn(expectedContent);
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.content[0]", is(expectedList.get(0))))
@@ -56,11 +57,12 @@ class ListControllerListContentsTest {
     UUID listId = UUID.randomUUID();
     Integer offset = 0;
     Integer size = 0;
-    var requestBuilder = get("/lists/" + listId + "/contents?size=0&offset=0")
+    List<String> fields = List.of("key1");
+    var requestBuilder = get("/lists/" + listId + "/contents?size=0&offset=0&fields=key1")
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, listId);
     Optional<ResultsetPage> expectedContent = Optional.empty();
-    when(listService.getListContents(listId, offset, size)).thenReturn(expectedContent);
+    when(listService.getListContents(listId, fields, offset, size)).thenReturn(expectedContent);
     mockMvc.perform(requestBuilder)
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.code", is("read-list.not.found")));
@@ -73,12 +75,13 @@ class ListControllerListContentsTest {
     listEntity.setId(listId);
     Integer offset = 0;
     Integer size = 0;
+    List<String> fields = List.of("key1");
 
-    var requestBuilder = get("/lists/" + listId + "/contents?size=0&offset=0")
+    var requestBuilder = get("/lists/" + listId + "/contents?size=0&offset=0&fields=key1")
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, listId);
 
-    when(listService.getListContents(listId, offset, size))
+    when(listService.getListContents(listId, fields, offset, size))
       .thenThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ));
 
     mockMvc.perform(requestBuilder)
