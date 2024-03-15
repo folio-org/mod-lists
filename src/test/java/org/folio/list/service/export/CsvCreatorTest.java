@@ -131,6 +131,7 @@ class CsvCreatorTest {
     exportDetails.setExportId(exportId);
     exportDetails.setList(entity);
     exportDetails.setStatus(AsyncProcessStatus.IN_PROGRESS);
+    exportDetails.setFields(entity.getFields());
     return exportDetails;
   }
 }

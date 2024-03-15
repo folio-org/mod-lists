@@ -1,5 +1,6 @@
 package org.folio.list.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportInProgressException;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.ByteArrayInputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
@@ -48,26 +50,31 @@ class ListExportControllerTest {
 
   @Test
   void testListExport() throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
     UUID id = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
+    List<String> fields = List.of("field1", "field2");
     ListExportDTO exportDTO = new ListExportDTO()
       .exportId(UUID.randomUUID())
       .listId(id)
       .status(ListExportDTO.StatusEnum.IN_PROGRESS)
-      .createdBy(userId);
+      .createdBy(userId)
+      .fields(fields);
     var requestBuilder = post("/lists/" + id + "/exports")
       .contentType(APPLICATION_JSON)
+      .content(objectMapper.writeValueAsString(fields))
       .header(XOkapiHeaders.TENANT, TENANT_ID)
       .header(XOkapiHeaders.USER_ID, userId);
 
-    when(listExportService.createExport(id)).thenReturn(exportDTO);
+    when(listExportService.createExport(id, fields)).thenReturn(exportDTO);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isCreated())
       .andExpect(jsonPath("$.exportId", is(exportDTO.getExportId().toString())))
       .andExpect(jsonPath("$.listId", is(exportDTO.getListId().toString())))
       .andExpect(jsonPath("$.status", is(ListExportDTO.StatusEnum.IN_PROGRESS.getValue())))
-      .andExpect(jsonPath("$.createdBy", is(exportDTO.getCreatedBy().toString())));
+      .andExpect(jsonPath("$.createdBy", is(exportDTO.getCreatedBy().toString())))
+      .andExpect(jsonPath("$.fields", is(exportDTO.getFields())));
   }
 
   @Test
@@ -80,7 +87,7 @@ class ListExportControllerTest {
       .header(XOkapiHeaders.TENANT, TENANT_ID)
       .header(XOkapiHeaders.USER_ID, userId);
 
-    doThrow(new ListNotFoundException(id, ListActions.EXPORT)).when(listExportService).createExport(id);
+    doThrow(new ListNotFoundException(id, ListActions.EXPORT)).when(listExportService).createExport(id, null);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isNotFound())
@@ -164,7 +171,7 @@ class ListExportControllerTest {
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    doThrow(new ExportInProgressException(listEntity, ListActions.EXPORT)).when(listExportService).createExport(listId);
+    doThrow(new ExportInProgressException(listEntity, ListActions.EXPORT)).when(listExportService).createExport(listId, null);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isBadRequest())

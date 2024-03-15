@@ -270,6 +270,15 @@ paths:
       description: Exports the list.
       parameters:
         - $ref: '#/components/parameters/id'
+      requestBody:
+        description: Export request
+        required: false
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
       responses:
         '201':
           description: 'returns if a list export request submitted successfully'

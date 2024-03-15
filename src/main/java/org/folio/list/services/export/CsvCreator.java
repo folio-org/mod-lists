@@ -71,7 +71,7 @@ public class CsvCreator {
       }
       log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
       ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
-        .fields(list.getFields())
+        .fields(exportDetails.getFields())
         .ids(ids);
       var sortedContents = queryClient.getContents(contentsRequest);
       csvWriter.writeCsv(sortedContents, localStorageOutputStream);

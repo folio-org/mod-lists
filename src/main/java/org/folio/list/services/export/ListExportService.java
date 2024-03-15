@@ -23,10 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.folio.list.services.export.ExportUtils.getFileName;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 @Lazy // Do not connect to S3 when the application starts
 @Service
@@ -43,11 +45,12 @@ public class ListExportService {
   private final AppShutdownService appShutdownService;
 
   @Transactional
-  public ListExportDTO createExport(UUID listId) {
+  public ListExportDTO createExport(UUID listId, List<String> fields) {
     ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
-    ExportDetails exportDetails = createExportDetails(list);
+    List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
+    ExportDetails exportDetails = createExportDetails(list, fieldsToExport);
     ExportDetails savedExport = listExportRepository.save(exportDetails);
     doAsyncExport(savedExport);
     return listExportMapper.toListExportDTO(savedExport);
@@ -88,10 +91,11 @@ public class ListExportService {
     listExportRepository.save(exportDetails);
   }
 
-  private ExportDetails createExportDetails(ListEntity list) {
+  private ExportDetails createExportDetails(ListEntity list, List<String> fields) {
     return new ExportDetails(
       UUID.randomUUID(),
       list,
+      fields,
       AsyncProcessStatus.IN_PROGRESS,
       executionContext.getUserId(),
       OffsetDateTime.now(),

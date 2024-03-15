@@ -10,4 +10,9 @@
   <include file="sql/update-list-refresh-details-table.sql" relativeToChangelogFile="true"/>
   <include file="yml/add-list-details-is-deleted-column.yaml" relativeToChangelogFile="true"/>
   <include file="xml/update-list-contents-table.xml" relativeToChangelogFile="true"/>
+  <changeSet id="UILISTS-110" author="bsharp@ebsco.com">
+    <sql>
+      ALTER TABLE export_details ADD fields text[];
+    </sql>
+  </changeSet>
 </databaseChangeLog>
