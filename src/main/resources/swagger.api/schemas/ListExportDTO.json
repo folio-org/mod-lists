@@ -37,6 +37,13 @@
       "description": "ID of the user who wants to export the list",
       "type": "string",
       "format": "UUID"
+    },
+    "fields": {
+      "description": "List of fields to export",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": false,

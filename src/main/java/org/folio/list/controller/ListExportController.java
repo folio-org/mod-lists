@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -25,8 +26,8 @@ public class ListExportController implements ListExportApi {
   private final ListExportService listExportService;
 
   @Override
-  public ResponseEntity<ListExportDTO> exportList(UUID listId) {
-    var listExportDto = listExportService.createExport(listId);
+  public ResponseEntity<ListExportDTO> exportList(UUID listId, List<String> fields) {
+    var listExportDto = listExportService.createExport(listId, fields);
     return new ResponseEntity<>(listExportDto, HttpStatus.CREATED);
   }
 
