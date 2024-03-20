@@ -358,15 +358,15 @@ class ListServiceTest {
     assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion+1);
   }
 
-  // This test can be removed once the UI has been updated to allow fields to be sent in the list update request
   @Test
-  void updateListShouldUseDefaultFieldsIfFieldsNotProvidedInRequest() {
+  void updateListShouldUseOriginalFieldsIfFieldsNotProvidedInRequest() {
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO();
     listUpdateRequestDto.setFields(null);
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
     String userFriendlyQuery = "some string";
-    List<String> expectedFields = List.of("field1");
+    // fields from the original ListEntity and NOT from the entity type
+    List<String> expectedFields = List.of("id", "item_status");
 
     User user = new User(userId, Optional.of(new UsersClient.Personal(FIRSTNAME, LASTNAME)));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
