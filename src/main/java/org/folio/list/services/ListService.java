@@ -147,10 +147,10 @@ public class ListService {
         listContentsRepository.deleteContents(id);
         list.setSuccessRefresh(null);
       }
-      // Once UI has been updated to support sending fields in the request, the below if-block
-      // can be removed
+      // not all updates include a list of fields (e.g. just updating name/description)
+      // in this case, we do not want to modify the list of fields
       if (isEmpty(request.getFields())) {
-        request.setFields(getFieldsFromEntityType(entityType));
+        request.setFields(list.getFields());
       }
       String userFriendlyQuery = "";
       if (hasText(request.getFqlQuery())) {
