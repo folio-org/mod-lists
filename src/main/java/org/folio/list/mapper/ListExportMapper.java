@@ -14,5 +14,6 @@ public interface ListExportMapper {
   @Mapping(target = "createdBy", source = "exportDetails.createdBy")
   @Mapping(target = "startDate", source = "exportDetails.startDate")
   @Mapping(target = "endDate", source = "exportDetails.endDate")
+  @Mapping(target = "fields", source = "exportDetails.fields")
   ListExportDTO toListExportDTO(ExportDetails exportDetails);
 }

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
@@ -30,6 +29,7 @@ import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListRepository;
@@ -47,7 +47,6 @@ import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 import static java.util.Objects.nonNull;
@@ -148,10 +147,10 @@ public class ListService {
         listContentsRepository.deleteContents(id);
         list.setSuccessRefresh(null);
       }
-      // Once UI has been updated to support sending fields in the request, the below if-block
-      // can be removed
+      // not all updates include a list of fields (e.g. just updating name/description)
+      // in this case, we do not want to modify the list of fields
       if (isEmpty(request.getFields())) {
-        request.setFields(getFieldsFromEntityType(entityType));
+        request.setFields(list.getFields());
       }
       String userFriendlyQuery = "";
       if (hasText(request.getFqlQuery())) {
@@ -208,13 +207,13 @@ public class ListService {
       });
   }
 
-  public Optional<ResultsetPage> getListContents(UUID listId, Integer offset, Integer size) {
+  public Optional<ResultsetPage> getListContents(UUID listId, List<String> fields, Integer offset, Integer size) {
     log.info("Attempting to get contents for list with listId {}, tenantId {}, offset {}, size {}",
       listId, executionContext.getTenantId(), offset, size);
     return listRepository.findByIdAndIsDeletedFalse(listId)
       .map(list -> {
         validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
-        return getListContents(list, offset, size);
+        return getListContents(list, fields, offset, size);
       });
   }
 
@@ -271,19 +270,13 @@ public class ListService {
     listRepository.save(list.withIsDeleted(true));
   }
 
-  private ResultsetPage getListContents(ListEntity list, Integer offset, Integer limit) {
+  private ResultsetPage getListContents(ListEntity list, List<String> fields, Integer offset, Integer limit) {
+    // If fields are not provided, retrieve all fields from the entity type definition
+    if (isEmpty(fields)) {
+      EntityType entityType = getEntityType(list.getEntityTypeId());
+      fields = getFieldsFromEntityType(entityType);
+    }
     List<Map<String, Object>> sortedContents = List.of();
-    List<String> fields = list.getFields();
-    if (CollectionUtils.isEmpty(fields)) {
-      Fql fql = fqlService.getFql(list.getFqlQuery());
-      fields = fqlService.getFqlFields(fql)
-        .stream()
-        .map(FqlField::getColumnName)
-        .collect(Collectors.toList());
-    }
-    if (!fields.contains("id")) {
-      fields.add("id");
-    }
     if (list.isRefreshed()) {
       List<List<String>> contentIds = listContentsRepository.getContents(list.getId(), list.getSuccessRefresh().getId(), new OffsetRequest(offset, limit))
         .stream()
@@ -346,14 +339,11 @@ public class ListService {
     return appShutdownService.registerShutdownTask(executionContext, shutDownTask, taskName);
   }
 
-  // The below method retrieves all fields from the entity type. We are using it as a
-  // temporary workaround to supply fields in the list request. This maintains compatibility
-  // until the UI has been updated to pass the fields parameter in a list request.
   private List<String> getFieldsFromEntityType(EntityType entityType) {
-    List<String> fields = new ArrayList<>();
-    entityType
+    return entityType
       .getColumns()
-      .forEach(col -> fields.add(col.getName()));
-    return fields;
+      .stream()
+      .map(Field::getName)
+      .toList();
   }
 }

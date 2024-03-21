@@ -19,21 +19,22 @@ import java.util.List;
 @Slf4j
 public class ListExceptionHandler {
   private static final String INVALID_REQUEST_ERROR_CODE = "invalid.request";
-  private static final String INVALID_REQUEST_MESSAGE = "Request failed. URL: {}. Failure reason : {}";
+  private static final String REQUEST_FAILED_MESSAGE = "Request failed. URL: {}. Failure reason : {}";
+  private static final String UNHANDLED_ERROR_CODE = "unhandled.error";
 
   @ExceptionHandler(AbstractListException.class)
   public ResponseEntity<ListAppError> exceptionHandlerForList(AbstractListException exception,
                                                               ServletWebRequest webRequest) {
     String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
-    log.error(INVALID_REQUEST_MESSAGE, url, exception.getMessage());
+    log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
     return new ResponseEntity<>(exception.getError(), exception.getHttpStatus());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ListAppError> handleValidationExceptions(MethodArgumentNotValidException exception,
                                                                  ServletWebRequest webRequest) {
-    String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
-    log.error(INVALID_REQUEST_MESSAGE, url, exception.getMessage());
+    String url = getUrl(webRequest);
+    log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
     List<Parameter> errorParams = exception.getBindingResult()
       .getAllErrors().stream()
       .filter(FieldError.class::isInstance)
@@ -50,13 +51,26 @@ public class ListExceptionHandler {
   }
 
   @ExceptionHandler({HttpMessageNotReadableException.class, IllegalArgumentException.class})
-  public ResponseEntity<ListAppError> handleValidationExceptions2(Exception exception,
-                                                                  ServletWebRequest webRequest) {
-    String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
-    log.error(INVALID_REQUEST_MESSAGE, url, exception.getMessage());
-    ListAppError errors = new ListAppError()
-      .code(INVALID_REQUEST_ERROR_CODE)
-      .addParametersItem(new Parameter().key("error.reason").value(exception.getMessage()));
+  public ResponseEntity<ListAppError> handleValidationExceptions2(Exception exception, ServletWebRequest webRequest) {
+    ListAppError errors = handleGenericError(exception.getMessage(), webRequest, INVALID_REQUEST_ERROR_CODE);
     return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ListAppError> handleGenericExceptions(Exception exception, ServletWebRequest webRequest) {
+    ListAppError errors = handleGenericError(exception.getMessage(), webRequest, UNHANDLED_ERROR_CODE);
+    return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  private static ListAppError handleGenericError(String exMessage, ServletWebRequest webRequest, String errorCode) {
+    String url = getUrl(webRequest);
+    log.error(ListExceptionHandler.REQUEST_FAILED_MESSAGE, url, exMessage);
+    return new ListAppError()
+      .code(errorCode)
+      .addParametersItem(new Parameter().key("error.reason").value(exMessage));
+  }
+
+  private static String getUrl(ServletWebRequest webRequest) {
+    return webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
   }
 }

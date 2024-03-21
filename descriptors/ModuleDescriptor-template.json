@@ -1,6 +1,6 @@
 {
   "id": "@artifactId@-@version@",
-  "name": "The module descriptor for mod-lists",
+  "name": "Lists",
   "provides": [
     {
       "id": "_tenant",

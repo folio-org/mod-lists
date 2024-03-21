@@ -29,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -73,6 +74,7 @@ class ListExportServiceTest {
   void shouldSaveExport() {
     UUID listId = TestDataFixture.getListExportDetails().getList().getId();
     UUID userId = UUID.randomUUID();
+    List<String> fields = List.of("field1", "field2");
     ListEntity fetchedEntity = TestDataFixture.getListExportDetails().getList();
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
@@ -85,7 +87,7 @@ class ListExportServiceTest {
     when(listExportWorkerService.doAsyncExport(exportDetails))
       .thenReturn(CompletableFuture.completedFuture(true));
 
-    listExportService.createExport(listId);
+    listExportService.createExport(listId, fields);
 
     // Two calls made to listExportRepository.save()
     // 1. For saving the "IN_PROGRESS" export
@@ -121,7 +123,7 @@ class ListExportServiceTest {
     when(listExportWorkerService.doAsyncExport(exportDetails))
       .thenReturn(CompletableFuture.failedFuture(new RuntimeException("something went wrong")));
 
-    listExportService.createExport(listId);
+    listExportService.createExport(listId, null);
 
     // Two calls made to listExportRepository.save()
     // 1. For saving the "IN_PROGRESS" export
@@ -244,7 +246,7 @@ class ListExportServiceTest {
     when(listExportMapper.toListExportDTO(exportDetails)).thenReturn(mock(ListExportDTO.class));
     when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(null));
 
-    listExportService.createExport(listId);
+    listExportService.createExport(listId, null);
 
     verify(appShutdownService, times(1)).registerShutdownTask(eq(folioExecutionContext), any(Runnable.class), any(String.class));
   }

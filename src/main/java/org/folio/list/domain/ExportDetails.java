@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,6 +35,10 @@ public class ExportDetails {
   @ManyToOne
   @JoinColumn(name = "list_id")
   private ListEntity list;
+
+  @NotNull
+  @Column(name = "fields")
+  private List<String> fields;
 
   @Column(name = "status")
   @NotNull

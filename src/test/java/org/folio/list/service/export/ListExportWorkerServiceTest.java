@@ -14,15 +14,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ListExportWorkerServiceTest {
@@ -39,17 +35,19 @@ class ListExportWorkerServiceTest {
   void shouldExportList() {
     UUID exportId = UUID.randomUUID();
     String tenantId = "tenant_01";
-    String localFile = "/path/to/file.csv";
+
     String expectedDestinationFile = tenantId + "/" + exportId + ".csv";
     ExportLocalStorage localStorage = mock(ExportLocalStorage.class);
     ExportDetails exportDetails = getExportDetails(TestDataFixture.getPrivateListEntity(), exportId);
+    String uploadId = "uploadId";
+    ArrayList<String> partETags = new ArrayList<>();
 
     when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(localStorage.getAbsolutePath()).thenReturn(localFile);
-    when(csvCreator.createCSV(exportDetails)).thenReturn(localStorage);
 
+    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags)).thenReturn(localStorage);
+    when(folioS3Client.initiateMultipartUpload(expectedDestinationFile)).thenReturn(uploadId);
     boolean exportSucceeded = listExportWorkerService.doAsyncExport(exportDetails).join();
-    verify(folioS3Client, times(1)).upload(localFile, expectedDestinationFile);
+    verify(folioS3Client, times(1)).completeMultipartUpload(expectedDestinationFile, uploadId, partETags);;
     assertTrue(exportSucceeded);
   }
 
@@ -57,14 +55,16 @@ class ListExportWorkerServiceTest {
   void shouldReturnFailedFutureIfExportFail() {
     UUID exportId = UUID.randomUUID();
     String tenantId = "tenant_01";
-    String localFile = "/path/to/file.csv";
+    String uploadId = "uploadId";
+    ArrayList<String> partETags = new ArrayList<>();
     ExportLocalStorage localStorage = mock(ExportLocalStorage.class);
+    String expectedDestinationFile = tenantId + "/" + exportId + ".csv";
     ExportDetails exportDetails = getExportDetails(TestDataFixture.getPrivateListEntity(), exportId);
 
     when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(localStorage.getAbsolutePath()).thenReturn(localFile);
-    when(csvCreator.createCSV(exportDetails)).thenReturn(localStorage);
-    doThrow(new RuntimeException("something went wrong")).when(folioS3Client).upload(any(), any());
+    when(folioS3Client.initiateMultipartUpload(expectedDestinationFile)).thenReturn(uploadId);
+    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags)).thenReturn(localStorage);
+    doThrow(new RuntimeException("something went wrong")).when(folioS3Client).completeMultipartUpload(any(), any(), any());
 
     boolean exportFailed = listExportWorkerService.doAsyncExport(exportDetails).isCompletedExceptionally();
     assertTrue(exportFailed);
