@@ -45,12 +45,12 @@ public class UserFriendlyQueryService {
 
   private String handleGreaterThan(GreaterThanCondition greaterThanCondition) {
     String operator = greaterThanCondition.orEqualTo() ? " >= " : " > ";
-    return greaterThanCondition.field().getColumnName() + operator + greaterThanCondition.value();
+    return greaterThanCondition.field().serialize() + operator + greaterThanCondition.value();
   }
 
   private String handleLessThan(LessThanCondition lessThanCondition) {
     String operator = lessThanCondition.orEqualTo() ? " <= " : " < ";
-    return lessThanCondition.field().getColumnName()  + operator + lessThanCondition.value();
+    return lessThanCondition.field().serialize()  + operator + lessThanCondition.value();
   }
 
   private String handleAnd(AndCondition andCondition, EntityType entityType) {
@@ -63,9 +63,9 @@ public class UserFriendlyQueryService {
 
   private String handleRegEx(RegexCondition regExCondition) {
     if (regExCondition.value().startsWith("^")) {
-      return regExCondition.field().getColumnName()  + " starts with " + regExCondition.value().substring(1);
+      return regExCondition.field().serialize()  + " starts with " + regExCondition.value().substring(1);
     }
-    return regExCondition.field().getColumnName()  + " contains " + regExCondition.value();
+    return regExCondition.field().serialize()  + " contains " + regExCondition.value();
   }
 
   private String handleEquals(EqualsCondition equalsCondition, EntityType entityType) {
@@ -128,9 +128,9 @@ public class UserFriendlyQueryService {
 
   private String handleEmpty(EmptyCondition emptyCondition) {
     if (Boolean.TRUE.equals(emptyCondition.value())) {
-      return emptyCondition.field().getColumnName()  + " is empty";
+      return emptyCondition.field().serialize()  + " is empty";
     } else {
-      return emptyCondition.field().getColumnName()  + " is not empty";
+      return emptyCondition.field().serialize()  + " is not empty";
     }
   }
 
@@ -159,11 +159,11 @@ public class UserFriendlyQueryService {
           // if we found this referencing column, use it as the basis for getting the label
           .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
           // sensible fallback
-          .orElse(condition.field().getColumnName() + operatorWithPadding + condition.value());
+          .orElse(condition.field().serialize() + operatorWithPadding + condition.value());
       }
     } catch (Exception e) {
       log.error("Unexpected error when creating user friendly query for condition " + condition + ". Exception: " + e);
-      return condition.field().getColumnName() + operatorWithPadding + condition.value();
+      return condition.field().serialize() + operatorWithPadding + condition.value();
     }
   }
 
@@ -179,7 +179,6 @@ public class UserFriendlyQueryService {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(List.of("id", field.getSource().getColumnName()))
       .ids(ids);
-    log.info("CR: {}", contentsRequest);
     return queryClient.getContents(contentsRequest)
       .stream()
       .map(map -> map.get(field.getSource().getColumnName()).toString())
