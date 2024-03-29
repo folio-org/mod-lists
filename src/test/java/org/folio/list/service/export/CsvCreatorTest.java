@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -83,7 +82,7 @@ class CsvCreatorTest {
 
     AtomicInteger indexBatch = new AtomicInteger(0);
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i ->
-      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize)-1, PageRequest.ofSize(batchSize)))
+      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize) - 1, PageRequest.ofSize(batchSize)))
         .thenReturn(contentIds.stream().skip((long) i * batchSize).limit(batchSize)
           .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
           .toList()));
@@ -107,10 +106,11 @@ class CsvCreatorTest {
   private static String toCSV(List<Map<String, Object>> list) {
     final StringBuilder sb = new StringBuilder();
     for (Map<String, Object> map : list) {
-      List<String> keys = List.copyOf(map.keySet());
-      for (int i = 0; i < keys.size(); i++) {
-        sb.append(map.get(keys.get(keys.size() - 1 - i)));
-        sb.append(i == keys.size() - 1 ? "\n" : ",");
+      int i = 0;
+      for (Object value : map.values()) {
+        sb.append(value);
+        sb.append(i == map.keySet().size() - 1 ? "\n" : ",");
+        i++;
       }
     }
     return sb.toString();
