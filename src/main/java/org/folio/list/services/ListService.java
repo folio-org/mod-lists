@@ -344,7 +344,9 @@ public class ListService {
     return entityType
       .getColumns()
       .stream()
-      .filter(EntityTypeColumn::getVisibleByDefault)
+      // we cannot use EntityTypeColumn::getVisibleByDefault here since it may return null
+      // if it is null, we get a NPE with plain .filter(...) :(
+      .filter(f -> Boolean.TRUE.equals(f.getVisibleByDefault()))
       .map(Field::getName)
       .toList();
   }

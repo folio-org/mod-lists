@@ -290,10 +290,10 @@ class ListServiceTest {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
     listRequestDto.setFields(null);
-    List<String> expectedFields = List.of("column_01", "column_02");
+    List<String> expectedFields = List.of("column_01");
     EntityType entityType = new EntityType().name("test-entity").columns(List.of(
-      new EntityTypeColumn().name("column_01"),
-      new EntityTypeColumn().name("column_02")
+      new EntityTypeColumn().name("column_01").visibleByDefault(true),
+      new EntityTypeColumn().name("column_02").visibleByDefault(false)
     ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
