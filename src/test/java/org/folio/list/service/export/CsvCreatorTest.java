@@ -72,7 +72,12 @@ class CsvCreatorTest {
     IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(UUID.randomUUID().toString())));
     List<Map<String, Object>> contentsWithData = new ArrayList<>();
     IntStream.rangeClosed(1, batchSize).forEach(i ->
-      contentsWithData.add(Map.of("col1", "col1-value1", "col2", "col2-value1"))
+      {
+        LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+        linkedHashMap.put("col1", "col1-value1");
+        linkedHashMap.put("col2", "col2-value1");
+        contentsWithData.add(linkedHashMap);
+      }
     );
 
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
