@@ -88,13 +88,6 @@ class CsvCreatorTest {
           .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
           .toList()));
 
-
-
-    String expectedCsv = """
-      col1-value1,col2-value1
-      col1-value2,col2-value2
-      """;
-
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
 
@@ -110,13 +103,14 @@ class CsvCreatorTest {
       assertEquals(2, partETags.size());
     }
   }
+
   private static String toCSV(List<Map<String, Object>> list) {
-    List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().toList();
     final StringBuilder sb = new StringBuilder();
     for (Map<String, Object> map : list) {
-      for (int i = 0; i < headers.size(); i++) {
-        sb.append(map.get(headers.get(i)));
-        sb.append(i == headers.size()-1 ? "\n" : ",");
+      List<String> keys = List.copyOf(map.keySet());
+      for (int i = 0; i < keys.size(); i++) {
+        sb.append(map.get(keys.get(keys.size() - 1 - i)));
+        sb.append(i == keys.size() - 1 ? "\n" : ",");
       }
     }
     return sb.toString();
