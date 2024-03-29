@@ -293,7 +293,8 @@ class ListServiceTest {
     List<String> expectedFields = List.of("column_01");
     EntityType entityType = new EntityType().name("test-entity").columns(List.of(
       new EntityTypeColumn().name("column_01").visibleByDefault(true),
-      new EntityTypeColumn().name("column_02").visibleByDefault(false)
+      new EntityTypeColumn().name("column_02").visibleByDefault(false),
+      new EntityTypeColumn().name("column_03").visibleByDefault(null) // should be treated as false
     ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
