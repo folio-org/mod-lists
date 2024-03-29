@@ -29,6 +29,7 @@ import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
@@ -343,6 +344,9 @@ public class ListService {
     return entityType
       .getColumns()
       .stream()
+      // we cannot use EntityTypeColumn::getVisibleByDefault here since it may return null
+      // if it is null, we get a NPE with plain .filter(...) :(
+      .filter(f -> Boolean.TRUE.equals(f.getVisibleByDefault()))
       .map(Field::getName)
       .toList();
   }
