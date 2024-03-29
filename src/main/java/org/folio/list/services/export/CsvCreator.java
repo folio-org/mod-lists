@@ -47,7 +47,7 @@ public class CsvCreator {
   private final FolioS3Client folioS3Client;
 
   //Minimal s3 part size is 5 MB
-  private final static Long MINIMAL_PART_SIZE = 5242880L;
+  private static final Long MINIMAL_PART_SIZE = 5242880L;
 
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags) {
