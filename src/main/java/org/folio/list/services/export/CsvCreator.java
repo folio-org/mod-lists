@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -22,6 +23,7 @@ import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,9 @@ public class CsvCreator {
   private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
 
+  //Minimal s3 part size is 5 MB
+  private final Long MINIMAL_PART_SIZE = 5242880L;
+
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
@@ -61,8 +66,10 @@ public class CsvCreator {
       if (batchNumber % 10 == 0) {
         checkIfExportCancelled(list.getId(), exportDetails.getExportId());
 
-        //Skip the first batch since we haven't generated any content yet.
-        if (batchNumber != 0) {
+        //Skip the first batch since we haven't generated any content yet and do not upload if file size less than 5 mb
+        File multiPartFile = new File(localStorage.getAbsolutePath());
+        long bytes = FileUtils.sizeOf(multiPartFile);
+        if (batchNumber != 0 && bytes > MINIMAL_PART_SIZE) {
           uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
           localStorage.rotateFile();
           localStorageOutputStream = localStorage.outputStream();

@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,7 +55,7 @@ class CsvCreatorTest {
 
   @Test
   void shouldCreateCsvFromList() throws IOException {
-    int batchSize = 100;
+    int batchSize = 100000;
 
     String destinationFileName = "destinationFileName";
     String uploadId = "uploadId";
@@ -70,10 +71,11 @@ class CsvCreatorTest {
     List<List<String>> contentIds = new ArrayList<>();
     // generate content ids for ten batches
     IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(UUID.randomUUID().toString())));
-    List<Map<String, Object>> contentsWithData = List.of(
-      Map.of("col1", "col1-value1", "col2", "col2-value1"),
-      Map.of("col1", "col1-value2", "col2", "col2-value2")
+    List<Map<String, Object>> contentsWithData = new ArrayList<>();
+    IntStream.rangeClosed(1, batchSize).forEach(i ->
+      contentsWithData.add(Map.of("col1", "col1-value1", "col2", "col2-value1"))
     );
+
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
       new ContentsRequest().entityTypeId(entity.getEntityTypeId())
         .fields(entity.getFields())
@@ -104,9 +106,20 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags)) {
       String actualCsv = new String(csvStorage.inputStream().readAllBytes());
-      assertEquals(expectedCsv, actualCsv);
+      assertEquals(toCSV(contentsWithData), actualCsv);
       assertEquals(2, partETags.size());
     }
+  }
+  private static String toCSV(List<Map<String, Object>> list) {
+    List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().toList();
+    final StringBuilder sb = new StringBuilder();
+    for (Map<String, Object> map : list) {
+      for (int i = 0; i < headers.size(); i++) {
+        sb.append(map.get(headers.get(i)));
+        sb.append(i == headers.size()-1 ? "\n" : ",");
+      }
+    }
+    return sb.toString();
   }
 
   private EntityType createEntityType(List<EntityTypeColumn> entityTypeColumnList) {
