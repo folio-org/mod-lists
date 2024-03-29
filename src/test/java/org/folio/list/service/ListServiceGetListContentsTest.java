@@ -110,7 +110,8 @@ class ListServiceGetListContentsTest {
       List.of(UUID.randomUUID().toString())
     );
     List<EntityTypeColumn> columns = List.of(
-      new EntityTypeColumn().name("id")
+      new EntityTypeColumn().name("id").visibleByDefault(true),
+      new EntityTypeColumn().name("something-else").visibleByDefault(false)
     );
     EntityType entityType = new EntityType().name("entity-type").columns(columns);
     int offset = 0;
