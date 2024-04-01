@@ -54,7 +54,7 @@ class CsvCreatorTest {
 
   @Test
   void shouldCreateCsvFromList() throws IOException {
-    int batchSize = 100;
+    int batchSize = 100000;
 
     String destinationFileName = "destinationFileName";
     String uploadId = "uploadId";
@@ -70,10 +70,16 @@ class CsvCreatorTest {
     List<List<String>> contentIds = new ArrayList<>();
     // generate content ids for ten batches
     IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(UUID.randomUUID().toString())));
-    List<Map<String, Object>> contentsWithData = List.of(
-      Map.of("col1", "col1-value1", "col2", "col2-value1"),
-      Map.of("col1", "col1-value2", "col2", "col2-value2")
+    List<Map<String, Object>> contentsWithData = new ArrayList<>();
+    IntStream.rangeClosed(1, batchSize).forEach(i ->
+      {
+        LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+        linkedHashMap.put("col1", "col1-value1");
+        linkedHashMap.put("col2", "col2-value1");
+        contentsWithData.add(linkedHashMap);
+      }
     );
+
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
       new ContentsRequest().entityTypeId(entity.getEntityTypeId())
         .fields(entity.getFields())
@@ -81,17 +87,10 @@ class CsvCreatorTest {
 
     AtomicInteger indexBatch = new AtomicInteger(0);
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i ->
-      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize)-1, PageRequest.ofSize(batchSize)))
+      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize) - 1, PageRequest.ofSize(batchSize)))
         .thenReturn(contentIds.stream().skip((long) i * batchSize).limit(batchSize)
           .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
           .toList()));
-
-
-
-    String expectedCsv = """
-      col1-value1,col2-value1
-      col1-value2,col2-value2
-      """;
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
@@ -104,9 +103,22 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags)) {
       String actualCsv = new String(csvStorage.inputStream().readAllBytes());
-      assertEquals(expectedCsv, actualCsv);
+      assertEquals(toCSV(contentsWithData), actualCsv);
       assertEquals(2, partETags.size());
     }
+  }
+
+  private static String toCSV(List<Map<String, Object>> list) {
+    final StringBuilder sb = new StringBuilder();
+    for (Map<String, Object> map : list) {
+      int i = 0;
+      for (Object value : map.values()) {
+        sb.append(value);
+        sb.append(i == map.keySet().size() - 1 ? "\n" : ",");
+        i++;
+      }
+    }
+    return sb.toString();
   }
 
   private EntityType createEntityType(List<EntityTypeColumn> entityTypeColumnList) {
