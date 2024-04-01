@@ -119,7 +119,7 @@ class ListServiceGetListContentsTest {
     int contentVersion = 2;
     List<String> fields = List.of();
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(entityTypeId)
-      .fields(List.of("id"))
+      .fields(List.of("id", "something-else"))
       .ids(contentIds);
     List<Map<String, Object>> expectedList = List.of(
       Map.of("id", contentIds.get(0)),

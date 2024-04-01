@@ -29,7 +29,6 @@ import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
-import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
@@ -117,7 +116,7 @@ public class ListService {
     // Once UI has been updated to support sending fields in the request, the below if-block
     // can be removed
     if (CollectionUtils.isEmpty(listEntity.getFields())) {
-      listEntity.setFields(getFieldsFromEntityType(entityType));
+      listEntity.setFields(getFieldsFromEntityType(entityType, false));
     }
 
     if (hasText(listRequest.getFqlQuery())) {
@@ -275,7 +274,7 @@ public class ListService {
     // If fields are not provided, retrieve all fields from the entity type definition
     if (isEmpty(fields)) {
       EntityType entityType = getEntityType(list.getEntityTypeId());
-      fields = getFieldsFromEntityType(entityType);
+      fields = getFieldsFromEntityType(entityType, true);
     }
     List<Map<String, Object>> sortedContents = List.of();
     if (list.isRefreshed()) {
@@ -340,13 +339,13 @@ public class ListService {
     return appShutdownService.registerShutdownTask(executionContext, shutDownTask, taskName);
   }
 
-  private List<String> getFieldsFromEntityType(EntityType entityType) {
+  private List<String> getFieldsFromEntityType(EntityType entityType, boolean showHidden) {
     return entityType
       .getColumns()
       .stream()
       // we cannot use EntityTypeColumn::getVisibleByDefault here since it may return null
       // if it is null, we get a NPE with plain .filter(...) :(
-      .filter(f -> Boolean.TRUE.equals(f.getVisibleByDefault()))
+      .filter(f -> showHidden || Boolean.TRUE.equals(f.getVisibleByDefault()))
       .map(Field::getName)
       .toList();
   }
