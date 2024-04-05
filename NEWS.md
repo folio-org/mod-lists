@@ -1,5 +1,9 @@
 # 2.0.x
 
+## 2.0.1
+- Bump folio-s3-client dependency to the latest version ([MODFQMMGR-218](https://folio-org.atlassian.net/browse/MODFQMMGR-218))
+- Fix bug with multipart uploads of CSVs ([MODLISTS-96](https://folio-org.atlassian.net/browse/MODLISTS-96))
+
 ## 2.0.0
 - Manually flush the entity manager, to address race condition ([MODLISTS-66](https://folio-org.atlassian.net/browse/MODLISTS-66))
 - Add list versioning ([MODLISTS-60](https://folio-org.atlassian.net/browse/MODLISTS-60), [MODLISTS-61](https://folio-org.atlassian.net/browse/MODLISTS-61), [MODLISTS-62](https://folio-org.atlassian.net/browse/MODLISTS-62), [MODLISTS-63](https://folio-org.atlassian.net/browse/MODLISTS-63), [MODLISTS-72](https://folio-org.atlassian.net/browse/MODLISTS-72), [MODLISTS-75](https://folio-org.atlassian.net/browse/MODLISTS-75), [MODLISTS-76](https://folio-org.atlassian.net/browse/MODLISTS-76))
