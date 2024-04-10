@@ -1,5 +1,8 @@
 # 2.0.x
 
+## 2.0.2
+- Fix bug where the Missing Items canned list could not be duplicated [MODLISTS-104](https://folio-org.atlassian.net/browse/MODLISTS-104)
+
 ## 2.0.1
 - Bump folio-s3-client dependency to the latest version ([MODLISTS-96](https://folio-org.atlassian.net/browse/MODLISTS-96))
 - Fix bug with multipart uploads of CSVs  ([MODFQMMGR-218](https://folio-org.atlassian.net/browse/MODFQMMGR-218))
