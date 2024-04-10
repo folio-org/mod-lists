@@ -4,14 +4,13 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <changeSet id="MODLISTS-104" author="mweaver@ebsco.com">
+  <changeSet id="MODLISTS-104" author="mweaver@ebsco.com" runOnChange="true">
     <comment>Convert the condition values in the Missing Items canned list to sentence case instead of lower case</comment>
     <sql>
       UPDATE list_details
-      SET fql_query = '{"item_status": {"$in": ["Missing", "Aged to lost", "Claimed returned", "Declared lost", "Long missing" ] }}'
-      WHERE id = '605a345f-f456-4ab2-8968-22f49cf1fbb6'
-        AND fql_query =
-            '{"item_status": {"$in": ["missing", "aged to lost", "claimed returned", "declared lost", "long missing" ] }}';
+      SET fql_query = '{"item_status": {"$in": ["Missing", "Aged to lost", "Claimed returned", "Declared lost", "Long missing" ] }}',
+          user_friendly_query = 'item_status in [missing, aged to lost, claimed returned, declared lost, long missing]'
+      WHERE id = '605a345f-f456-4ab2-8968-22f49cf1fbb6';
     </sql>
   </changeSet>
 </databaseChangeLog>
