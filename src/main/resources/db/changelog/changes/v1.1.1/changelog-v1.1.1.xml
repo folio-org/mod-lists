@@ -9,7 +9,7 @@
     <sql>
       UPDATE list_details
       SET fql_query = '{"item_status": {"$in": ["Missing", "Aged to lost", "Claimed returned", "Declared lost", "Long missing" ] }}',
-          user_friendly_query = 'item_status in [missing, aged to lost, claimed returned, declared lost, long missing]'
+          user_friendly_query = 'item_status in [Missing, Aged to lost, Claimed returned, Declared lost, Long missing]'
       WHERE id = '605a345f-f456-4ab2-8968-22f49cf1fbb6';
     </sql>
   </changeSet>
