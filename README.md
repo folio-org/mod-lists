@@ -14,6 +14,7 @@ The "mod-lists" module is responsible for handling lists within the system. It p
 mvn clean install
 ```
 ## Environment Variables
+
 | Name                                            | Default Value            | Description                                                    |
 |-------------------------------------------------|--------------------------|----------------------------------------------------------------|
 | DB_HOST                                         | localhost                | Postgres hostname                                              |
@@ -34,7 +35,12 @@ mvn clean install
 | mod-lists.general.refresh-query-timeout-minutes | 90                       | Max time to wait for an FQL query to run during a list refresh |
 
 
-> **Note:** `USE_AWS_SDK` is set to `false` when connected to minio.
+> **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
+The storage is selected by specifying the url of S3-compatible storage by using ENV variable `AWS_URL`.
+`USE_AWS_SDK` is used to specify client to communicate with storage.
+It requires `true` in case if S3 usage or `false` in case if MinIO usage. By default it equals to `false`.
+In addition, the following ENV variables can be
+specified: `AWS_REGION`, `LIST_APP_AWS_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
 
 ## Installing the module
 Follow the guide of Deploying Modules sections of the [Okapi Guide](https://github.com/folio-org/okapi/blob/master/doc/guide.md#example-1-deploying-and-using-a-simple-module) and Reference, which describe the process in detail.
@@ -196,7 +202,7 @@ curl \
 ```
 
 > **Note:** To paginate through the results, you can utilize the optional `offset` and `size` query parameters. It's important to
-note that the offset parameter follows a zero-based index.
+> note that the offset parameter follows a zero-based index.
 
 Response
 * Status Code : 200 OK
