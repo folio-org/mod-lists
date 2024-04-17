@@ -21,3 +21,7 @@ management:
 logging:
   level:
     org.springframework.web: debug
+mod-lists:
+  list-export:
+    s3-startup-check:
+      enabled: false

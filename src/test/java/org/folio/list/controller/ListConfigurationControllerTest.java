@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 // Using db-test profile here to prevent this test from waiting on the db connection timeout from application.yml
 // This allows the test to run much faster, since it doesn't get stuck waiting for a db connection
-@ActiveProfiles("db-test")
+@ActiveProfiles({"test", "db-test"})
 @ExtendWith(TestcontainerCallbackExtension.class)
 class ListConfigurationControllerTest {
   private static final String TENANT_ID = "test-tenant";
