@@ -15,24 +15,25 @@ mvn clean install
 ```
 ## Environment Variables
 
-| Name                                            | Default Value            | Description                                                    |
-|-------------------------------------------------|--------------------------|----------------------------------------------------------------|
-| DB_HOST                                         | localhost                | Postgres hostname                                              |
-| DB_PORT                                         | 5432                     | Postgres port                                                  |
-| DB_USERNAME                                     | postgres                 | Postgres username                                              |
-| DB_PASSWORD                                     | postgres                 | Postgres password                                              |
-| DB_DATABASE                                     | postgres                 | Postgres database name                                         |
-| server.port                                     | 8081                     | Server port                                                    |
-| MAX_LIST_SIZE                                   | 1250000                  | max size of each list                                          |
-| LIST_EXPORT_BATCH_SIZE                          | 1000                     | batch size for exports                                         |
-| LIST_APP_S3_BUCKET                              | list-exports-us-west-2   | Name of the S3 bucket for exports                              |
-| AWS_REGION                                      | us-west-2                | region of the S3 bucket                                        |
-| AWS_URL                                         | https://s3.amazonaws.com | end point for the S3 bucket                                    |
-| USE_AWS_SDK                                     | false                    | Use the AWS SDK for S3 access                                  |                     |
-| S3_ACCESS_KEY_ID                                | -                        | access key for the S3 bucket                                   |
-| S3_SECRET_ACCESS_KEY                            | -                        | secret key for the S3 bucket                                   |
-| spring.task.execution.pool.max-size             | 10                       | refresh/export thread pool's max size                          |
-| mod-lists.general.refresh-query-timeout-minutes | 90                       | Max time to wait for an FQL query to run during a list refresh |
+| Name                                             | Default Value            | Description                                                    |
+|--------------------------------------------------|--------------------------|----------------------------------------------------------------|
+| DB_HOST                                          | localhost                | Postgres hostname                                              |
+| DB_PORT                                          | 5432                     | Postgres port                                                  |
+| DB_USERNAME                                      | postgres                 | Postgres username                                              |
+| DB_PASSWORD                                      | postgres                 | Postgres password                                              |
+| DB_DATABASE                                      | postgres                 | Postgres database name                                         |
+| server.port                                      | 8081                     | Server port                                                    |
+| MAX_LIST_SIZE                                    | 1250000                  | max size of each list                                          |
+| LIST_EXPORT_BATCH_SIZE                           | 1000                     | batch size for exports                                         |
+| LIST_APP_S3_BUCKET                               | list-exports-us-west-2   | Name of the S3 bucket for exports                              |
+| AWS_REGION                                       | us-west-2                | region of the S3 bucket                                        |
+| AWS_URL                                          | https://s3.amazonaws.com | end point for the S3 bucket                                    |
+| USE_AWS_SDK                                      | false                    | Use the AWS SDK for S3 access                                  |
+| S3_ACCESS_KEY_ID                                 | -                        | access key for the S3 bucket                                   |
+| S3_SECRET_ACCESS_KEY                             | -                        | secret key for the S3 bucket                                   |
+| mod-lists.list-export.s3-startup-check.enabled   | true                     | Verify that S3/MinIO is accessible on startup                  |
+| spring.task.execution.pool.max-size              | 10                       | refresh/export thread pool's max size                          |
+| mod-lists.general.refresh-query-timeout-minutes  | 90                       | Max time to wait for an FQL query to run during a list refresh |
 
 
 > **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
@@ -41,6 +42,8 @@ The storage is selected by specifying the url of S3-compatible storage by using 
 It requires `true` in case if S3 usage or `false` in case if MinIO usage. By default it equals to `false`.
 In addition, the following ENV variables can be
 specified: `AWS_REGION`, `LIST_APP_AWS_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
+By default, the module will attempt to uploaded and delete a small file to S3/MinIO on startup, to verify that the
+service is reachable. This check can be disabled by setting `mod-lists.list-export.s3-startup-check.enabled` to `false`.
 
 ## Installing the module
 Follow the guide of Deploying Modules sections of the [Okapi Guide](https://github.com/folio-org/okapi/blob/master/doc/guide.md#example-1-deploying-and-using-a-simple-module) and Reference, which describe the process in detail.

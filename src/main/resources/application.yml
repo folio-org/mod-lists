@@ -3,6 +3,8 @@ mod-lists:
     max-list-size: ${MAX_LIST_SIZE:1250000}
     refresh-query-timeout-minutes: 90
   list-export:
+    s3-startup-check:
+      enabled: true
     data-fetch-properties:
       batch-size: ${LIST_EXPORT_BATCH_SIZE:1000}
     s3-properties:
