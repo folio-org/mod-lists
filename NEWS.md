@@ -1,5 +1,10 @@
 # 2.0.x
 
+## 2.0.3
+- Add more detail about S3/MinIO config to the README ([MODLISTS-107](https://folio-org.atlassian.net/browse/MODLISTS-107))
+- Only select columns that are visibleByDefault when none are specified in the list (#75) ([MODLISTS-98](https://folio-org.atlassian.net/browse/MODLISTS-98))
+- Fix bug where data was never retrieved for non-default columns ([MODLISTS-99](https://folio-org.atlassian.net/browse/MODLISTS-99))
+
 ## 2.0.2
 - Fix bug where the Missing Items canned list could not be duplicated [MODLISTS-104](https://folio-org.atlassian.net/browse/MODLISTS-104)
 
