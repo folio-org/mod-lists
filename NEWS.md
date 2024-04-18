@@ -1,5 +1,8 @@
 # 2.0.x
 
+## 2.0.4
+- Add a startup check to verify that S3/MinIO are accessible ([MODLISTS-108](https://folio-org.atlassian.net/browse/MODLISTS-108))
+
 ## 2.0.3
 - Add more detail about S3/MinIO config to the README ([MODLISTS-107](https://folio-org.atlassian.net/browse/MODLISTS-107))
 - Only select columns that are visibleByDefault when none are specified in the list (#75) ([MODLISTS-98](https://folio-org.atlassian.net/browse/MODLISTS-98))
