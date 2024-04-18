@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
@@ -48,6 +49,7 @@ public class CsvCreator {
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
+  private static final String IS_DELETED = "_deleted";
 
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags) {
@@ -80,7 +82,10 @@ public class CsvCreator {
       ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
         .fields(exportDetails.getFields())
         .ids(ids);
-      var sortedContents = queryClient.getContents(contentsRequest);
+      var sortedContents = queryClient.getContents(contentsRequest)
+        .stream()
+        .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+        .toList();
       csvWriter.writeCsv(sortedContents, localStorageOutputStream);
       batchNumber++;
     }
