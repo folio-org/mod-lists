@@ -246,6 +246,9 @@
       { "name": "S3_SECRET_ACCESS_KEY",
         "value": ""
       },
+      { "name": "mod-lists.list-export.s3-startup-check.enabled",
+        "value": "true"
+      },
       { "name": "spring.task.execution.pool.max-size",
         "value": "10"
       }
