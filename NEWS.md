@@ -2,6 +2,7 @@
 
 ## 2.0.4
 - Add a startup check to verify that S3/MinIO are accessible ([MODLISTS-108](https://folio-org.atlassian.net/browse/MODLISTS-108))
+- Fix a bug where records deleted after a list refresh caused exports to fail ([MODLISTS-105](https://folio-org.atlassian.net/browse/MODLISTS-105))
 
 ## 2.0.3
 - Add more detail about S3/MinIO config to the README ([MODLISTS-107](https://folio-org.atlassian.net/browse/MODLISTS-107))
