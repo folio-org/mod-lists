@@ -46,7 +46,24 @@ By default, the module will attempt to uploaded and delete a small file to S3/Mi
 service is reachable. This check can be disabled by setting `mod-lists.list-export.s3-startup-check.enabled` to `false`.
 
 ## Installing the module
+
 Follow the guide of Deploying Modules sections of the [Okapi Guide](https://github.com/folio-org/okapi/blob/master/doc/guide.md#example-1-deploying-and-using-a-simple-module) and Reference, which describe the process in detail.
+
+### Resource requirements
+
+Most operations in mod-lists use very little memory, however more memory is required when serving up list exports to
+users. Additionally, sufficient memory is required for good and consistent performance.
+With the default settings, you should provide mod-lists with at least 1 gigabyte of heap space. This will allow it to
+perform well and export any list up to the default maximum list size. For larger instances, where mod-lists is used
+heavily, give it at least 2 gigabytes. In the most extreme case (still assuming the default max list size and concurrent
+task limit), where the application is fully saturated with non-stop export requests of extremely large lists that happen
+to all require a lot of memory at the same instant, 5.5 gigabytes of heap space should be sufficient to maintain
+performance and stability.
+
+In addition, at least 200 megabytes of free storage space should be available on the server for mod-lists to use for
+staging temporary files during the list export process.
+
+### Installation
 
 First of all you need a running Okapi instance. (Note that specifying an explicit 'okapiurl' might be needed.)
 ```bash
