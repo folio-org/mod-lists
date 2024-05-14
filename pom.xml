@@ -158,6 +158,12 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- required for folio-spring-system-user :( -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-messaging</artifactId>
+      <version>6.1.6</version>
+    </dependency>
 
     <!-- AWS S3 dependencies -->
     <dependency>
