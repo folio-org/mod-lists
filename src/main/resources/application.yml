@@ -80,6 +80,7 @@ folio:
   tenant:
     validation:
       enabled: true
+  environment: folio
   okapi-url: ${OKAPI_URL}
   system-user:
     username: mod-lists
