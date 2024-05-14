@@ -251,6 +251,12 @@
       },
       { "name": "spring.task.execution.pool.max-size",
         "value": "10"
+      },
+      { "name": "OKAPI_URL",
+        "value": "http://okapi:9130"
+      },
+      { "name": "SYSTEM_USER_PASSWORD",
+        "value": ""
       }
     ]
   }

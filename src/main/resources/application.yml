@@ -80,6 +80,12 @@ folio:
   tenant:
     validation:
       enabled: true
+  okapi-url: ${OKAPI_URL}
+  system-user:
+    username: mod-lists
+    password: ${SYSTEM_USER_PASSWORD}
+    lastname: System
+    permissionsFilePath: system-user-permissions.txt
 management:
   endpoints:
     web:

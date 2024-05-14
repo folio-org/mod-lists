@@ -14,9 +14,11 @@ import org.folio.list.repository.ListExportRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.AppShutdownService;
+import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListValidationService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +37,9 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 @Log4j2
 @RequiredArgsConstructor
 public class ListExportService {
+
   private final FolioExecutionContext executionContext;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
   private final ListExportRepository listExportRepository;
   private final ListExportMapper listExportMapper;
   private final ListRepository listRepository;
@@ -105,15 +109,26 @@ public class ListExportService {
 
   private void doAsyncExport(ExportDetails exportDetails) {
     Runnable cancelExport = () -> cancelExport(exportDetails.getList().getId(), exportDetails.getExportId());
-    var shutdownTask = appShutdownService.registerShutdownTask(executionContext, cancelExport, "Cancel export for list " + exportDetails.getList().getId());
-    listExportWorkerService.doAsyncExport(exportDetails)
-      .whenComplete((success, throwable) -> {
-        try (var autoClose = shutdownTask) { // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
-          setExportStatus(exportDetails, throwable);
-          exportDetails.setEndDate(OffsetDateTime.now());
-          listExportRepository.save(exportDetails);
-        }
-      });
+    ShutdownTask shutdownTask = appShutdownService.registerShutdownTask(
+      executionContext,
+      cancelExport,
+      "Cancel export for list " + exportDetails.getList().getId()
+    );
+
+    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+      executionContext.getTenantId(),
+      () ->
+        listExportWorkerService
+          .doAsyncExport(exportDetails)
+          .whenComplete((success, throwable) -> {
+            // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
+            try (ShutdownTask autoClose = shutdownTask) {
+              setExportStatus(exportDetails, throwable);
+              exportDetails.setEndDate(OffsetDateTime.now());
+              listExportRepository.save(exportDetails);
+            }
+          })
+    );
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {
