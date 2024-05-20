@@ -1,5 +1,13 @@
 package org.folio.list.services.export;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+import static org.folio.list.services.export.ExportUtils.getFileName;
+
+import java.io.InputStream;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,9 +20,9 @@ import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.mapper.ListExportMapper;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.repository.ListRepository;
-import org.folio.list.services.ListActions;
 import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
@@ -22,15 +30,6 @@ import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.InputStream;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.folio.list.services.export.ExportUtils.getFileName;
-import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 @Lazy // Do not connect to S3 when the application starts
 @Service
@@ -50,7 +49,8 @@ public class ListExportService {
 
   @Transactional
   public ListExportDTO createExport(UUID listId, List<String> fields) {
-    ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId)
+    ListEntity list = listRepository
+      .findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
@@ -61,7 +61,8 @@ public class ListExportService {
   }
 
   public ListExportDTO getExportDetails(UUID listId, UUID exportId) {
-    ExportDetails exportDetails = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ExportDetails exportDetails = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
     validationService.validateGetExport(exportDetails.getList());
     return listExportMapper.toListExportDTO(exportDetails);
@@ -77,7 +78,8 @@ public class ListExportService {
    */
   public Pair<String, InputStream> downloadExport(UUID listId, UUID exportId) {
     String fileName = getFileName(executionContext.getTenantId(), exportId);
-    ListEntity list = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ListEntity list = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .map(ExportDetails::getList)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
     validationService.validateDownloadExport(list);
@@ -88,7 +90,8 @@ public class ListExportService {
   @Transactional
   public void cancelExport(UUID listId, UUID exportId) {
     log.info("Cancelling export: listId {}, exportId {}", listId, exportId);
-    ExportDetails exportDetails = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ExportDetails exportDetails = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.CANCEL_EXPORT));
     validationService.validateCancelExport(exportDetails);
     exportDetails.setStatus(AsyncProcessStatus.CANCELLED);
@@ -114,6 +117,11 @@ public class ListExportService {
       cancelExport,
       "Cancel export for list " + exportDetails.getList().getId()
     );
+
+    log.info(executionContext.getTenantId());
+    log.info(executionContext.getTenantId());
+    log.info(executionContext.getTenantId());
+    log.info(executionContext.getTenantId());
 
     systemUserScopedExecutionService.executeAsyncSystemUserScoped(
       executionContext.getTenantId(),
