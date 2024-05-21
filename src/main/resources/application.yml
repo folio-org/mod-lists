@@ -52,7 +52,7 @@ spring:
   jackson:
     default-property-inclusion: non_empty
     deserialization:
-      fail-on-unknown-properties: true
+      fail-on-unknown-properties: false
       accept-single-value-as-array: true
   mustache:
     check-template-location: false
