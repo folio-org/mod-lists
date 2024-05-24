@@ -118,11 +118,6 @@ public class ListExportService {
       "Cancel export for list " + exportDetails.getList().getId()
     );
 
-    log.info(executionContext.getTenantId());
-    log.info(executionContext.getTenantId());
-    log.info(executionContext.getTenantId());
-    log.info(executionContext.getTenantId());
-
     systemUserScopedExecutionService.executeAsyncSystemUserScoped(
       executionContext.getTenantId(),
       () ->

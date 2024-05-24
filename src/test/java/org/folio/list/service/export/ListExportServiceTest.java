@@ -1,5 +1,16 @@
 package org.folio.list.service.export;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -19,6 +30,7 @@ import org.folio.list.services.export.ListExportWorkerService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,20 +39,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class ListExportServiceTest {
+
   private static final String TENANT_ID = "test-tenant";
 
   @InjectMocks
@@ -70,6 +71,9 @@ class ListExportServiceTest {
   @Mock
   private AppShutdownService appShutdownService;
 
+  @Mock
+  private SystemUserScopedExecutionService systemUserScopedExecutionService;
+
   @Test
   void shouldSaveExport() {
     UUID listId = TestDataFixture.getListExportDetails().getList().getId();
@@ -84,8 +88,14 @@ class ListExportServiceTest {
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
-    when(listExportWorkerService.doAsyncExport(exportDetails))
-      .thenReturn(CompletableFuture.completedFuture(true));
+    when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(true));
+    doAnswer(invocation -> {
+        Runnable runnable = invocation.getArgument(1);
+        runnable.run();
+        return CompletableFuture.completedFuture(null);
+      })
+      .when(systemUserScopedExecutionService)
+      .executeAsyncSystemUserScoped(any(), any());
 
     listExportService.createExport(listId, fields);
 
@@ -122,6 +132,13 @@ class ListExportServiceTest {
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(exportDetails))
       .thenReturn(CompletableFuture.failedFuture(new RuntimeException("something went wrong")));
+    doAnswer(invocation -> {
+        Runnable runnable = invocation.getArgument(1);
+        runnable.run();
+        return CompletableFuture.completedFuture(null);
+      })
+      .when(systemUserScopedExecutionService)
+      .executeAsyncSystemUserScoped(any(), any());
 
     listExportService.createExport(listId, null);
 
@@ -168,9 +185,12 @@ class ListExportServiceTest {
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.EXPORT))
-      .when(validationService).validateGetExport(exportDetails.getList());
-    Assertions.assertThrows(PrivateListOfAnotherUserException.class,
-      () -> listExportService.getExportDetails(listId, exportId));
+      .when(validationService)
+      .validateGetExport(exportDetails.getList());
+    Assertions.assertThrows(
+      PrivateListOfAnotherUserException.class,
+      () -> listExportService.getExportDetails(listId, exportId)
+    );
   }
 
   @Test
@@ -209,9 +229,12 @@ class ListExportServiceTest {
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.EXPORT))
-      .when(validationService).validateDownloadExport(exportDetails.getList());
-    Assertions.assertThrows(PrivateListOfAnotherUserException.class,
-      () -> listExportService.downloadExport(listId, exportId));
+      .when(validationService)
+      .validateDownloadExport(exportDetails.getList());
+    Assertions.assertThrows(
+      PrivateListOfAnotherUserException.class,
+      () -> listExportService.downloadExport(listId, exportId)
+    );
   }
 
   @Test
@@ -244,10 +267,10 @@ class ListExportServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(any(ExportDetails.class))).thenReturn(exportDetails);
     when(listExportMapper.toListExportDTO(exportDetails)).thenReturn(mock(ListExportDTO.class));
-    when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(null));
 
     listExportService.createExport(listId, null);
 
-    verify(appShutdownService, times(1)).registerShutdownTask(eq(folioExecutionContext), any(Runnable.class), any(String.class));
+    verify(appShutdownService, times(1))
+      .registerShutdownTask(eq(folioExecutionContext), any(Runnable.class), any(String.class));
   }
 }
