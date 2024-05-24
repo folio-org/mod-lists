@@ -1,5 +1,13 @@
 package org.folio.list.services.export;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+import static org.folio.list.services.export.ExportUtils.getFileName;
+
+import java.io.InputStream;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,30 +20,25 @@ import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.mapper.ListExportMapper;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.repository.ListRepository;
-import org.folio.list.services.ListActions;
 import org.folio.list.services.AppShutdownService;
+import org.folio.list.services.AppShutdownService.ShutdownTask;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.InputStream;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.folio.list.services.export.ExportUtils.getFileName;
-import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 @Lazy // Do not connect to S3 when the application starts
 @Service
 @Log4j2
 @RequiredArgsConstructor
 public class ListExportService {
+
   private final FolioExecutionContext executionContext;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
   private final ListExportRepository listExportRepository;
   private final ListExportMapper listExportMapper;
   private final ListRepository listRepository;
@@ -46,7 +49,8 @@ public class ListExportService {
 
   @Transactional
   public ListExportDTO createExport(UUID listId, List<String> fields) {
-    ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId)
+    ListEntity list = listRepository
+      .findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
@@ -57,7 +61,8 @@ public class ListExportService {
   }
 
   public ListExportDTO getExportDetails(UUID listId, UUID exportId) {
-    ExportDetails exportDetails = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ExportDetails exportDetails = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
     validationService.validateGetExport(exportDetails.getList());
     return listExportMapper.toListExportDTO(exportDetails);
@@ -73,7 +78,8 @@ public class ListExportService {
    */
   public Pair<String, InputStream> downloadExport(UUID listId, UUID exportId) {
     String fileName = getFileName(executionContext.getTenantId(), exportId);
-    ListEntity list = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ListEntity list = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .map(ExportDetails::getList)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
     validationService.validateDownloadExport(list);
@@ -84,7 +90,8 @@ public class ListExportService {
   @Transactional
   public void cancelExport(UUID listId, UUID exportId) {
     log.info("Cancelling export: listId {}, exportId {}", listId, exportId);
-    ExportDetails exportDetails = listExportRepository.findByListIdAndExportId(listId, exportId)
+    ExportDetails exportDetails = listExportRepository
+      .findByListIdAndExportId(listId, exportId)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.CANCEL_EXPORT));
     validationService.validateCancelExport(exportDetails);
     exportDetails.setStatus(AsyncProcessStatus.CANCELLED);
@@ -105,15 +112,26 @@ public class ListExportService {
 
   private void doAsyncExport(ExportDetails exportDetails) {
     Runnable cancelExport = () -> cancelExport(exportDetails.getList().getId(), exportDetails.getExportId());
-    var shutdownTask = appShutdownService.registerShutdownTask(executionContext, cancelExport, "Cancel export for list " + exportDetails.getList().getId());
-    listExportWorkerService.doAsyncExport(exportDetails)
-      .whenComplete((success, throwable) -> {
-        try (var autoClose = shutdownTask) { // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
-          setExportStatus(exportDetails, throwable);
-          exportDetails.setEndDate(OffsetDateTime.now());
-          listExportRepository.save(exportDetails);
-        }
-      });
+    ShutdownTask shutdownTask = appShutdownService.registerShutdownTask(
+      executionContext,
+      cancelExport,
+      "Cancel export for list " + exportDetails.getList().getId()
+    );
+
+    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+      executionContext.getTenantId(),
+      () ->
+        listExportWorkerService
+          .doAsyncExport(exportDetails)
+          .whenComplete((success, throwable) -> {
+            // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
+            try (ShutdownTask autoClose = shutdownTask) {
+              setExportStatus(exportDetails, throwable);
+              exportDetails.setEndDate(OffsetDateTime.now());
+              listExportRepository.save(exportDetails);
+            }
+          })
+    );
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {

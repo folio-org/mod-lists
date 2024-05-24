@@ -52,8 +52,9 @@ spring:
   jackson:
     default-property-inclusion: non_empty
     deserialization:
-      fail-on-unknown-properties: true
       accept-single-value-as-array: true
+      # unfortunately, this is required for the system user library, pending FOLSPRINGS-157
+      fail-on-unknown-properties: false
   mustache:
     check-template-location: false
   cloud:
@@ -80,6 +81,13 @@ folio:
   tenant:
     validation:
       enabled: true
+  environment: folio
+  okapi-url: ${OKAPI_URL}
+  system-user:
+    username: mod-lists
+    password: ${SYSTEM_USER_PASSWORD}
+    lastname: System
+    permissionsFilePath: system-user-permissions.txt
 management:
   endpoints:
     web:
