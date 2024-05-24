@@ -207,7 +207,7 @@ class ListServiceTest {
   void testCreateListWithoutFqlQuery() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
-    EntityType entityType = new EntityType().name("test-entity");
+    EntityType entityType = new EntityType().name("test-entity").columns(List.of());
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);

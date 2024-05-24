@@ -4,6 +4,34 @@ Copyright (C) 2023 The Open Library Foundation
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
+- [Introduction](#introduction)
+- [Architecture](#architecture)
+- [Compiling](#compiling)
+- [Environment Variables](#environment-variables)
+- [Installing the module](#installing-the-module)
+  - [System user](#system-user)
+  - [Resource requirements](#resource-requirements)
+  - [Installation](#installation)
+- [Deploying the module](#deploying-the-module)
+- [Interacting with list-app](#interacting-with-list-app)
+  - [Create a new list](#create-a-new-list)
+  - [Get all the available lists](#get-all-the-available-lists)
+  - [Get comprehensive details about a particular list](#get-comprehensive-details-about-a-particular-list)
+  - [Update list](#update-list)
+  - [Delete list](#delete-list)
+  - [Refresh List](#refresh-list)
+  - [Contents of a list](#contents-of-a-list)
+  - [Exporting List](#exporting-list)
+  - [Export Status](#export-status)
+  - [Download export](#download-export)
+- [Additional information](#additional-information)
+  - [Issue tracker](#issue-tracker)
+  - [Code of Conduct](#code-of-conduct)
+  - [ModuleDescriptor](#moduledescriptor)
+  - [API documentation](#api-documentation)
+  - [Code analysis](#code-analysis)
+  - [Download and configuration](#download-and-configuration)
+
 ## Introduction
 mod-lists is responsible for persisting the metadata and the contents (IDs) of lists.
 
@@ -31,10 +59,11 @@ mvn clean install
 | USE_AWS_SDK                                      | false                    | Use the AWS SDK for S3 access                                  |
 | S3_ACCESS_KEY_ID                                 | -                        | access key for the S3 bucket                                   |
 | S3_SECRET_ACCESS_KEY                             | -                        | secret key for the S3 bucket                                   |
+| OKAPI_URL                                        | http://okapi:9130        | Okapi URL, used for system user authentication/management      |
+| SYSTEM_USER_PASSWORD                             | -                        | Password for the system user; **must be set**                  |
 | mod-lists.list-export.s3-startup-check.enabled   | true                     | Verify that S3/MinIO is accessible on startup                  |
 | spring.task.execution.pool.max-size              | 10                       | refresh/export thread pool's max size                          |
 | mod-lists.general.refresh-query-timeout-minutes  | 90                       | Max time to wait for an FQL query to run during a list refresh |
-
 
 > **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
 The storage is selected by specifying the url of S3-compatible storage by using ENV variable `AWS_URL`.
@@ -48,6 +77,12 @@ service is reachable. This check can be disabled by setting `mod-lists.list-expo
 ## Installing the module
 
 Follow the guide of Deploying Modules sections of the [Okapi Guide](https://github.com/folio-org/okapi/blob/master/doc/guide.md#example-1-deploying-and-using-a-simple-module) and Reference, which describe the process in detail.
+
+### System user
+
+As part of installation, this module creates a system user with the username `mod-lists`, password as the environment
+variable `SYSTEM_USER_PASSWORD`, and permissions to interact with `mod-fqm-manager`
+(as specified [here](src/main/resources/system-user-permissions.txt)).
 
 ### Resource requirements
 
