@@ -1,4 +1,5 @@
-# 2.0.x
+## 2.0.5
+- Add a system user for list exports ([MODLISTS-109](https://folio-org.atlassian.net/browse/MODLISTS-109))
 
 ## 2.0.4
 - Add a startup check to verify that S3/MinIO are accessible ([MODLISTS-108](https://folio-org.atlassian.net/browse/MODLISTS-108))
