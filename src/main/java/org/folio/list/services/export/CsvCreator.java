@@ -28,7 +28,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
@@ -59,7 +58,7 @@ public class CsvCreator {
     EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId());
 
     OutputStream localStorageOutputStream = localStorage.outputStream();
-    var csvWriter = new ListCsvWriter(entityType);
+    var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());
     int batchSize = exportProperties.getBatchSize();
     int batchNumber = 0;
     int partNumber = 1;
@@ -124,8 +123,8 @@ public class CsvCreator {
       "arrayType", CsvSchema.ColumnType.ARRAY
     );
 
-    private ListCsvWriter(EntityType entityType) {
-      this.csvSchema = createSchema(entityType);
+    private ListCsvWriter(EntityType entityType, List<String> fields) {
+      this.csvSchema = createSchema(entityType, fields);
       this.objectWriter = new CsvMapper().writerFor(List.class);
       this.firstBatch = true;
     }
@@ -140,9 +139,13 @@ public class CsvCreator {
       destination.flush();
     }
 
-    private CsvSchema createSchema(EntityType entityType) {
+    private CsvSchema createSchema(EntityType entityType, List<String> fields) {
       CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
-      entityType.getColumns().forEach(column -> csvSchemaBuilder.addColumn(column.getName(), getColumnType(column)));
+      entityType
+        .getColumns()
+        .stream()
+        .filter(column -> fields.contains(column.getName()))
+        .forEach(column -> csvSchemaBuilder.addColumn(column.getName(), getColumnType(column)));
       return csvSchemaBuilder.build();
     }
 
