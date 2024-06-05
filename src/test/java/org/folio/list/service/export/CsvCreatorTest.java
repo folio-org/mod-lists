@@ -65,7 +65,7 @@ class CsvCreatorTest {
     int numberOfBatch = 11;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
-    EntityType entityType = createEntityType(List.of(createColumn("col1"), createColumn("col2")));
+    EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
     List<List<String>> contentIds = new ArrayList<>();
     // generate content ids for ten batches
@@ -74,8 +74,8 @@ class CsvCreatorTest {
     IntStream.rangeClosed(1, batchSize).forEach(i ->
       {
         LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
-        linkedHashMap.put("col1", "col1-value1");
-        linkedHashMap.put("col2", "col2-value1");
+        linkedHashMap.put("id", "value1");
+        linkedHashMap.put("item_status", "value2");
         contentsWithData.add(linkedHashMap);
       }
     );
