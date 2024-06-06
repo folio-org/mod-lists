@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -16,6 +17,7 @@ import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
+import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
 import org.folio.list.exception.VersionNotFoundException;
@@ -38,6 +40,7 @@ import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.UsersClient;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
+import org.folio.spring.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -83,10 +86,21 @@ public class ListService {
 
     log.info("Attempting to get all lists");
     UUID currentUserId = executionContext.getUserId();
+    List<UUID> permittedEntityTypeIds = entityTypeClient
+      .getEntityTypeSummary(null)
+      .stream()
+      .map(EntityTypeSummary::id)
+      .toList();
+
+    List<UUID> searchEntityTypeIds = permittedEntityTypeIds
+      .stream()
+      .filter(id -> isEmpty(entityTypeIds) || entityTypeIds.contains(id))
+      .toList();
+
     Page<ListEntity> lists = listRepository.searchList(
       pageable,
       isEmpty(ids) ? null : ids,
-      isEmpty(entityTypeIds) ? null : entityTypeIds,
+      searchEntityTypeIds,
       currentUserId,
       active,
       isPrivate,
@@ -108,7 +122,7 @@ public class ListService {
 
   public ListDTO createList(ListRequestDTO listRequest) {
     log.info("Attempting to create a list");
-    EntityType entityType = getEntityType(listRequest.getEntityTypeId());
+    EntityType entityType = getEntityType(listRequest.getEntityTypeId(), ListActions.CREATE);
     validationService.validateCreate(listRequest, entityType);
     UsersClient.User currentUser = getCurrentUser();
     ListEntity listEntity = listEntityMapper.toListEntity(listRequest, currentUser);
@@ -140,7 +154,7 @@ public class ListService {
     log.info("Attempting to update a list with id : {}", id);
     Optional<ListEntity> listEntity = listRepository.findByIdAndIsDeletedFalse(id);
     listEntity.ifPresent(list -> {
-      EntityType entityType = getEntityType(list.getEntityTypeId());
+      EntityType entityType = getEntityType(list.getEntityTypeId(), ListActions.UPDATE);
       validationService.validateUpdate(list, request, entityType);
       if (!request.getIsActive()) {
         // If we're deactivating a list, clear its contents and refresh data
@@ -176,7 +190,7 @@ public class ListService {
     log.info("Attempting to get specific list for id {}", id);
     return listRepository.findByIdAndIsDeletedFalse(id)
       .map(list -> {
-        validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+        validationService.validateRead(list);
         return listMapper.toListDTO(list);
       });
   }
@@ -212,7 +226,7 @@ public class ListService {
       listId, executionContext.getTenantId(), offset, size);
     return listRepository.findByIdAndIsDeletedFalse(listId)
       .map(list -> {
-        validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+        validationService.validateRead(list);
         return getListContents(list, fields, offset, size);
       });
   }
@@ -237,7 +251,7 @@ public class ListService {
     log.info("Checking that list {} is accessible and exists before getting versions", listId);
 
     ListEntity list = listRepository.findByIdAndIsDeletedFalse(listId).orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
-    validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+    validationService.validateRead(list);
 
     log.info("Getting all versions of the list {}", listId);
 
@@ -255,7 +269,7 @@ public class ListService {
     ListEntity list = listRepository
       .findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.READ));
-    validationService.assertSharedOrOwnedByUser(list, ListActions.READ);
+    validationService.validateRead(list);
 
     log.info("Getting version {} of the list {}", version, listId);
 
@@ -273,7 +287,7 @@ public class ListService {
   private ResultsetPage getListContents(ListEntity list, List<String> fields, Integer offset, Integer limit) {
     // If fields are not provided, retrieve all fields from the entity type definition
     if (isEmpty(fields)) {
-      EntityType entityType = getEntityType(list.getEntityTypeId());
+      EntityType entityType = getEntityType(list.getEntityTypeId(), ListActions.READ);
       fields = getFieldsFromEntityType(entityType, true);
     }
     List<Map<String, Object>> sortedContents = List.of();
@@ -330,8 +344,15 @@ public class ListService {
     return userFriendlyQueryService.getUserFriendlyQuery(fql.fqlCondition(), entityType);
   }
 
-  private EntityType getEntityType(UUID entityTypeId) {
-    return entityTypeClient.getEntityType(entityTypeId);
+  private EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction) {
+    try {
+      return entityTypeClient.getEntityType(entityTypeId);
+    } catch(FeignException.Unauthorized e) {
+      String message = e.getMessage();
+      throw new InsufficientEntityTypePermissionsException(entityTypeId, attemptedAction, message);
+    } catch(FeignException.NotFound e) {
+      throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
+    }
   }
 
   private AppShutdownService.ShutdownTask registerShutdownTask(ListEntity list, String taskName) {

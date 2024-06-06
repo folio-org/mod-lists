@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.AsyncProcessStatus;
@@ -10,8 +11,10 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.*;
 import org.folio.list.repository.ListExportRepository;
 
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +31,7 @@ public class ListValidationService {
   private final FolioExecutionContext folioExecutionContext;
   private final FqlValidationService fqlValidationService;
   private final ListExportRepository listExportRepository;
+  private final EntityTypeClient entityTypeClient;
 
   public void validateCreate(ListRequestDTO saveRequest, EntityType entityType) {
     assertIsValidFql(entityType, saveRequest.getFqlQuery(), CREATE);
@@ -43,13 +47,20 @@ public class ListValidationService {
   }
 
   public void validateDelete(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), DELETE);
     assertSharedOrOwnedByUser(list, DELETE);
     assertListNotCanned(list, DELETE);
     assertListNotRefreshing(list, DELETE);
     assertListNotExporting(list, DELETE);
   }
 
+  public void validateRead(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), READ);
+    assertSharedOrOwnedByUser(list, READ);
+  }
+
   public void validateRefresh(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), REFRESH);
     assertSharedOrOwnedByUser(list, REFRESH);
     assertListIsActive(list, REFRESH);
     assertListHasQuery(list, REFRESH);
@@ -58,6 +69,7 @@ public class ListValidationService {
   }
 
   public void validateCancelRefresh(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), CANCEL_REFRESH);
     assertSharedOrOwnedByUser(list, CANCEL_REFRESH);
     assertRefreshInProgress(list, CANCEL_REFRESH);
   }
@@ -70,21 +82,20 @@ public class ListValidationService {
   }
 
   public void validateCreateExport(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), EXPORT);
     assertListIsActive(list, EXPORT);
     assertSharedOrOwnedByUser(list, EXPORT);
     assertListNotRefreshing(list, EXPORT);
     assertUserNotExporting(list, EXPORT);
   }
 
-  public void validateGetExport(ListEntity list) {
-    assertSharedOrOwnedByUser(list, EXPORT);
-  }
-
-  public void validateDownloadExport(ListEntity list) {
+  public void validateExport(ListEntity list) {
+    assertUserHasEntityTypePermissions(list.getEntityTypeId(), EXPORT);
     assertSharedOrOwnedByUser(list, EXPORT);
   }
 
   public void validateCancelExport(ExportDetails exportDetails) {
+    assertUserHasEntityTypePermissions(exportDetails.getList().getEntityTypeId(), CANCEL_EXPORT);
     assertSharedOrOwnedByUser(exportDetails.getList(), CANCEL_EXPORT);
     assertExportInProgress(exportDetails, CANCEL_EXPORT);
   }
@@ -150,6 +161,16 @@ public class ListValidationService {
   private void assertUserNotExporting(ListEntity list, ListActions failedAction) {
     if (listExportRepository.isUserAlreadyExporting(list.getId(), folioExecutionContext.getUserId())) {
       throw new ExportInProgressException(list, failedAction);
+    }
+  }
+
+  private void assertUserHasEntityTypePermissions(UUID entityTypeId, ListActions failedAction) {
+    try {
+      entityTypeClient.getEntityType(entityTypeId);
+    } catch(FeignException.Unauthorized e) {
+      throw new InsufficientEntityTypePermissionsException(entityTypeId, failedAction, e.getMessage());
+    } catch(FeignException.NotFound e) {
+      throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
     }
   }
 }

@@ -20,14 +20,12 @@ import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -169,7 +167,7 @@ class ListServiceGetListContentsTest {
     List<String> fields = List.of("id", "key1", "key2");
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
-      .when(listValidationService).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+      .when(listValidationService).validateRead(listEntity);
     Assertions.assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListContents(listId, fields, 0, 100));
   }
 }

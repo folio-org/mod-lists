@@ -14,10 +14,15 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.domain.dto.ListExportDTO;
+import org.folio.querytool.domain.dto.EntityType;
 
 import java.util.UUID;
 
 public class TestDataFixture {
+
+  public static final EntityType TEST_ENTITY_TYPE = new EntityType()
+    .name("test-entity-type")
+    .id(UUID.randomUUID().toString());
 
   private static final ObjectMapper objectMapper;
 

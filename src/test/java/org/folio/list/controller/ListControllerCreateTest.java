@@ -3,11 +3,13 @@ package org.folio.list.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
+import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.InvalidFqlException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.utils.DateMatcher;
 import org.folio.list.utils.TestDataFixture;
+import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -39,7 +41,8 @@ class ListControllerCreateTest {
   void testCreateList() throws Exception {
     UUID listId = UUID.randomUUID();
     ListDTO listDto = TestDataFixture.getListDTOSuccessRefresh(listId);
-    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();;
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    ;
 
     var requestBuilder = post("/lists")
       .content(new ObjectMapper().writeValueAsString(listRequestDto))
@@ -64,7 +67,8 @@ class ListControllerCreateTest {
 
   @Test
   void shouldReturnHttp400ForInvalidFql() throws Exception {
-    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();;
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    ;
     when(listService.createList(listRequestDto))
       .thenThrow(new InvalidFqlException(listRequestDto.getFqlQuery(), ListActions.CREATE, Map.of("field1", "Field is invalid")));
 
@@ -75,6 +79,41 @@ class ListControllerCreateTest {
     mockMvc.perform(requestBuilder)
       .andExpect(status().isBadRequest())
       .andExpect(jsonPath("$.code", is("create-fql.query.invalid")));
+  }
+
+  @Test
+  void shouldReturnHttp403ForMissingEntityTypePermissions() throws Exception {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    String expectedErrorMessage = "User is missing permissions to access entity type "
+      + listRequestDto.getEntityTypeId() + ". User is missing permissions: [foo.bar]";
+    when(listService.createList(listRequestDto))
+      .thenThrow(new InsufficientEntityTypePermissionsException(listRequestDto.getEntityTypeId(), ListActions.CREATE, "User is missing permissions: [foo.bar]"));
+
+    var requestBuilder = post("/lists")
+      .content(new ObjectMapper().writeValueAsString(listRequestDto))
+      .contentType(APPLICATION_JSON);
+
+    mockMvc.perform(requestBuilder)
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.code", is("create-entity.type.restricted")))
+      .andExpect(jsonPath("$.message", is(expectedErrorMessage)));
+  }
+
+  @Test
+  void shouldReturnHttp404WhenEntityTypeNotFound() throws Exception {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    String expectedErrorMessage = "Entity type with id " + listRequestDto.getEntityTypeId() + " was not found.";
+    when(listService.createList(listRequestDto))
+      .thenThrow(new NotFoundException("Entity type with id " + listRequestDto.getEntityTypeId() + " was not found."));
+
+    var requestBuilder = post("/lists")
+      .content(new ObjectMapper().writeValueAsString(listRequestDto))
+      .contentType(APPLICATION_JSON);
+
+    mockMvc.perform(requestBuilder)
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.code", is("not.found")))
+      .andExpect(jsonPath("$.message", is(expectedErrorMessage)));
   }
 
   @Test

@@ -2,6 +2,7 @@ package org.folio.list.service;
 
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -22,12 +23,14 @@ class ListServiceValidateGetExportTest {
   private ListValidationService validationService;
   @Mock
   private FolioExecutionContext folioExecutionContext;
+  @Mock
+  private EntityTypeClient entityTypeClient;
 
   @Test
   void getExportDetailsShouldReturnErrorWhenListIsPrivate() {
     UUID listId = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
     when(folioExecutionContext.getUserId()).thenReturn(UUID.randomUUID());
-    assertThrows(PrivateListOfAnotherUserException.class, () -> validationService.validateGetExport(entity));
+    assertThrows(PrivateListOfAnotherUserException.class, () -> validationService.validateExport(entity));
   }
 }
