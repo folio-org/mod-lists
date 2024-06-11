@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,10 +21,12 @@ import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.mapper.ListExportMapper;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -46,6 +49,7 @@ public class ListExportService {
   private final FolioS3Client folioS3Client;
   private final ListValidationService validationService;
   private final AppShutdownService appShutdownService;
+  private final EntityTypeClient entityTypeClient;
 
   @Transactional
   public ListExportDTO createExport(UUID listId, List<String> fields) {
@@ -54,6 +58,18 @@ public class ListExportService {
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
+    entityTypeClient
+      .getEntityType(list.getEntityTypeId())
+      .getColumns()
+      .stream()
+      .filter(column -> Boolean.TRUE.equals(column.getIsIdColumn()))
+      .forEach(column -> {
+        if (!fieldsToExport.contains(column.getName())) {
+          fieldsToExport.add(column.getName());
+        }
+      });
+
+
     ExportDetails exportDetails = createExportDetails(list, fieldsToExport);
     ExportDetails savedExport = listExportRepository.save(exportDetails);
     doAsyncExport(savedExport);
