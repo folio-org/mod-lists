@@ -80,7 +80,7 @@ public class ListExportService {
     ExportDetails exportDetails = listExportRepository
       .findByListIdAndExportId(listId, exportId)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
-    validationService.validateGetExport(exportDetails.getList());
+    validationService.validateExport(exportDetails.getList());
     return listExportMapper.toListExportDTO(exportDetails);
   }
 
@@ -98,7 +98,7 @@ public class ListExportService {
       .findByListIdAndExportId(listId, exportId)
       .map(ExportDetails::getList)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
-    validationService.validateDownloadExport(list);
+    validationService.validateExport(list);
     InputStream csvStream = folioS3Client.read(fileName);
     return Pair.of(list.getName(), csvStream);
   }

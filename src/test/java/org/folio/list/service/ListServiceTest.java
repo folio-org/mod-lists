@@ -1,5 +1,6 @@
 package org.folio.list.service;
 
+import feign.FeignException;
 import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.fql.model.EqualsCondition;
@@ -9,6 +10,7 @@ import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
+import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.exception.VersionNotFoundException;
@@ -35,6 +37,7 @@ import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -123,6 +126,7 @@ class ListServiceTest {
     ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
     EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
     EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
+    EntityTypeSummary expectedSummary3 = new EntityTypeClient.EntityTypeSummary(UUID.randomUUID(), "Other");
 
     Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
     when(executionContext.getUserId()).thenReturn(currentUserId);
@@ -138,6 +142,7 @@ class ListServiceTest {
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
+    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of(expectedSummary1, expectedSummary2, expectedSummary3));
     when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
       listSummaryDto2.getEntityTypeId()))).thenReturn(List.of(expectedSummary1, expectedSummary2));
 
@@ -147,6 +152,53 @@ class ListServiceTest {
       Pageable.ofSize(100),
       List.of(entity1.getId(), entity2.getId()),
       List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId()),
+      true,
+      false,
+      false,
+      null
+    );
+    assertThat(actual.getContent()).isEqualTo(expected.getContent());
+  }
+
+  @Test
+  void getAllListsShouldSearchAllEntityTypesIfEntityTypesNotProvided() {
+    UUID entityTypeId1 = UUID.randomUUID();
+    UUID entityTypeId2 = UUID.randomUUID();
+    UUID currentUserId = UUID.randomUUID();
+    ListEntity entity1 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    ListEntity entity2 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    entity1.setEntityTypeId(entityTypeId1);
+    entity2.setEntityTypeId(entityTypeId2);
+
+    ListSummaryDTO listSummaryDto1 = TestDataFixture.getListSummaryDTO(entity1.getId()).entityTypeId(entityTypeId1);
+    ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
+
+    Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(listRepository.searchList(
+      any(Pageable.class),
+      Mockito.eq(List.of(entity1.getId(), entity2.getId())),
+      Mockito.eq(List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId())),
+      any(UUID.class),
+      Mockito.eq(true),
+      Mockito.eq(false),
+      Mockito.eq(false),
+      any()
+    )).thenReturn(listEntities);
+    when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
+    when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
+    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of(expectedSummary1, expectedSummary2));
+    when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
+      listSummaryDto2.getEntityTypeId()))).thenReturn(List.of(expectedSummary1, expectedSummary2));
+
+    Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
+
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      List.of(entity1.getId(), entity2.getId()),
+      null,
       true,
       false,
       false,
@@ -312,6 +364,20 @@ class ListServiceTest {
     ListEntity list = listEntityArgumentCaptor.getValue();
     assertFalse(hasText(list.getUserFriendlyQuery()));
     assertEquals(expectedFields, list.getFields());
+  }
+
+  @Test
+  void createListShouldThrowErrorForUserMissingEntityTypePermissions() {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenThrow(new FeignException.Unauthorized("[{\"User is missing permissions: [foo.bar]\"}]", mock(feign.Request.class), null, null));
+    assertThrows(InsufficientEntityTypePermissionsException.class, () -> listService.createList(listRequestDto));
+  }
+
+  @Test
+  void createListShouldThrowErrorForMissingEntityType() {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenThrow(new FeignException.NotFound("Entity type not found", mock(feign.Request.class), null, null));
+    assertThrows(NotFoundException.class, () -> listService.createList(listRequestDto));
   }
 
   @Test
@@ -497,7 +563,7 @@ class ListServiceTest {
     verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListId(listId);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
-    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verify(validationService, times(1)).validateRead(listEntity);
     verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper, validationService);
 
     assertEquals(1, result.size());
@@ -514,12 +580,12 @@ class ListServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(validationService)
-      .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+      .validateRead(listEntity);
 
     assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersions(listId));
 
     verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
-    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verify(validationService, times(1)).validateRead(listEntity);
 
     verifyNoMoreInteractions(listRepository, validationService);
     verifyNoInteractions(listVersionRepository, listVersionMapper);
@@ -560,7 +626,7 @@ class ListServiceTest {
     verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
     verify(listVersionMapper, times(1)).toListVersionDTO(any());
-    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verify(validationService, times(1)).validateRead(listEntity);
     verifyNoMoreInteractions(listRepository, listVersionRepository, listVersionMapper, validationService);
   }
 
@@ -575,12 +641,12 @@ class ListServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
       .when(validationService)
-      .assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+      .validateRead(listEntity);
 
     assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListVersion(listId, versionNumber));
 
     verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
-    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verify(validationService, times(1)).validateRead(listEntity);
 
     verifyNoMoreInteractions(listRepository, validationService);
     verifyNoInteractions(listVersionRepository, listVersionMapper);
@@ -618,7 +684,7 @@ class ListServiceTest {
 
     verify(listRepository, times(1)).findByIdAndIsDeletedFalse(listId);
     verify(listVersionRepository, times(1)).findByListIdAndVersion(listId, versionNumber);
-    verify(validationService, times(1)).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+    verify(validationService, times(1)).validateRead(listEntity);
     verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);
     verifyNoInteractions(listVersionMapper);
   }

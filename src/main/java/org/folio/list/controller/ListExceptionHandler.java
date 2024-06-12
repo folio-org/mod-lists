@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.folio.list.domain.dto.ListAppError;
 import org.folio.list.domain.dto.Parameter;
 import org.folio.list.exception.AbstractListException;
+import org.folio.spring.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,12 +23,23 @@ public class ListExceptionHandler {
   private static final String REQUEST_FAILED_MESSAGE = "Request failed. URL: {}. Failure reason : {}";
   private static final String UNHANDLED_ERROR_CODE = "unhandled.error";
 
-  @ExceptionHandler(AbstractListException.class)
+  @ExceptionHandler({AbstractListException.class})
   public ResponseEntity<ListAppError> exceptionHandlerForList(AbstractListException exception,
                                                               ServletWebRequest webRequest) {
     String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
     log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
     return new ResponseEntity<>(exception.getError(), exception.getHttpStatus());
+  }
+
+  @ExceptionHandler({NotFoundException.class})
+  public ResponseEntity<ListAppError> handleEntityTypeNotFound(Exception exception,
+                                                              ServletWebRequest webRequest) {
+    String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
+    log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
+    ListAppError listAppError = new ListAppError()
+      .message(exception.getMessage())
+      .code("not.found");
+    return new ResponseEntity<>(listAppError, HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

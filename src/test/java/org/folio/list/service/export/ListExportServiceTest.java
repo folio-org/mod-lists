@@ -213,7 +213,7 @@ class ListExportServiceTest {
     when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.EXPORT))
       .when(validationService)
-      .validateGetExport(exportDetails.getList());
+      .validateExport(exportDetails.getList());
     Assertions.assertThrows(
       PrivateListOfAnotherUserException.class,
       () -> listExportService.getExportDetails(listId, exportId)
@@ -232,7 +232,7 @@ class ListExportServiceTest {
     exportDetails.setExportId(exportId);
 
     when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
-    doNothing().when(validationService).validateDownloadExport(exportDetails.getList());
+    doNothing().when(validationService).validateExport(exportDetails.getList());
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
     when(folioS3Client.read(ExportUtils.getFileName(TENANT_ID, exportId))).thenReturn(csvInputStream);
     Pair<String, InputStream> actual = listExportService.downloadExport(listId, exportId);
@@ -257,7 +257,7 @@ class ListExportServiceTest {
     when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.EXPORT))
       .when(validationService)
-      .validateDownloadExport(exportDetails.getList());
+      .validateExport(exportDetails.getList());
     Assertions.assertThrows(
       PrivateListOfAnotherUserException.class,
       () -> listExportService.downloadExport(listId, exportId)

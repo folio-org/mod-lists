@@ -3,6 +3,7 @@ package org.folio.list.service;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ListInactiveException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
@@ -26,6 +27,9 @@ class ListValidationServiceTest {
 
   @Mock
   private FolioExecutionContext folioExecutionContext;
+
+  @Mock
+  private EntityTypeClient entityTypeClient;
 
 
   @Test

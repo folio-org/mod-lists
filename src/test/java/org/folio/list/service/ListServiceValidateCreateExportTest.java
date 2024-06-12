@@ -5,6 +5,7 @@ import org.folio.list.exception.ExportInProgressException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.exception.RefreshInProgressException;
 import org.folio.list.repository.ListExportRepository;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -26,9 +27,10 @@ class ListServiceValidateCreateExportTest {
   private ListValidationService validationService;
   @Mock
   private FolioExecutionContext folioExecutionContext;
-
   @Mock
   private ListExportRepository listExportRepository;
+  @Mock
+  private EntityTypeClient entityTypeClient;
 
   @Test
   void shouldReturnErrorWhenListIsPrivate() {

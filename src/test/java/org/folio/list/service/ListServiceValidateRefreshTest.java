@@ -3,6 +3,7 @@ package org.folio.list.service;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.*;
 import org.folio.list.repository.ListExportRepository;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -22,11 +23,13 @@ import static org.mockito.Mockito.when;
 class ListServiceValidateRefreshTest {
   @Mock
   private FolioExecutionContext folioExecutionContext;
+  @Mock
+  private ListExportRepository listExportRepository;
+  @Mock
+  private EntityTypeClient entityTypeClient;
   @InjectMocks
   private ListValidationService validationService;
 
-  @Mock
-  private ListExportRepository listExportRepository;
 
   @Test
   void shouldNotPerformRefreshWhenListIsInactive() {

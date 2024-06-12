@@ -3,6 +3,7 @@ package org.folio.list.service;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ListNotRefreshingException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -22,6 +23,8 @@ import static org.mockito.Mockito.when;
 class ListServiceValidateCancelRefreshTest {
   @Mock
   private FolioExecutionContext folioExecutionContext;
+  @Mock
+  private EntityTypeClient entityTypeClient;
   @InjectMocks
   private ListValidationService validationService;
 

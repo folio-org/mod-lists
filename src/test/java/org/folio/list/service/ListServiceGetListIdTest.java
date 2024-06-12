@@ -2,10 +2,12 @@ package org.folio.list.service;
 
 
 import org.folio.list.domain.ListEntity;
+import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.mapper.ListMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.domain.dto.ListDTO;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +41,9 @@ class ListServiceGetListIdTest {
 
   @Mock
   private ListValidationService listValidationService;
+
+  @Mock
+  private EntityTypeClient entityTypeClient;
 
   @Test
   void testGetListById() {
@@ -57,7 +63,17 @@ class ListServiceGetListIdTest {
     ListEntity listEntity = TestDataFixture.getNeverRefreshedListEntity();
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     doThrow(new PrivateListOfAnotherUserException(listEntity, ListActions.READ))
-      .when(listValidationService).assertSharedOrOwnedByUser(listEntity, ListActions.READ);
+      .when(listValidationService).validateRead(listEntity);
     Assertions.assertThrows(PrivateListOfAnotherUserException.class, () -> listService.getListById(listId));
+  }
+
+  @Test
+  void shouldThrowExceptionWhenUserIsMissingEntityTypePermissions() {
+    UUID listId = UUID.randomUUID();
+    ListEntity listEntity = TestDataFixture.getNeverRefreshedListEntity();
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
+    doThrow(new InsufficientEntityTypePermissionsException(listEntity.getEntityTypeId(), ListActions.READ, "User is missing permissions: [foo.bar]"))
+      .when(listValidationService).validateRead(listEntity);
+    assertThrows(InsufficientEntityTypePermissionsException.class, () -> listService.getListById(listId));
   }
 }
