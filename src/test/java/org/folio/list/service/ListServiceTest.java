@@ -208,6 +208,24 @@ class ListServiceTest {
   }
 
   @Test
+  void getAllListsShouldReturnEmptyPageForEmptySearchEntityTypeIds() {
+    UUID currentUserId = UUID.randomUUID();
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of());
+    Page<ListSummaryDTO> expected = new PageImpl<>(List.of());
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      List.of(UUID.randomUUID(), UUID.randomUUID()),
+      null,
+      true,
+      false,
+      false,
+      null
+    );
+    assertThat(actual.getContent()).isEqualTo(expected.getContent());
+  }
+
+  @Test
   void testCreateList() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     UUID userId = UUID.randomUUID();

@@ -96,6 +96,11 @@ public class ListService {
       .stream()
       .filter(id -> isEmpty(entityTypeIds) || entityTypeIds.contains(id))
       .toList();
+    if (isEmpty(searchEntityTypeIds)) {
+      return new ListSummaryResultsDTO()
+        .totalRecords(0L)
+        .totalPages(0);
+    }
 
     Page<ListEntity> lists = listRepository.searchList(
       pageable,
