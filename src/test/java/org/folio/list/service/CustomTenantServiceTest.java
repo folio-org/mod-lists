@@ -3,6 +3,7 @@ package org.folio.list.service;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.folio.list.repository.ListRepository;
 import org.folio.list.services.CustomTenantService;
 import org.folio.spring.service.PrepareSystemUserService;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -20,6 +21,10 @@ class CustomTenantServiceTest {
 
   @Mock
   private PrepareSystemUserService prepareSystemUserService;
+
+  @Mock
+  private ListRepository listRepository;
+
 
   @Test
   void testSystemUserCreation() {
