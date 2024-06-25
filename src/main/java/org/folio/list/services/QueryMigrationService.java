@@ -36,10 +36,10 @@ public class QueryMigrationService {
       if (list.getEntityTypeId().equals(UUID.fromString("0069cf6f-2833-46db-8a51-8934769b8289"))) {
         list.setEntityTypeId(UUID.fromString("ddc93926-d15a-4a45-9d9c-93eadc3d9bbf"));
         try {
-
           list.setFqlQuery(updateFqlQueryForUsers(list));
           list.setFields(updateFieldNamesForUsers(list));
         } catch (Exception e) {
+          log.error("Exception:", e);
           throw new RuntimeException(e);
         }
       }
@@ -59,14 +59,17 @@ public class QueryMigrationService {
       String key = entry.getKey();
       //System.out.println("print key" +key);
       if (keyMappings.containsKey(key)) {
+        //System.out.println("printing new key" +keyMappings.get(key));
         String newKey = keyMappings.get(key);
+        //System.out.println("printing value" +entry.getValue());
         result.put(newKey, entry.getValue());
       } else {
         result.put(key, entry.getValue());
       }
     }
+    //System.out.print("new migrated query" +objectMapper.writeValueAsString(result));
     return objectMapper.writeValueAsString(result);
-    //System.out.print("new migrated query" +resultStr);
+    //
     //list.setFqlQuery(resultStr);
   }
 
@@ -88,17 +91,12 @@ public class QueryMigrationService {
     ObjectMapper objectMapper = new ObjectMapper();
     Map<String, String> keyMappings = new HashMap<>();
     ResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
-
     List<Map<String, String>> mapList = Stream
-      .concat(
-        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings/keymappings.json5")),
-        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings/keymappings.json"))
-      )
+      .of(resourceResolver.getResources("classpath:/mappings/keymappings.json5"))
       .filter(Resource::isReadable)
       .map(resource -> {
         try {
-          return objectMapper.readValue(resource.getInputStream(), new TypeReference<Map<String, String>>() {
-          });
+          return objectMapper.readValue(resource.getInputStream(), new TypeReference<Map<String, String>>() {});
         } catch (IOException e) {
           log.error("Unable to read values from resource: {}", resource.getDescription(), e);
           throw new UncheckedIOException(e);
@@ -109,6 +107,7 @@ public class QueryMigrationService {
     for (Map<String, String> map : mapList) {
       keyMappings.putAll(map);
     }
+
     return keyMappings;
   }
 }

@@ -39,7 +39,7 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.info("Initializing system user");
    prepareSystemUserService.setupSystemUser();
+    log.info("Initializing migrating queries");
    queryMigrationService.migratingQueries();
   }
-
 }
