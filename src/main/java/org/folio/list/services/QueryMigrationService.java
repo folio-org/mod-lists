@@ -32,10 +32,11 @@ public class QueryMigrationService {
 
   public void migratingQueries() {
     Iterable<ListEntity> lists = listRepository.findAll();
+    List<ListEntity> listsToUpdate = new ArrayList<>();
     for (ListEntity list : lists) {
       if (list.getEntityTypeId().equals(UUID.fromString("0069cf6f-2833-46db-8a51-8934769b8289"))) {
-        list.setEntityTypeId(UUID.fromString("ddc93926-d15a-4a45-9d9c-93eadc3d9bbf"));
         try {
+          list.setEntityTypeId(UUID.fromString("ddc93926-d15a-4a45-9d9c-93eadc3d9bbf"));
           list.setFqlQuery(updateFqlQueryForUsers(list));
           list.setFields(updateFieldNamesForUsers(list));
         } catch (Exception e) {
@@ -43,13 +44,17 @@ public class QueryMigrationService {
           throw new RuntimeException(e);
         }
       }
-      listRepository.save(list);
+      //listRepository.save(list);
     }
+    listRepository.saveAll(listsToUpdate);
   }
 
   public String updateFqlQueryForUsers(ListEntity list) throws Exception {
     Map<String, String> keyMappings = getStringStringMap();
     String currentQuery = list.getFqlQuery();
+    if (currentQuery == null || currentQuery.isEmpty()) {
+      return "";
+    }
     Map<String, Object> map = objectMapper.readValue(currentQuery, new TypeReference<HashMap<String, Object>>() {
     });
 
@@ -75,8 +80,12 @@ public class QueryMigrationService {
 
 
   public List<String> updateFieldNamesForUsers(ListEntity list) throws IOException {
+
     Map<String, String> keyMappings = getStringStringMap();
     List<String> listFields = list.getFields();
+    if (listFields == null || listFields.isEmpty()) {
+      return Collections.emptyList();
+    }
     List<String> updatedFields = new ArrayList<>();
     for (String field : listFields) {
       // If no mapping is found, retain the original field name
