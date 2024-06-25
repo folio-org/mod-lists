@@ -44,7 +44,7 @@ public class CustomTenantService extends TenantService {
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.info("Initializing system user");
-    prepareSystemUserService.setupSystemUser();
+   prepareSystemUserService.setupSystemUser();
     Collection<ListEntity> lists = (Collection<ListEntity>) listRepository.findAll();
     for (ListEntity list : lists) {
       System.out.println(list.getEntityTypeId());
