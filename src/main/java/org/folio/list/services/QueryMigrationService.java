@@ -89,7 +89,7 @@ public class QueryMigrationService {
     Map<String, String> keyMappings = new HashMap<>();
     ResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 
-    List<Map<String, String>> desiredEntityTypes = Stream
+    List<Map<String, String>> mapList = Stream
       .concat(
         Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings.json5")),
         Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings.json"))
@@ -100,16 +100,15 @@ public class QueryMigrationService {
           return objectMapper.readValue(resource.getInputStream(), new TypeReference<Map<String, String>>() {
           });
         } catch (IOException e) {
-          log.error("Unable to read entity type from resource: {}", resource.getDescription(), e);
+          log.error("Unable to read values from resource: {}", resource.getDescription(), e);
           throw new UncheckedIOException(e);
         }
       })
       .toList();
 
-    for (Map<String, String> map : desiredEntityTypes) {
+    for (Map<String, String> map : mapList) {
       keyMappings.putAll(map);
     }
-
     return keyMappings;
   }
 }
