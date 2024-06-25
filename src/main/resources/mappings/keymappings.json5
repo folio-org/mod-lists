@@ -1,0 +1,12 @@
+{
+  "user_active": "users.active",
+  "user_barcode": "users.barcode",
+  "user_mobile_phone": "users.mobile_phone",
+  "user_phone": "users.phone",
+  "users_departments": "users.departments",
+  "users_addresses": "users.addresses",
+  "user_address_line1": "address_line1",
+  "user_address_line2": "address_line2",
+  "user_cities": "city",
+  "user_country_ids": "country_id"
+}
