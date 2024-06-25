@@ -47,7 +47,7 @@ public class CustomTenantService extends TenantService {
    prepareSystemUserService.setupSystemUser();
     Collection<ListEntity> lists = (Collection<ListEntity>) listRepository.findAll();
     for (ListEntity list : lists) {
-      System.out.println(list.getEntityTypeId());
+      //System.out.println(list.getEntityTypeId());
       if (list.getEntityTypeId().equals(UUID.fromString("0069cf6f-2833-46db-8a51-8934769b8289"))) {
         list.setEntityTypeId(UUID.fromString("ddc93926-d15a-4a45-9d9c-93eadc3d9bbf"));
         try {
@@ -70,7 +70,7 @@ public class CustomTenantService extends TenantService {
 
     for (Map.Entry<String, Object> entry : map.entrySet()) {
       String key = entry.getKey();
-      System.out.println("print key" +key);
+      //System.out.println("print key" +key);
       if (keyMappings.containsKey(key)) {
         String newKey = keyMappings.get(key);
         result.put(newKey, entry.getValue());
@@ -79,7 +79,7 @@ public class CustomTenantService extends TenantService {
       }
     }
     String resultStr = objectMapper.writeValueAsString(result);
-    System.out.print("new migrated query" +resultStr);
+    //System.out.print("new migrated query" +resultStr);
     list.setFqlQuery(resultStr);
   }
 
