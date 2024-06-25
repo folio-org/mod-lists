@@ -91,8 +91,8 @@ public class QueryMigrationService {
 
     List<Map<String, String>> mapList = Stream
       .concat(
-        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings.json5")),
-        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings.json"))
+        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings/keymappings.json5")),
+        Arrays.stream(resourceResolver.getResources("classpath:src/main/resources/mappings/keymappings.json"))
       )
       .filter(Resource::isReadable)
       .map(resource -> {
