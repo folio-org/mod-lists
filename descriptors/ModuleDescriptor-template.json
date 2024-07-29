@@ -200,6 +200,46 @@
       "version": "5.3"
     }
   ],
+  "metadata": {
+    "user": {
+      "type": "system",
+      "permissions": [
+        "acquisitions-units.units.collection.get",
+        "addresstypes.collection.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation.loans.collection.get",
+        "configuration.entries.collection.get",
+        "departments.collection.get",
+        "finance.exchange-rate.item.get",
+        "fqm.entityTypes.item.get",
+        "fqm.query.async.results.get",
+        "inventory-storage.call-number-types.collection.get",
+        "inventory-storage.contributor-name-types.collection.get",
+        "inventory-storage.contributor-types.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instance-statuses.collection.get",
+        "inventory-storage.instance-types.collection.get",
+        "inventory-storage.instance-types.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.modes-of-issuance.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.statistical-code-types.collection.get",
+        "inventory-storage.statistical-codes.collection.get",
+        "orders.item.get",
+        "orders.po-lines.item.get",
+        "organizations-storage.categories.collection.get",
+        "organizations-storage.organization-types.collection.get",
+        "organizations.organizations.collection.get",
+        "usergroups.collection.get",
+        "users.collection.get",
+        "users.item.get"
+      ]
+    }
+  },
   "launchDescriptor": {
     "dockerImage": "@artifactId@:@version@",
     "dockerPull": false,
