@@ -43,27 +43,28 @@ mvn clean install
 ```
 ## Environment Variables
 
-| Name                                             | Default Value            | Description                                                    |
-|--------------------------------------------------|--------------------------|----------------------------------------------------------------|
-| DB_HOST                                          | localhost                | Postgres hostname                                              |
-| DB_PORT                                          | 5432                     | Postgres port                                                  |
-| DB_USERNAME                                      | postgres                 | Postgres username                                              |
-| DB_PASSWORD                                      | postgres                 | Postgres password                                              |
-| DB_DATABASE                                      | postgres                 | Postgres database name                                         |
-| server.port                                      | 8081                     | Server port                                                    |
-| MAX_LIST_SIZE                                    | 1250000                  | max size of each list                                          |
-| LIST_EXPORT_BATCH_SIZE                           | 1000                     | batch size for exports                                         |
-| LIST_APP_S3_BUCKET                               | list-exports-us-west-2   | Name of the S3 bucket for exports                              |
-| AWS_REGION                                       | us-west-2                | region of the S3 bucket                                        |
-| AWS_URL                                          | https://s3.amazonaws.com | end point for the S3 bucket                                    |
-| USE_AWS_SDK                                      | false                    | Use the AWS SDK for S3 access                                  |
-| S3_ACCESS_KEY_ID                                 | -                        | access key for the S3 bucket                                   |
-| S3_SECRET_ACCESS_KEY                             | -                        | secret key for the S3 bucket                                   |
-| OKAPI_URL                                        | http://okapi:9130        | Okapi URL, used for system user authentication/management      |
-| SYSTEM_USER_PASSWORD                             | -                        | Password for the system user; **must be set**                  |
-| mod-lists.list-export.s3-startup-check.enabled   | true                     | Verify that S3/MinIO is accessible on startup                  |
-| spring.task.execution.pool.max-size              | 10                       | refresh/export thread pool's max size                          |
-| mod-lists.general.refresh-query-timeout-minutes  | 90                       | Max time to wait for an FQL query to run during a list refresh |
+| Name                                            | Default Value            | Description                                                                                                 |
+|-------------------------------------------------|--------------------------|-------------------------------------------------------------------------------------------------------------|
+| DB_HOST                                         | localhost                | Postgres hostname                                                                                           |
+| DB_PORT                                         | 5432                     | Postgres port                                                                                               |
+| DB_USERNAME                                     | postgres                 | Postgres username                                                                                           |
+| DB_PASSWORD                                     | postgres                 | Postgres password                                                                                           |
+| DB_DATABASE                                     | postgres                 | Postgres database name                                                                                      |
+| server.port                                     | 8081                     | Server port                                                                                                 |
+| MAX_LIST_SIZE                                   | 1250000                  | max size of each list                                                                                       |
+| LIST_EXPORT_BATCH_SIZE                          | 1000                     | batch size for exports                                                                                      |
+| LIST_APP_S3_BUCKET                              | list-exports-us-west-2   | Name of the S3 bucket for exports                                                                           |
+| AWS_REGION                                      | us-west-2                | region of the S3 bucket                                                                                     |
+| AWS_URL                                         | https://s3.amazonaws.com | end point for the S3 bucket                                                                                 |
+| USE_AWS_SDK                                     | false                    | Use the AWS SDK for S3 access                                                                               |
+| S3_ACCESS_KEY_ID                                | -                        | access key for the S3 bucket                                                                                |
+| S3_SECRET_ACCESS_KEY                            | -                        | secret key for the S3 bucket                                                                                |
+| OKAPI_URL                                       | http://okapi:9130        | Okapi URL, used for system user authentication/management                                                   |
+| SYSTEM_USER_PASSWORD                            | -                        | Password for the system user; **must be set**                                                               |
+| SYSTEM_USER_ENABLED                             | true                     | Defines if system user must be created at service tenant initialization or used for egress service requests |
+| mod-lists.list-export.s3-startup-check.enabled  | true                     | Verify that S3/MinIO is accessible on startup                                                               |
+| spring.task.execution.pool.max-size             | 10                       | refresh/export thread pool's max size                                                                       |
+| mod-lists.general.refresh-query-timeout-minutes | 90                       | Max time to wait for an FQL query to run during a list refresh                                              |
 
 > **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
 The storage is selected by specifying the url of S3-compatible storage by using ENV variable `AWS_URL`.
