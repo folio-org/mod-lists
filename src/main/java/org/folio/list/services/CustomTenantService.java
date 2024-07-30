@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+
 import lombok.extern.log4j.Log4j2;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
@@ -18,20 +19,27 @@ public class CustomTenantService extends TenantService {
 
   protected final PrepareSystemUserService prepareSystemUserService;
 
+  protected final QueryMigrationService queryMigrationService;
+
+
   @Autowired
   public CustomTenantService(
     JdbcTemplate jdbcTemplate,
     FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase,
-    PrepareSystemUserService prepareSystemUserService
+    PrepareSystemUserService prepareSystemUserService,
+    QueryMigrationService queryMigrationService
   ) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.prepareSystemUserService = prepareSystemUserService;
+    this.queryMigrationService = queryMigrationService;
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.info("Initializing system user");
-    prepareSystemUserService.setupSystemUser();
+   prepareSystemUserService.setupSystemUser();
+    log.info("Initializing migrating queries");
+   queryMigrationService.migratingQueries();
   }
 }
