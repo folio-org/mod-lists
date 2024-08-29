@@ -13,11 +13,13 @@ import java.util.UUID;
 @FeignClient(name = "entity-types")
 public interface EntityTypeClient {
   @GetMapping("")
-  List<EntityTypeSummary> getEntityTypeSummary(@RequestParam List<UUID> ids);
+  EntityTypeSummaryResponse getEntityTypeSummary(@RequestParam List<UUID> ids);
 
   @GetMapping("/{entityTypeId}")
   EntityType getEntityType(@RequestHeader UUID entityTypeId);
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   record EntityTypeSummary(UUID id, String label) {}
+
+  record EntityTypeSummaryResponse(List<EntityTypeSummary> entityTypes, String _version) {}
 }
