@@ -66,7 +66,7 @@ class UserFriendlyQueryServiceTest {
         new EntityTypeColumn().name("underlying"),
         new EntityTypeColumn().name("friendly")
           .idColumnName("underlying")
-          .source(new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("sourceField"))
+          .source(new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("sourceField"))
       ));
     EqualsCondition equalsCondition = new EqualsCondition(new FqlField("friendly"), searchValue.toString());
 
@@ -101,7 +101,7 @@ class UserFriendlyQueryServiceTest {
         new EntityTypeColumn().name("underlying"),
         new EntityTypeColumn().name("friendly")
           .idColumnName("underlying")
-          .source(new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("sourceField"))
+          .source(new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("sourceField"))
       ));
     EqualsCondition equalsCondition = new EqualsCondition(new FqlField("underlying"), searchValue.toString());
 
@@ -138,7 +138,7 @@ class UserFriendlyQueryServiceTest {
     UUID sourceEntityTypeId = UUID.randomUUID();
     UUID value = UUID.randomUUID();
     List<String> fields = List.of("id", "field1");
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -181,7 +181,7 @@ class UserFriendlyQueryServiceTest {
       List.of(value2.toString())
     );
     List<String> fields = List.of("id", "field1");
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -224,7 +224,7 @@ class UserFriendlyQueryServiceTest {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -264,7 +264,7 @@ class UserFriendlyQueryServiceTest {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -304,7 +304,7 @@ class UserFriendlyQueryServiceTest {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -346,7 +346,7 @@ class UserFriendlyQueryServiceTest {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
@@ -386,7 +386,7 @@ class UserFriendlyQueryServiceTest {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(fields)
       .ids(ids);
-    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId.toString()).columnName("field1");
+    SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
     EntityTypeColumn column = new EntityTypeColumn().name("field1");
     EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
