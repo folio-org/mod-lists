@@ -88,6 +88,7 @@ public class ListService {
     UUID currentUserId = executionContext.getUserId();
     List<UUID> permittedEntityTypeIds = entityTypeClient
       .getEntityTypeSummary(null)
+      .entityTypes()
       .stream()
       .map(EntityTypeSummary::id)
       .toList();
@@ -314,6 +315,7 @@ public class ListService {
       List<UUID> entityTypeIds = lists.stream().map(ListEntity::getEntityTypeId).distinct().toList();
       log.info("Getting entity type summary for entityTypeIds: {}", entityTypeIds);
       return entityTypeClient.getEntityTypeSummary(entityTypeIds)
+        .entityTypes()
         .stream()
         .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
     } catch (Exception exception) {

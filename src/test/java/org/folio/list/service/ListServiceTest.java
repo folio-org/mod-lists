@@ -24,6 +24,7 @@ import org.folio.list.repository.ListRepository;
 import org.folio.list.repository.ListVersionRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummaryResponse;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
@@ -142,9 +143,11 @@ class ListServiceTest {
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
-    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of(expectedSummary1, expectedSummary2, expectedSummary3));
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2, expectedSummary3), ""));
     when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
-      listSummaryDto2.getEntityTypeId()))).thenReturn(List.of(expectedSummary1, expectedSummary2));
+                                                        listSummaryDto2.getEntityTypeId())))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
 
@@ -189,9 +192,11 @@ class ListServiceTest {
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
-    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of(expectedSummary1, expectedSummary2));
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
     when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
-      listSummaryDto2.getEntityTypeId()))).thenReturn(List.of(expectedSummary1, expectedSummary2));
+                                                      listSummaryDto2.getEntityTypeId())))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
 
@@ -211,7 +216,7 @@ class ListServiceTest {
   void getAllListsShouldReturnEmptyPageForEmptySearchEntityTypeIds() {
     UUID currentUserId = UUID.randomUUID();
     when(executionContext.getUserId()).thenReturn(currentUserId);
-    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(List.of());
+    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(new EntityTypeSummaryResponse(List.of(), ""));
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of());
     var actual = listService.getAllLists(
       Pageable.ofSize(100),
