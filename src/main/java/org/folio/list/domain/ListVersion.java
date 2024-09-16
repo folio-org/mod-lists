@@ -73,6 +73,9 @@ public class ListVersion {
   @Column(name = "user_friendly_query")
   private String userFriendlyQuery;
 
+  @Column(name = "cross_tenant")
+  private boolean crossTenant;
+
   public void setDataFromListEntity(ListEntity listEntity) {
     listId = listEntity.getId();
     name = listEntity.getName();
@@ -86,5 +89,6 @@ public class ListVersion {
     version = listEntity.getVersion();
     isActive = listEntity.getIsActive();
     isPrivate = listEntity.getIsPrivate();
+    crossTenant = listEntity.isCrossTenant();
   }
 }

@@ -15,7 +15,6 @@ import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
 import org.folio.querytool.domain.dto.SubmitQuery;
 import org.folio.spring.FolioExecutionContext;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,8 +23,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -77,7 +74,7 @@ class ListRefreshServiceTest {
     timer.start(TimedStage.TOTAL);
     listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
-    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer);
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer, false);
   }
 
   @Test
@@ -90,7 +87,7 @@ class ListRefreshServiceTest {
     var timer =  new TaskTimer();
     timer.start(TimedStage.TOTAL);
     listRefreshService.doAsyncSorting(list, queryId, null, timer);
-    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer);
+    verify(refreshSuccessCallback, times(1)).accept(list, totalRecords, timer, false);
   }
 
   @Test

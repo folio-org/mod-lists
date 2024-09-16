@@ -41,7 +41,7 @@ class RefreshSuccessCallbackTest {
     ListEntity entity = TestDataFixture.getListEntityWithInProgressRefresh();
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
 
-    successRefreshService.accept(entity, recordsCount, new TaskTimer());
+    successRefreshService.accept(entity, recordsCount, new TaskTimer(), false);
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);
     // Delete contents should not be called if list has never been refreshed
     verify(listContentsRepository, times(0)).deleteContents(any(), any());
@@ -55,7 +55,7 @@ class RefreshSuccessCallbackTest {
     UUID originalRefreshId = entity.getSuccessRefresh().getId();
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
 
-    successRefreshService.accept(entity, recordsCount, new TaskTimer());
+    successRefreshService.accept(entity, recordsCount, new TaskTimer(), false);
     assertEquals(entity.getSuccessRefresh().getRecordsCount(), recordsCount);
     verify(listContentsRepository, times(1)).deleteContents(entity.getId(), originalRefreshId);
     verify(listRepository, times(1)).save(entity);

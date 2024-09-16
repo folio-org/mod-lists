@@ -13,4 +13,7 @@
       WHERE id = '605a345f-f456-4ab2-8968-22f49cf1fbb6';
     </sql>
   </changeSet>
+
+  <include file="add-cross-tenant-column.yaml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

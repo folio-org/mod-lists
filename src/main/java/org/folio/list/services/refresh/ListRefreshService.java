@@ -91,7 +91,7 @@ public class ListRefreshService {
 
     if (queryDetails.getStatus() == QueryDetails.StatusEnum.SUCCESS) {
       int resultCount = timer.time(TimedStage.IMPORT_RESULTS, () -> importQueryResults(list, queryId));
-      refreshSuccessCallback.accept(list, resultCount, timer);
+      refreshSuccessCallback.accept(list, resultCount, timer, Boolean.TRUE.equals(queryDetails.getCrossTenant()));
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.FAILED) {
       refreshFailedCallback.accept(list, timer, new RuntimeException(queryDetails.getFailureReason()));
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {

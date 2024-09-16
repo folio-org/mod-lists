@@ -109,6 +109,9 @@ public class ListEntity {
   @Column(name = "user_friendly_query")
   private String userFriendlyQuery;
 
+  @Column(name = "cross_tenant")
+  private boolean crossTenant;
+
   @Column(name = "is_deleted")
   @NotNull
   private Boolean isDeleted;

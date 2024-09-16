@@ -22,15 +22,15 @@ public class RefreshSuccessCallback implements SuccessCallback {
   private final EntityManagerFlushService entityManagerFlushService;
 
   @Transactional
-  public void accept(ListEntity entity, int recordsCount, TaskTimer timer) {
-    saveSuccessRefresh(entity, recordsCount, timer);
+  public void accept(ListEntity entity, int recordsCount, TaskTimer timer, boolean crossTenant) {
+    saveSuccessRefresh(entity, recordsCount, timer, crossTenant);
   }
 
   /**
    * Compare this list's inProgressRefreshId with the up-to-date inProgressRefreshId from the database.
    * Save list with refresh details if they are the same.
    */
-  private void saveSuccessRefresh(ListEntity entity, Integer recordsCount, TaskTimer timer) {
+  private void saveSuccessRefresh(ListEntity entity, Integer recordsCount, TaskTimer timer, boolean crossTenant) {
     UUID currentRefreshId = entity.getInProgressRefreshId()
       .orElseThrow(() -> new IllegalStateException("List " + entity.getId() + " is not refreshing"));
     log.info("Refresh completed for list {}, refreshId {}. Total count: {}",
@@ -43,6 +43,7 @@ public class RefreshSuccessCallback implements SuccessCallback {
         if (entity.getSuccessRefresh() != null) {
           listContentsRepository.deleteContents(entity.getId(), entity.getSuccessRefresh().getId());
         }
+        entity.setCrossTenant(crossTenant);
         entity.refreshCompleted(recordsCount, timer);
         timer.time(TimedStage.WRITE_END, () -> listRepository.save(entity));
         entityManagerFlushService.flush();
