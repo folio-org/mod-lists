@@ -1,0 +1,56 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet id="MODLISTS-123" author="mweaver@ebsco.com" runOnChange="true">
+    <comment>Update the canned lists to use the new entity type IDs and column names</comment>
+    <sql>
+      INSERT INTO list_details
+      (id, name, description, entity_type_id, fql_query, fields, created_by, created_by_username, created_date, updated_by, updated_by_username, updated_date, is_active, is_private, is_canned, version, user_friendly_query)
+      values
+        ('605a345f-f456-4ab2-8968-22f49cf1fbb6',
+         'Missing items',
+         'Returns all items with a status of: missing, aged to lost, claimed returned, declared lost, long missing',
+         'd0213d22-32cf-490f-9196-d81c3c66e53f',
+         '{"items.status_name": {"$in": ["Missing", "Aged to lost", "Claimed returned", "Declared lost", "Long missing" ] }}',
+         '{items.id, items.hrid, holdings.id, items.effective_call_number, effective_call_number.id, effective_call_number.name, items.status_name, items.copy_number, items.barcode, items.created_date, items.updated_date, items.effective_location_id, effective_location.name, loclibrary.name, loclibrary.code, mtypes.id, mtypes.name, instances.id, instances.title, instances.created_at, instances.updated_at, instances.instance_primary_contributor, item_level_call_number.name, item_level_call_number.id, items.permanent_location_id, item_level_call_number.name, permanent_location.name, temporary_location.name}',
+         '7eb41f7c-ec2f-4637-8ceb-2e9573666ad0',
+         'SYSTEM',
+         Now(),
+         '7eb41f7c-ec2f-4637-8ceb-2e9573666ad0',
+         'SYSTEM',
+         Now(),
+         true,
+         false,
+         true,
+         1,
+         'items.status_name in [Missing, Aged to lost, Claimed returned, Declared lost, Long missing]'),
+
+        ('97f5829f-1510-47bc-8454-ae7fa849baef',
+         'Inactive patrons with open loans',
+         'Returns all loans with a status of open by inactive users',
+         'd6729885-f2fb-4dc7-b7d0-a865a7f461e4',
+         '{"$and": [{"loans.status_name" : {"$eq": "Open"}}, {"users.active" : {"$eq": "false"}}]}',
+         '{users.id, users.last_name_first_name, users.active, users.barcode, users.expiration_date, groups.id, groups.group, loans.id, loans.status_name, loans.loan_date, loans.due_date, lpolicy.id, lpolicy.name, cospi.id, cospi.name, holdings.id, instance.id, instance.title, instance.instance_primary_contributor, items.id, items.barcode, items.status_name, mtypes.id, mtypes.name}',
+         '7eb41f7c-ec2f-4637-8ceb-2e9573666ad0',
+         'SYSTEM',
+         Now(),
+         '7eb41f7c-ec2f-4637-8ceb-2e9573666ad0',
+         'SYSTEM',
+         Now(),
+         true,
+         false,
+         true,
+         1,
+         '(loans.status_name == Open) AND (users.active == false)')
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, entity_type_id = EXCLUDED.entity_type_id,
+                              fql_query = EXCLUDED.fql_query, fields = EXCLUDED.fields, created_by = EXCLUDED.created_by, created_by_username = EXCLUDED.created_by_username,
+                              created_date = EXCLUDED.created_date, updated_by = EXCLUDED.updated_by, updated_by_username = EXCLUDED.updated_by_username,
+                              updated_date = EXCLUDED.updated_date, is_active = EXCLUDED.is_active, is_private = EXCLUDED.is_private, is_canned = EXCLUDED.is_canned,
+                              version = EXCLUDED.version, user_friendly_query = EXCLUDED.user_friendly_query ;
+
+    </sql>
+  </changeSet>
+</databaseChangeLog>
