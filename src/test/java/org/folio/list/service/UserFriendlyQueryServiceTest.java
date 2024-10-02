@@ -18,13 +18,17 @@ import org.folio.fql.model.field.FqlField;
 import org.folio.fql.service.FqlService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.ConfigurationClient;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.querytool.domain.dto.ContentsRequest;
+import org.folio.querytool.domain.dto.DateType;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.RangedUUIDType;
 import org.folio.querytool.domain.dto.SourceColumn;
+import org.folio.querytool.domain.dto.StringType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,10 +41,51 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserFriendlyQueryServiceTest {
+
+  private static final String UTC_PLUS_ONE_LOCALE = """
+    {
+      "configs": [
+        {
+           "id":"2a132a01-623b-4d3a-9d9a-2feb777665c2",
+           "module":"ORG",
+           "configName":"localeSettings",
+           "enabled":true,
+           "value":"{\\"locale\\":\\"en-US\\",\\"timezone\\":\\"Africa/Lagos\\",\\"currency\\":\\"USD\\"}","metadata":{"createdDate":"2024-03-25T17:37:22.309+00:00","createdByUserId":"db760bf8-e05a-4a5d-a4c3-8d49dc0d4e48"}
+        }
+      ],
+      "totalRecords": 1,
+      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
+    }
+    """;
+
+  private static final String UTC_MINUS_THREE_LOCALE = """
+    {
+      "configs": [
+        {
+           "id":"2a132a01-623b-4d3a-9d9a-2feb777665c2",
+           "module":"ORG",
+           "configName":"localeSettings",
+           "enabled":true,
+           "value":"{\\"locale\\":\\"en-US\\",\\"timezone\\":\\"America/Montevideo\\",\\"currency\\":\\"USD\\"}","metadata":{"createdDate":"2024-03-25T17:37:22.309+00:00","createdByUserId":"db760bf8-e05a-4a5d-a4c3-8d49dc0d4e48"}
+        }
+      ],
+      "totalRecords": 1,
+      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
+    }
+    """;
+
+  private static final String EMPTY_LOCALE_JSON = """
+    {
+      "configs": [],
+      "totalRecords": 0,
+      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
+    }
+    """;
 
   @InjectMocks
   private UserFriendlyQueryService userFriendlyQueryService;
@@ -53,10 +98,15 @@ class UserFriendlyQueryServiceTest {
 
   @Mock
   private QueryClient queryClient;
+  @Mock
+  private ConfigurationClient configurationClient;
 
   @Test
   void testGetAndDeserialize() {
-    EntityType entityType = new EntityType();
+    List<EntityTypeColumn> columns = List.of(
+      new EntityTypeColumn().name("field1").dataType(new StringType())
+    );
+    EntityType entityType = new EntityType().columns(columns);
     EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
     String expectedEqualsCondition = "field1 == some value";
 
@@ -68,7 +118,10 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void testUpdateWithProvidedEntityType() {
-    EntityType entityType = new EntityType();
+    List<EntityTypeColumn> columns = List.of(
+      new EntityTypeColumn().name("field1").dataType(new StringType())
+    );
+    EntityType entityType = new EntityType().columns(columns);
     EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
     String expectedEqualsCondition = "field1 == some value";
     ListEntity testList = new ListEntity().withFqlQuery("query");
@@ -88,9 +141,12 @@ class UserFriendlyQueryServiceTest {
     ListEntity testList = new ListEntity()
       .withEntityTypeId(UUID.fromString("39bf039d-a582-5758-878c-185aeb88e679"))
       .withFqlQuery("query");
+    List<EntityTypeColumn> columns = List.of(
+      new EntityTypeColumn().name("field1").dataType(new StringType())
+    );
 
     when(fqlService.getFql("query")).thenReturn(new Fql("", equalsCondition));
-    when(entityTypeClient.getEntityType(testList.getEntityTypeId(), ListActions.UPDATE)).thenReturn(new EntityType());
+    when(entityTypeClient.getEntityType(testList.getEntityTypeId(), ListActions.UPDATE)).thenReturn(new EntityType().columns(columns));
 
     userFriendlyQueryService.updateListUserFriendlyQuery(testList);
     assertEquals(expectedEqualsCondition, testList.getUserFriendlyQuery());
@@ -98,7 +154,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlEqualsConditionWithoutIdColumn() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
     String expectedEqualsCondition = "field1 == some value";
     String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
@@ -118,8 +175,10 @@ class UserFriendlyQueryServiceTest {
     EntityType entityType = new EntityType()
       .id(entityTypeId.toString())
       .columns(List.of(
-        new EntityTypeColumn().name("underlying"),
+        new EntityTypeColumn().name("underlying")
+          .dataType(new RangedUUIDType().dataType("rangedUUIDType")),
         new EntityTypeColumn().name("friendly")
+          .dataType(new StringType().dataType("stringType"))
           .idColumnName("underlying")
           .source(new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("sourceField"))
       ));
@@ -153,8 +212,10 @@ class UserFriendlyQueryServiceTest {
     EntityType entityType = new EntityType()
       .id(entityTypeId.toString())
       .columns(List.of(
-        new EntityTypeColumn().name("underlying"),
+        new EntityTypeColumn().name("underlying")
+          .dataType(new RangedUUIDType().dataType("rangedUUIDType")),
         new EntityTypeColumn().name("friendly")
+          .dataType(new StringType().dataType("stringType"))
           .idColumnName("underlying")
           .source(new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("sourceField"))
       ));
@@ -177,7 +238,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlNotEqualsConditionWithoutIdColumn() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     NotEqualsCondition notEqualsCondition = new NotEqualsCondition(new FqlField("field1"), "some value");
     String expectedNotEqualsCondition = "field1 != some value";
     String actualNotEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery(notEqualsCondition, entityType);
@@ -194,8 +256,8 @@ class UserFriendlyQueryServiceTest {
     UUID value = UUID.randomUUID();
     List<String> fields = List.of("id", "field1");
     SourceColumn sourceColumn = new SourceColumn().entityTypeId(sourceEntityTypeId).columnName("field1");
-    EntityTypeColumn column = new EntityTypeColumn().name("field1");
-    EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn);
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new RangedUUIDType().dataType("rangedUUIDType"));
+    EntityTypeColumn column1 = new EntityTypeColumn().name("field2").idColumnName("field1").source(sourceColumn).dataType(new StringType().dataType("stringType"));
     EntityType entityType = new EntityType().id(entityTypeId.toString()).columns(List.of(column, column1));
     NotEqualsCondition notEqualsCondition = new NotEqualsCondition(new FqlField("field1"), value.toString());
     List<List<String>> ids = List.of(
@@ -373,7 +435,6 @@ class UserFriendlyQueryServiceTest {
   }
 
 
-
   @Test
   void shouldGetStringForFqlNotContainsAllConditionWithoutIdColumn() {
     EntityType entityType = new EntityType();
@@ -456,7 +517,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlGreaterThanCondition() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     GreaterThanCondition greaterThanCondition = new GreaterThanCondition(new FqlField("field1"), false, "some value");
     String expectedGreaterThanCondition = "field1 > some value";
     String actualGreaterThanCondition = userFriendlyQueryService.getUserFriendlyQuery(greaterThanCondition, entityType);
@@ -465,7 +527,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlGreaterThanEqualToCondition() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     GreaterThanCondition greaterThanEqualCondition = new GreaterThanCondition(new FqlField("field1"), true, "some value");
     String expectedGreaterThanEqualCondition = "field1 >= some value";
     String actualGreaterThanEqualCondition = userFriendlyQueryService.getUserFriendlyQuery(greaterThanEqualCondition, entityType);
@@ -474,7 +537,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlLessThanCondition() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "some value");
     String expectedLessThanCondition = "field1 < some value";
     String actualLessThanCondition = userFriendlyQueryService.getUserFriendlyQuery(lessThanCondition, entityType);
@@ -483,7 +547,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlLessThanEqualToCondition() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     LessThanCondition lessThanEqualCondition = new LessThanCondition(new FqlField("field1"), true, "some value");
     String expectedLessThanEqualCondition = "field1 <= some value";
     String actualLessThanEqualCondition = userFriendlyQueryService.getUserFriendlyQuery(lessThanEqualCondition, entityType);
@@ -528,7 +593,8 @@ class UserFriendlyQueryServiceTest {
 
   @Test
   void shouldGetStringForFqlAndCondition() {
-    EntityType entityType = new EntityType();
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
     RegexCondition regexCondition = new RegexCondition(new FqlField("field1"), "^some value");
     LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "some value");
     AndCondition andCondition = new AndCondition(List.of(regexCondition, lessThanCondition));
@@ -544,5 +610,68 @@ class UserFriendlyQueryServiceTest {
     String expectedCondition = "field1[*]->foo->bar->baz is not empty";
     String actualRegexCondition = userFriendlyQueryService.getUserFriendlyQuery(condition, entityType);
     assertEquals(expectedCondition, actualRegexCondition);
+  }
+
+  @Test
+  void shouldLocalizeDateConditionWithoutTimeComponent() {
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01");
+
+    when(configurationClient.getLocaleSettings()).thenReturn(EMPTY_LOCALE_JSON);
+
+    String expectedQuery = "field1 == 2024-10-01";
+    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
+    assertEquals(expectedQuery, actualQuery);
+  }
+
+  @Test
+  void shouldLocalizeDateConditionWithTimestampInUtcPlusTimezone() {
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01T23:00:00.000");
+
+    when(configurationClient.getLocaleSettings()).thenReturn(UTC_PLUS_ONE_LOCALE);
+
+    String expectedQuery = "field1 == 2024-10-02";
+    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
+    assertEquals(expectedQuery, actualQuery);
+  }
+
+  @Test
+  void shouldLocalizeDateConditionWithTimestampInUtcMinusTimezone() {
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
+    // Use a timezone 1h ahead of UTC, should convert below time to midnight, then truncate it
+
+    GreaterThanCondition greaterThanCondition = new GreaterThanCondition(new FqlField("field1"), false, "2024-10-01T03:00:00.000");
+
+    when(configurationClient.getLocaleSettings()).thenReturn(UTC_MINUS_THREE_LOCALE);
+
+    String expectedQuery = "field1 > 2024-10-01";
+    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(greaterThanCondition, entityType);
+    assertEquals(expectedQuery, actualQuery);
+  }
+
+  @Test
+  void shouldUseUtcAsDefaultForLocalization() {
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
+
+    LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "2024-10-01T00:00:00.000");
+
+    when(configurationClient.getLocaleSettings()).thenReturn(EMPTY_LOCALE_JSON);
+
+    String expectedQuery = "field1 < 2024-10-01";
+    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(lessThanCondition, entityType);
+    assertEquals(expectedQuery, actualQuery);
+  }
+
+  @Test
+  void shouldThrowExceptionForInvalidDateFormat() {
+    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
+    EntityType entityType = new EntityType().columns(List.of(column));
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01T23:00:00");
+    assertThrows(IllegalArgumentException.class, () -> userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType));
   }
 }
