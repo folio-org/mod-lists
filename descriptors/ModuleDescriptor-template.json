@@ -74,12 +74,18 @@
           "methods": ["POST"],
           "pathPattern": "/lists",
           "permissionsRequired": ["lists.collection.post"],
-          "modulePermissions": ["users.item.get"]
+          "modulePermissions": [
+            "users.item.get",
+            "configuration.entries.collection.get"
+          ]
         }, {
           "methods": ["PUT"],
           "pathPattern": "/lists/{id}",
           "permissionsRequired": ["lists.item.update"],
-          "modulePermissions": ["users.item.get"]
+          "modulePermissions": [
+            "users.item.get",
+            "configuration.entries.collection.get"
+          ]
         }, {
           "methods": ["DELETE"],
           "pathPattern": "/lists/{id}",
