@@ -1,5 +1,9 @@
 package org.folio.list.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.fql.model.*;
@@ -7,12 +11,21 @@ import org.folio.fql.service.FqlService;
 import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.ConfigurationClient;
 import org.folio.list.rest.QueryClient;
 import org.folio.querytool.domain.dto.ContentsRequest;
+import org.folio.querytool.domain.dto.DateType;
+import org.folio.querytool.domain.dto.EntityDataType;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.Field;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -25,15 +38,22 @@ public class UserFriendlyQueryService {
 
   private final EntityTypeClient entityTypeClient;
   private final FqlService fqlService;
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+  private static final String DATE_REGEX = "^\\d{4}-\\d{2}-\\d{2}$";
+  private static final String DATE_TIME_REGEX = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$";
+  private static final String INVALID_DATE_STRING = "Date %s is not valid. Dates should match format 'yyyy-MM-dd' or 'yyyy-MM-dd'T'HH:mm:ss.SSS'";
+
   private final QueryClient queryClient;
+  private final ConfigurationClient configurationClient;
 
   private final Map<Class<? extends FqlCondition<?>>, BiFunction<FqlCondition<?>, EntityType, String>> userFriendlyQuery = Map.ofEntries(
     Map.entry(EqualsCondition.class, (cnd, ent) -> handleEquals((EqualsCondition) cnd, ent)),
     Map.entry(NotEqualsCondition.class, (cnd, ent) -> handleNotEquals((NotEqualsCondition) cnd, ent)),
     Map.entry(InCondition.class, (cnd, ent) -> handleIn((InCondition) cnd, ent)),
     Map.entry(NotInCondition.class, (cnd, ent) -> handleNotIn((NotInCondition) cnd, ent)),
-    Map.entry(GreaterThanCondition.class, (cnd, ent) -> handleGreaterThan((GreaterThanCondition) cnd)),
-    Map.entry(LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd)),
+    Map.entry(GreaterThanCondition.class, (cnd, ent) -> handleGreaterThan((GreaterThanCondition) cnd, ent)),
+    Map.entry(LessThanCondition.class, (cnd, ent) -> handleLessThan((LessThanCondition) cnd, ent)),
     Map.entry(AndCondition.class, (cnd, ent) -> handleAnd((AndCondition) cnd, ent)),
     Map.entry(RegexCondition.class, (cnd, ent) -> handleRegEx((RegexCondition) cnd)),
     Map.entry(ContainsAllCondition.class, (cnd, ent) -> handleContainsAll((ContainsAllCondition) cnd, ent)),
@@ -65,14 +85,14 @@ public class UserFriendlyQueryService {
     );
   }
 
-  private String handleGreaterThan(GreaterThanCondition greaterThanCondition) {
+  private String handleGreaterThan(GreaterThanCondition greaterThanCondition, EntityType entityType) {
     String operator = greaterThanCondition.orEqualTo() ? " >= " : " > ";
-    return greaterThanCondition.field().serialize() + operator + greaterThanCondition.value();
+    return greaterThanCondition.field().serialize() + operator + getConditionValue(greaterThanCondition, entityType);
   }
 
-  private String handleLessThan(LessThanCondition lessThanCondition) {
+  private String handleLessThan(LessThanCondition lessThanCondition, EntityType entityType) {
     String operator = lessThanCondition.orEqualTo() ? " <= " : " < ";
-    return lessThanCondition.field().serialize()  + operator + lessThanCondition.value();
+    return lessThanCondition.field().serialize() + operator + getConditionValue(lessThanCondition, entityType);
   }
 
   private String handleAnd(AndCondition andCondition, EntityType entityType) {
@@ -85,19 +105,21 @@ public class UserFriendlyQueryService {
 
   private String handleRegEx(RegexCondition regExCondition) {
     if (regExCondition.value().startsWith("^")) {
-      return regExCondition.field().serialize()  + " starts with " + regExCondition.value().substring(1);
+      return regExCondition.field().serialize() + " starts with " + regExCondition.value().substring(1);
     }
-    return regExCondition.field().serialize()  + " contains " + regExCondition.value();
+    return regExCondition.field().serialize() + " contains " + regExCondition.value();
   }
 
   private String handleEquals(EqualsCondition equalsCondition, EntityType entityType) {
+    var value = getConditionValue(equalsCondition, entityType);
     BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
-    return handleConditionWithPossibleIdValue(equalsCondition, entityType, "==", labelFn);
+    return handleConditionWithPossibleIdValue(equalsCondition, value, entityType, "==", labelFn);
   }
 
   private String handleNotEquals(NotEqualsCondition notEqualsCondition, EntityType entityType) {
+    var value = getConditionValue(notEqualsCondition, entityType);
     BiFunction<Field, Object, String> labelFn = (col, val) -> this.getLabel(UUID.fromString(val.toString()), col);
-    return handleConditionWithPossibleIdValue(notEqualsCondition, entityType, "!=", labelFn);
+    return handleConditionWithPossibleIdValue(notEqualsCondition, value, entityType, "!=", labelFn);
   }
 
   private String handleIn(InCondition inCondition, EntityType entityType) {
@@ -105,7 +127,7 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(inCondition, entityType, "in", labelFn);
+    return handleConditionWithPossibleIdValue(inCondition, inCondition.value(), entityType, "in", labelFn);
   }
 
   private String handleNotIn(NotInCondition notInCondition, EntityType entityType) {
@@ -113,7 +135,7 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(notInCondition, entityType, "not in", labelFn);
+    return handleConditionWithPossibleIdValue(notInCondition, notInCondition.value(), entityType, "not in", labelFn);
   }
 
   private String handleContainsAll(ContainsAllCondition containsAllCondition, EntityType entityType) {
@@ -121,7 +143,7 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(containsAllCondition, entityType, "contains all", labelFn);
+    return handleConditionWithPossibleIdValue(containsAllCondition, containsAllCondition.value(), entityType, "contains all", labelFn);
   }
 
   private String handleNotContainsAll(NotContainsAllCondition notContainsAllCondition, EntityType entityType) {
@@ -129,7 +151,7 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(notContainsAllCondition, entityType, "does not contain all", labelFn);
+    return handleConditionWithPossibleIdValue(notContainsAllCondition, notContainsAllCondition.value(), entityType, "does not contain all", labelFn);
   }
 
   private String handleContainsAny(ContainsAnyCondition containsAnyCondition, EntityType entityType) {
@@ -137,7 +159,7 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(containsAnyCondition, entityType, "contains any", labelFn);
+    return handleConditionWithPossibleIdValue(containsAnyCondition, containsAnyCondition.value(), entityType, "contains any", labelFn);
   }
 
   private String handleNotContainsAny(NotContainsAnyCondition notContainsAnyCondition, EntityType entityType) {
@@ -145,18 +167,65 @@ public class UserFriendlyQueryService {
       List<List<String>> ids = val.stream().map(uuidStr -> List.of(uuidStr.toString())).toList();
       return getLabel(ids, col, true);
     };
-    return handleConditionWithPossibleIdValue(notContainsAnyCondition, entityType, "does not contain any", labelFn);
+    return handleConditionWithPossibleIdValue(notContainsAnyCondition, notContainsAnyCondition.value(), entityType, "does not contain any", labelFn);
   }
 
   private String handleEmpty(EmptyCondition emptyCondition) {
     if (Boolean.TRUE.equals(emptyCondition.value())) {
-      return emptyCondition.field().serialize()  + " is empty";
+      return emptyCondition.field().serialize() + " is empty";
     } else {
-      return emptyCondition.field().serialize()  + " is not empty";
+      return emptyCondition.field().serialize() + " is not empty";
     }
   }
 
+  private Object getConditionValue(FieldCondition<?> fieldCondition, EntityType entityType) {
+    String columnName = fieldCondition.field().getColumnName();
+    EntityDataType dataType = entityType
+      .getColumns()
+      .stream()
+      .filter(col -> col.getName().equals(columnName))
+      .findFirst()
+      .map(Field::getDataType)
+      .orElseThrow();
+    if (!(dataType instanceof DateType)) {
+      return fieldCondition.value();
+    }
+    LocalDateTime dateTime;
+    String timezone;
+    String dateString = (String) fieldCondition.value();
+    if (dateString.matches(DATE_REGEX)) {
+      dateTime = LocalDate.parse(dateString, DATE_FORMATTER).atStartOfDay();
+    } else if (dateString.matches(DATE_TIME_REGEX)) {
+      dateTime = LocalDateTime.parse(dateString, DATE_TIME_FORMATTER);
+    } else {
+      // We should never end up here because mod-fqm-manager validates queries first, but just in case
+      throw new IllegalArgumentException(INVALID_DATE_STRING.formatted(dateString));
+    }
+
+    try {
+      String localeSettingsResponse = configurationClient.getLocaleSettings();
+      ObjectMapper objectMapper = new ObjectMapper();
+      JsonNode localeSettingsNode = objectMapper.readTree(localeSettingsResponse);
+      String valueString = localeSettingsNode
+        .path("configs")
+        .get(0)
+        .path("value")
+        .asText();
+      JsonNode valueNode = objectMapper.readTree(valueString);
+      timezone = valueNode.path("timezone").asText();
+    } catch (JsonProcessingException | FeignException.Unauthorized | NullPointerException e) {
+      log.error("Failed to retrieve locale information from mod-configuration. Defaulting to UTC.");
+      return dateTime.toLocalDate();
+    }
+    ZoneId zoneId = ZoneId.of(timezone);
+    ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId);
+    ZoneOffset offset = zonedDateTime.getOffset();
+    LocalDateTime adjustedTime = dateTime.plusSeconds(offset.getTotalSeconds());
+    return adjustedTime.toLocalDate();
+  }
+
   private <T> String handleConditionWithPossibleIdValue(FieldCondition<T> condition,
+                                                        T value,
                                                         EntityType entityType,
                                                         String userFriendlyOperator,
                                                         BiFunction<Field, T, String> labelFn) {
@@ -166,7 +235,7 @@ public class UserFriendlyQueryService {
       // e.g. user patron group, vendor code, vendor ID, etc
       Field querySubjectField = FqlValidationService.findFieldDefinition(condition.field(), entityType).orElseThrow();
       if (querySubjectField.getIdColumnName() != null) {
-        return condition.field().serialize() + operatorWithPadding + labelFn.apply(querySubjectField, condition.value());
+        return condition.field().serialize() + operatorWithPadding + labelFn.apply(querySubjectField, value);
       } else {
         // a column which uses our query subject as ID
         // this will be found when querySubjectField is something like vendor_id, etc.; we would find something like vendor_code
@@ -181,7 +250,7 @@ public class UserFriendlyQueryService {
           // if we found this referencing column, use it as the basis for getting the label
           .map(column -> column.getName() + operatorWithPadding + labelFn.apply(column, condition.value()))
           // sensible fallback
-          .orElse(condition.field().serialize() + operatorWithPadding + condition.value());
+          .orElse(condition.field().serialize() + operatorWithPadding + value);
       }
     } catch (Exception e) {
       log.error("Unexpected error when creating user friendly query for condition " + condition + ". Exception: " + e);
