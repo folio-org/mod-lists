@@ -3,6 +3,7 @@ package org.folio.list.mapper;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.services.ListService;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.querytool.domain.dto.FqmMigrateWarning;
@@ -28,6 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class ListMigrationMapper {
 
   @Autowired
+  private ListService listService;
+
+  @Autowired
   private TranslationService translationService;
 
   public abstract FqmMigrateRequest toMigrationRequest(ListEntity list);
@@ -44,6 +48,8 @@ public abstract class ListMigrationMapper {
   // instead, we have to do this at the end and manually implement this mapping :/
   @AfterMapping
   protected void updateListDescriptionAfterMigration(@MappingTarget ListEntity list, FqmMigrateResponse response) {
+    listService.updateUserFriendlyQuery(list);
+
     if (response.getWarnings().isEmpty()) {
       return;
     }

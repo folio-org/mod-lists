@@ -3,25 +3,36 @@ package org.folio.list.mapper;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.services.ListService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.querytool.domain.dto.FqmMigrateWarning;
-import org.folio.spring.i18n.config.TranslationConfiguration;
 import org.folio.spring.i18n.service.TranslationService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SpringBootTest(classes = { ListMigrationMapperImpl.class, TranslationService.class, TranslationConfiguration.class })
+@ExtendWith(MockitoExtension.class)
 class ListMigrationMapperTest {
 
-  @Autowired
-  private ListMigrationMapper mapper;
+  @Mock
+  private ListService listService;
+
+  @Mock
+  private TranslationService translationService;
+
+  @InjectMocks
+  private ListMigrationMapper mapper = new ListMigrationMapperImpl();
 
   @Test
   void testToMigrationRequest() {
@@ -37,6 +48,14 @@ class ListMigrationMapperTest {
   void testFromMigrationResponseNoWarnings() {
     ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh();
 
+    doAnswer(invocation -> {
+        ListEntity list = invocation.getArgument(0);
+        list.setUserFriendlyQuery(list.getFqlQuery());
+        return list;
+      })
+      .when(listService)
+      .updateUserFriendlyQuery(any());
+
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
       .fields(List.of("a", "b", "c"))
@@ -48,11 +67,23 @@ class ListMigrationMapperTest {
     assertThat(updatedEntity.getFqlQuery(), is(response.getFqlQuery()));
     assertThat(updatedEntity.getFields(), is(response.getFields()));
     assertThat(updatedEntity.getDescription(), is(sourceEntity.getDescription()));
+    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 
   @Test
   void testFromMigrationResponseWithOneWarning() {
     ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh();
+
+    when(translationService.format(any(String.class), any(Object[].class)))
+      .thenAnswer(invocation -> invocation.getArgument(0));
+
+    doAnswer(invocation -> {
+        ListEntity list = invocation.getArgument(0);
+        list.setUserFriendlyQuery(list.getFqlQuery());
+        return list;
+      })
+      .when(listService)
+      .updateUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -66,18 +97,25 @@ class ListMigrationMapperTest {
     assertThat(updatedEntity.getFields(), is(response.getFields()));
     assertThat(
       updatedEntity.getDescription(),
-      stringContainsInOrder(
-        sourceEntity.getDescription(),
-        "This list was modified as part of a module upgrade",
-        "produced the following warning:",
-        "warning description"
-      )
+      stringContainsInOrder(sourceEntity.getDescription(), "mod-lists.migration.warning-header", "warning description")
     );
+    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 
   @Test
   void testFromMigrationResponseWithMultipleWarnings() {
     ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh();
+
+    when(translationService.format(any(String.class), any(Object[].class)))
+      .thenAnswer(invocation -> invocation.getArgument(0));
+
+    doAnswer(invocation -> {
+        ListEntity list = invocation.getArgument(0);
+        list.setUserFriendlyQuery(list.getFqlQuery());
+        return list;
+      })
+      .when(listService)
+      .updateUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -99,12 +137,12 @@ class ListMigrationMapperTest {
       updatedEntity.getDescription(),
       stringContainsInOrder(
         sourceEntity.getDescription(),
-        "This list was modified as part of a module upgrade",
-        "produced the following 3 warnings:",
+        "mod-lists.migration.warning-header",
         "first warning description",
         "second warning description",
         "third warning description"
       )
     );
+    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 }
