@@ -23,10 +23,10 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>8.1.0</folio-spring-base.version>
+    <folio-spring-base.version>8.2.0-SNAPSHOT</folio-spring-base.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <folio-service-tools.version>3.1.0</folio-service-tools.version>
-    <mapstruct.version>1.5.2.Final</mapstruct.version>
+    <mapstruct.version>1.6.2</mapstruct.version>
     <lib-fqm-query-processor.version>2.1.0-SNAPSHOT</lib-fqm-query-processor.version>
     <jackson-dataformat-csv.version>2.14.2</jackson-dataformat-csv.version>
     <aws-sdk-java.version>2.19.2</aws-sdk-java.version>
@@ -70,6 +70,11 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-spring-system-user</artifactId>
+      <version>${folio-spring-base.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-spring-i18n</artifactId>
       <version>${folio-spring-base.version}</version>
     </dependency>
     <dependency>
@@ -231,8 +236,17 @@
   </dependencies>
 
   <build>
-    <plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/translations</directory>
+        <targetPath>translations</targetPath>
+      </resource>
+    </resources>
 
+    <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
