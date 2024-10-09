@@ -4,6 +4,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.folio.list.services.CustomTenantService;
+import org.folio.list.services.QueryMigrationService;
 import org.folio.spring.service.PrepareSystemUserService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,10 @@ class CustomTenantServiceTest {
 
   @Mock
   private PrepareSystemUserService prepareSystemUserService;
+
+  @Mock
+  private QueryMigrationService queryMigrationService;
+
 
   @Test
   void testSystemUserCreation() {
