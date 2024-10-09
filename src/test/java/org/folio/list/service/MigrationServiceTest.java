@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -59,10 +58,9 @@ class MigrationServiceTest {
 
   @Test
   void testMigrateListWithNoQuery() {
-    assertThrows(
-      IllegalArgumentException.class,
-      () -> migrationService.migrateList(TestDataFixture.getListEntityWithoutQuery())
-    );
+    ListEntity list = TestDataFixture.getListEntityWithoutQuery();
+
+    assertThrows(IllegalArgumentException.class, () -> migrationService.migrateList(list));
   }
 
   @Test
@@ -88,7 +86,7 @@ class MigrationServiceTest {
     assertThat(migrationService.migrateList(sourceList), is(true));
 
     verify(migrationClient, times(1)).migrate(any());
-    verify(listRepository, times(1)).save(eq(mapper.updateListWithMigration(sourceList, CHANGED_RESPONSE)));
+    verify(listRepository, times(1)).save(mapper.updateListWithMigration(sourceList, CHANGED_RESPONSE));
     verifyNoMoreInteractions(migrationClient, listRepository);
     verifyNoInteractions(latestMigratedVersionRepository);
   }
@@ -98,6 +96,8 @@ class MigrationServiceTest {
     List<ListEntity> sourceLists = List.of(
       TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("e99fa190-7d95-54f5-bba7-6ca661dcc01d")),
       TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("de13facd-ac98-575b-be95-619fbf387c8f")),
+      TestDataFixture.getListEntityWithoutQuery(),
+      TestDataFixture.getListEntityWithSuccessRefresh().withIsDeleted(true),
       TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("f778600e-d680-52ff-90c7-3e524e555d29"))
     );
 
