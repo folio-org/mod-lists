@@ -25,7 +25,6 @@ class ListMigrationMapperTest {
 
   @Test
   void testToMigrationRequest() {
-    // new ListMigrationMapperImpl()
     ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh();
 
     FqmMigrateRequest request = mapper.toMigrationRequest(sourceEntity);
