@@ -125,4 +125,44 @@ class MigrationServiceTest {
     verifyNoMoreInteractions(migrationClient, listRepository);
     verifyNoInteractions(latestMigratedVersionRepository);
   }
+
+  @Test
+  void testVerifyListsUpToDateWhenUpToDate() {
+    when(latestMigratedVersionRepository.getLatestMigratedVersion()).thenReturn("current");
+
+    migrationService.verifyListsAreUpToDate("current");
+
+    verify(latestMigratedVersionRepository, times(1)).getLatestMigratedVersion();
+    verifyNoMoreInteractions(latestMigratedVersionRepository);
+    verifyNoInteractions(listRepository, migrationClient);
+  }
+
+  @Test
+  void testVerifyListsUpToDateWhenUpdateNeeded() {
+    when(latestMigratedVersionRepository.getLatestMigratedVersion()).thenReturn("old");
+    when(listRepository.findAll()).thenReturn(List.of());
+
+    migrationService.verifyListsAreUpToDate("new");
+
+    verify(latestMigratedVersionRepository, times(1)).getLatestMigratedVersion();
+    verify(latestMigratedVersionRepository, times(1)).setLatestMigratedVersion("new");
+    verify(listRepository, times(1)).findAll();
+    verifyNoMoreInteractions(latestMigratedVersionRepository, listRepository);
+    verifyNoInteractions(migrationClient);
+  }
+
+  @Test
+  void testVerifyListsUpToDateWithNoArgAndUpdateNeeded() {
+    when(migrationClient.getVersion()).thenReturn("new");
+    when(latestMigratedVersionRepository.getLatestMigratedVersion()).thenReturn("old");
+    when(listRepository.findAll()).thenReturn(List.of());
+
+    migrationService.verifyListsAreUpToDate();
+
+    verify(migrationClient, times(1)).getVersion();
+    verify(latestMigratedVersionRepository, times(1)).getLatestMigratedVersion();
+    verify(latestMigratedVersionRepository, times(1)).setLatestMigratedVersion("new");
+    verify(listRepository, times(1)).findAll();
+    verifyNoMoreInteractions(migrationClient, latestMigratedVersionRepository, listRepository);
+  }
 }
