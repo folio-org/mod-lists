@@ -140,8 +140,7 @@ public class ListService {
     }
 
     if (hasText(listRequest.getFqlQuery())) {
-      String userFriendlyQuery = getUserFriendlyQuery(listRequest.getFqlQuery(), entityType);
-      listEntity.setUserFriendlyQuery(userFriendlyQuery);
+      updateUserFriendlyQuery(listEntity, entityType);
     }
     ListEntity savedEntity = listRepository.save(listEntity);
     ListVersion previousVersions = new ListVersion();
@@ -344,6 +343,18 @@ public class ListService {
       queryId,
       registerShutdownTask(savedEntity, "Cancel refresh for list " + savedEntity.getId()),
       timer);
+  }
+
+  public void updateUserFriendlyQuery(ListEntity listEntity) {
+    listEntity.setUserFriendlyQuery(
+      getUserFriendlyQuery(listEntity.getFqlQuery(), getEntityType(listEntity.getEntityTypeId(), ListActions.UPDATE))
+    );
+  }
+
+  public void updateUserFriendlyQuery(ListEntity listEntity, EntityType entityType) {
+    listEntity.setUserFriendlyQuery(
+      getUserFriendlyQuery(listEntity.getFqlQuery(), entityType)
+    );
   }
 
   private String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {

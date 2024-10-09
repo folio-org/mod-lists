@@ -63,7 +63,7 @@ mvn clean install
 | SYSTEM_USER_PASSWORD                            | -                        | Password for the system user; **must be set**                                                               |
 | SYSTEM_USER_ENABLED                             | true                     | Defines if system user must be created at service tenant initialization or used for egress service requests |
 | mod-lists.list-export.s3-startup-check.enabled  | true                     | Verify that S3/MinIO is accessible on startup                                                               |
-| spring.task.execution.pool.max-size             | 10                       | refresh/export thread pool's max size                                                                       |
+| spring.task.execution.pool.max-size             | 10                       | refresh/export/migrate thread pool's max size                                                               |
 | mod-lists.general.refresh-query-timeout-minutes | 90                       | Max time to wait for an FQL query to run during a list refresh                                              |
 
 > **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
