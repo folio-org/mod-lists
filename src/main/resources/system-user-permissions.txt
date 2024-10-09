@@ -31,3 +31,4 @@ organizations.organizations.collection.get
 usergroups.collection.get
 users.collection.get
 users.item.get
+inventory-storage.classification-types.collection.get
