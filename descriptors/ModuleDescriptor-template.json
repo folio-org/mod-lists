@@ -44,7 +44,7 @@
         }, {
           "methods": ["POST"],
           "pathPattern": "/lists/{id}/refresh",
-          "permissionsRequired": ["lists.item.refresh"],
+          "permissionsRequired": ["lists.item.post"],
           "modulePermissions": ["users.item.get"]
         }, {
           "methods": ["DELETE"],
@@ -123,7 +123,8 @@
       "description": "Get the contents of a list"
     },
     {
-      "permissionName": "lists.item.refresh",
+      "permissionName": "lists.item.post",
+      "replaces":  ["lists.item.refresh"],
       "displayName": "Lists: Refresh a list",
       "description": "Refresh a list"
     },
