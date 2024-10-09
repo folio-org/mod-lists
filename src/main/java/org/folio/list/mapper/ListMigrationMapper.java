@@ -19,12 +19,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Mapper(
   componentModel = MappingConstants.ComponentModel.SPRING,
   injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = { MappingMethods.class, ListRefreshMapper.class }
+  uses = TranslationService.class
 )
+// we cannot use constructor injection in the subclass due to https://github.com/mapstruct/mapstruct/issues/2257
+// and we cannot use an interface here, due to the @AfterMapping.
+// so, we use field injection here.
+@SuppressWarnings("java:S6813")
 public abstract class ListMigrationMapper {
 
   @Autowired
-  TranslationService translationService;
+  private TranslationService translationService;
 
   public abstract FqmMigrateRequest toMigrationRequest(ListEntity list);
 
@@ -48,7 +52,13 @@ public abstract class ListMigrationMapper {
       (
         list.getDescription() +
         "\n\n" +
-        translationService.format("mod-lists.migration.warning-header", "date", Instant.now()) +
+        translationService.format(
+          "mod-lists.migration.warning-header",
+          "date",
+          Instant.now(),
+          "count",
+          response.getWarnings().size()
+        ) +
         "\n" +
         response.getWarnings().stream().map(FqmMigrateWarning::getDescription).collect(Collectors.joining("\n"))
       ).trim()

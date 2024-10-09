@@ -64,7 +64,6 @@ public class MigrationService {
     return CompletableFuture.allOf(
       StreamSupport
         .stream(listRepository.findAll().spliterator(), true)
-        .filter(list -> !list.getId().toString().equals(null))
         .filter(list -> list.getFqlQuery() != null)
         .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
         .map(list -> executor.submit(() -> migrateList(list)))
