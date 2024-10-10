@@ -22,6 +22,7 @@ import org.folio.list.rest.MigrationClient;
 import org.folio.list.services.MigrationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,6 +52,9 @@ class MigrationServiceTest {
   ListMigrationMapper mapper;
 
   @Mock
+  SystemUserScopedExecutionService systemUserScopedExecutionService;
+
+  @Mock
   AsyncTaskExecutor executor;
 
   @InjectMocks
@@ -67,6 +71,8 @@ class MigrationServiceTest {
   void testMigrateListWithNoChange() {
     ListEntity sourceList = TestDataFixture.getListEntityWithSuccessRefresh();
 
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
     when(migrationClient.migrate(mapper.toMigrationRequest(sourceList)))
       .thenReturn(new FqmMigrateResponse().fqlQuery(sourceList.getFqlQuery()));
 
@@ -81,6 +87,8 @@ class MigrationServiceTest {
   void testMigrateListWithChanges() {
     ListEntity sourceList = TestDataFixture.getListEntityWithSuccessRefresh();
 
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
     when(migrationClient.migrate(mapper.toMigrationRequest(sourceList))).thenReturn(CHANGED_RESPONSE);
 
     assertThat(migrationService.migrateList(sourceList), is(true));
@@ -101,6 +109,8 @@ class MigrationServiceTest {
       TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("f778600e-d680-52ff-90c7-3e524e555d29"))
     );
 
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
     when(listRepository.findAll()).thenReturn(sourceLists);
     when(migrationClient.migrate(any()))
       .thenReturn(
@@ -156,6 +166,8 @@ class MigrationServiceTest {
     when(migrationClient.getVersion()).thenReturn("new");
     when(latestMigratedVersionRepository.getLatestMigratedVersion()).thenReturn("old");
     when(listRepository.findAll()).thenReturn(List.of());
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
 
     migrationService.verifyListsAreUpToDate();
 

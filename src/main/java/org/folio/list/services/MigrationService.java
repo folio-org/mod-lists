@@ -10,6 +10,7 @@ import org.folio.list.repository.LatestMigratedVersionRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class MigrationService {
   private final ListMigrationMapper mapper;
   private final ListRepository listRepository;
   private final MigrationClient migrationClient;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
 
   private final AsyncTaskExecutor executor;
 
@@ -38,20 +40,22 @@ public class MigrationService {
       throw new IllegalArgumentException("FQL query is required for migration");
     }
 
-    FqmMigrateResponse result = migrationClient.migrate(mapper.toMigrationRequest(list));
+    return systemUserScopedExecutionService.executeSystemUserScoped(() -> {
+      FqmMigrateResponse result = migrationClient.migrate(mapper.toMigrationRequest(list));
 
-    // the query contains the version, so even if there were no substantial changes,
-    // a migration will still change update that
-    if (result.getFqlQuery().equals(list.getFqlQuery())) {
-      log.info("Attempted migration of list {} yielded no changes", list.getId());
-      return false;
-    }
+      // the query contains the version, so even if there were no substantial changes,
+      // a migration will still change update that
+      if (result.getFqlQuery().equals(list.getFqlQuery())) {
+        log.info("Attempted migration of list {} yielded no changes", list.getId());
+        return false;
+      }
 
-    listRepository.save(mapper.updateListWithMigration(list, result));
+      listRepository.save(mapper.updateListWithMigration(list, result));
 
-    log.info("Upgraded list {}", list.getId());
+      log.info("Upgraded list {}", list.getId());
 
-    return true;
+      return true;
+    });
   }
 
   /**
@@ -90,6 +94,7 @@ public class MigrationService {
    * Check that lists are up to date with the current FQM entity types version, fetched via API
    */
   public void verifyListsAreUpToDate() {
-    verifyListsAreUpToDate(migrationClient.getVersion());
+    String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(migrationClient::getVersion);
+    verifyListsAreUpToDate(latestVersion);
   }
 }
