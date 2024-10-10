@@ -1,16 +1,10 @@
 package org.folio.list.service;
 
-import feign.FeignException;
-import org.folio.fql.model.field.FqlField;
-import org.folio.fql.service.FqlService;
-import org.folio.fql.model.EqualsCondition;
-import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
-import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.exception.VersionNotFoundException;
@@ -39,7 +33,6 @@ import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -83,9 +76,6 @@ class ListServiceTest {
 
   @Mock
   private FolioExecutionContext executionContext;
-
-  @Mock
-  private FqlService fqlService;
 
   @Mock
   private ListContentsRepository listContentsRepository;
@@ -240,16 +230,17 @@ class ListServiceTest {
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql("0", equalsCondition));
-    when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    doAnswer(invocation -> {
+      ((ListEntity) invocation.getArgument(0)).setUserFriendlyQuery(userFriendlyQuery);
+      return null;
+    }).when(userFriendlyQueryService).updateListUserFriendlyQuery(entity, entityType);
 
     var actual = listService.createList(listRequestDto);
     ListDTO expected = new ListDTO()
@@ -292,7 +283,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
@@ -315,8 +306,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql("0", new EqualsCondition(new FqlField("item_status"), "missing")));
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -343,16 +333,17 @@ class ListServiceTest {
     listRequestDto.setQueryId(queryId);
 
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql("0", equalsCondition));
-    when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    doAnswer(invocation -> {
+      ((ListEntity) invocation.getArgument(0)).setUserFriendlyQuery(userFriendlyQuery);
+      return null;
+    }).when(userFriendlyQueryService).updateListUserFriendlyQuery(entity, entityType);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     listService.createList(listRequestDto);
     assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
@@ -380,7 +371,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     listService.createList(listRequestDto);
@@ -389,20 +380,6 @@ class ListServiceTest {
     ListEntity list = listEntityArgumentCaptor.getValue();
     assertFalse(hasText(list.getUserFriendlyQuery()));
     assertEquals(expectedFields, list.getFields());
-  }
-
-  @Test
-  void createListShouldThrowErrorForUserMissingEntityTypePermissions() {
-    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenThrow(new FeignException.Unauthorized("[{\"User is missing permissions: [foo.bar]\"}]", mock(feign.Request.class), null, null));
-    assertThrows(InsufficientEntityTypePermissionsException.class, () -> listService.createList(listRequestDto));
-  }
-
-  @Test
-  void createListShouldThrowErrorForMissingEntityType() {
-    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId())).thenThrow(new FeignException.NotFound("Entity type not found", mock(feign.Request.class), null, null));
-    assertThrows(NotFoundException.class, () -> listService.createList(listRequestDto));
   }
 
   @Test
@@ -416,14 +393,12 @@ class ListServiceTest {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
     ListDTO expected = TestDataFixture.getListDTOSuccessRefresh(userId);
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
     ListVersion previousVersions = new ListVersion();
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql("0", equalsCondition));
-    when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(userFriendlyQueryService.getUserFriendlyQuery(entity.getFqlQuery(), entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listVersionRepository.save(any(ListVersion.class))).thenReturn(previousVersions);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -466,13 +441,11 @@ class ListServiceTest {
     EntityType entityType = new EntityType()
       .id(entity.getEntityTypeId().toString())
       .columns(List.of(new EntityTypeColumn().name("field1")));
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("item_status"), "missing");
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
-    when(fqlService.getFql(entity.getFqlQuery())).thenReturn(new Fql("0", equalsCondition));
-    when(userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)).thenReturn(userFriendlyQuery);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(userFriendlyQueryService.getUserFriendlyQuery(entity.getFqlQuery(), entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
@@ -495,7 +468,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     doNothing().when(validationService).validateUpdate(entity, deactivateRequest, entityType);
 
@@ -524,7 +497,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     when(listRepository.save(entity)).thenReturn(entity);
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
@@ -557,7 +530,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
 
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);

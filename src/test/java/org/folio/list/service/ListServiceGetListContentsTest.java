@@ -141,7 +141,7 @@ class ListServiceGetListContentsTest {
     expectedEntity.getSuccessRefresh().setRecordsCount(2);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
-    when(entityTypeClient.getEntityType(entityTypeId)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entityTypeId, ListActions.READ)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(expectedEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(queryClient.getContents(contentsRequest)).thenReturn(expectedList);

@@ -6,6 +6,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportNotFoundException;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
@@ -37,7 +38,7 @@ class ListServiceValidateCancelExportTest {
     list.setIsPrivate(true);
     UUID userId = list.getCreatedBy();
     when(folioExecutionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(list.getEntityTypeId())).thenReturn(TestDataFixture.TEST_ENTITY_TYPE);
+    when(entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.CANCEL_EXPORT)).thenReturn(TestDataFixture.TEST_ENTITY_TYPE);
     assertDoesNotThrow(() -> validationService.validateCancelExport(exportDetails));
   }
 
@@ -47,7 +48,7 @@ class ListServiceValidateCancelExportTest {
     ListEntity list = exportDetails.getList();
     list.setIsPrivate(true);
     when(folioExecutionContext.getUserId()).thenReturn(UUID.randomUUID());
-    when(entityTypeClient.getEntityType(list.getEntityTypeId())).thenReturn(TestDataFixture.TEST_ENTITY_TYPE);
+    when(entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.CANCEL_EXPORT)).thenReturn(TestDataFixture.TEST_ENTITY_TYPE);
     assertThrows(PrivateListOfAnotherUserException.class, () -> validationService.validateCancelExport(exportDetails));
   }
 
