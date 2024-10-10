@@ -120,7 +120,7 @@ class MigrationServiceTest {
       );
 
     // the world's best async implementation™
-    when(executor.submit((Callable<?>) any(Callable.class)))
+    when(executor.submitCompletable((Callable<?>) any(Callable.class)))
       .thenAnswer(invocation -> {
         Callable<?> task = invocation.getArgument(0);
         task.call();
