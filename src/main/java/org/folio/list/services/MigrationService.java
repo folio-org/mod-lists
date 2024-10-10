@@ -70,7 +70,7 @@ public class MigrationService {
         .stream(listRepository.findAll().spliterator(), true)
         .filter(list -> list.getFqlQuery() != null)
         .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
-        .map(list -> executor.submit(() -> migrateList(list)))
+        .map(list -> executor.submitCompletable(() -> migrateList(list)))
         .toArray(s -> new CompletableFuture[s])
     );
   }
