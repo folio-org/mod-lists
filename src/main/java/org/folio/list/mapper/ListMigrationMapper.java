@@ -3,7 +3,7 @@ package org.folio.list.mapper;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.services.ListService;
+import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.querytool.domain.dto.FqmMigrateWarning;
@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Mapper(
   componentModel = MappingConstants.ComponentModel.SPRING,
   injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = TranslationService.class
+  uses = { TranslationService.class, UserFriendlyQueryService.class }
 )
 // we cannot use constructor injection in the subclass due to https://github.com/mapstruct/mapstruct/issues/2257
 // and we cannot use an interface here, due to the @AfterMapping.
@@ -29,10 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class ListMigrationMapper {
 
   @Autowired
-  private ListService listService;
+  private TranslationService translationService;
 
   @Autowired
-  private TranslationService translationService;
+  private UserFriendlyQueryService userFriendlyQueryService;
 
   public abstract FqmMigrateRequest toMigrationRequest(ListEntity list);
 
@@ -48,7 +48,7 @@ public abstract class ListMigrationMapper {
   // instead, we have to do this at the end and manually implement this mapping :/
   @AfterMapping
   protected void updateListDescriptionAfterMigration(@MappingTarget ListEntity list, FqmMigrateResponse response) {
-    listService.updateUserFriendlyQuery(list);
+    userFriendlyQueryService.updateListUserFriendlyQuery(list);
 
     if (response.getWarnings().isEmpty()) {
       return;

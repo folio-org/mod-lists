@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.services.ListService;
+import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
@@ -26,10 +26,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ListMigrationMapperTest {
 
   @Mock
-  private ListService listService;
+  private TranslationService translationService;
 
   @Mock
-  private TranslationService translationService;
+  private UserFriendlyQueryService userFriendlyQueryService;
 
   @InjectMocks
   private ListMigrationMapper mapper = new ListMigrationMapperImpl();
@@ -53,8 +53,8 @@ class ListMigrationMapperTest {
         list.setUserFriendlyQuery(list.getFqlQuery());
         return list;
       })
-      .when(listService)
-      .updateUserFriendlyQuery(any());
+      .when(userFriendlyQueryService)
+      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -82,8 +82,8 @@ class ListMigrationMapperTest {
         list.setUserFriendlyQuery(list.getFqlQuery());
         return list;
       })
-      .when(listService)
-      .updateUserFriendlyQuery(any());
+      .when(userFriendlyQueryService)
+      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -114,8 +114,8 @@ class ListMigrationMapperTest {
         list.setUserFriendlyQuery(list.getFqlQuery());
         return list;
       })
-      .when(listService)
-      .updateUserFriendlyQuery(any());
+      .when(userFriendlyQueryService)
+      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))

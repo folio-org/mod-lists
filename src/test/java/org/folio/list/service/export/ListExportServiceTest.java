@@ -112,7 +112,7 @@ class ListExportServiceTest {
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(true));
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
     doAnswer(invocation -> {
       Runnable runnable = invocation.getArgument(1);
       runnable.run();
@@ -152,7 +152,7 @@ class ListExportServiceTest {
     ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId())).thenReturn(new EntityType());
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(new EntityType());
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
@@ -294,7 +294,7 @@ class ListExportServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(any(ExportDetails.class))).thenReturn(exportDetails);
     when(listExportMapper.toListExportDTO(exportDetails)).thenReturn(mock(ListExportDTO.class));
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId())).thenReturn(new EntityType());
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(new EntityType());
 
     listExportService.createExport(listId, null);
 

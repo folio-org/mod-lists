@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomTenantService extends TenantService {
 
+  protected final MigrationService migrationService;
   protected final PrepareSystemUserService prepareSystemUserService;
 
   @Autowired
@@ -23,9 +24,11 @@ public class CustomTenantService extends TenantService {
     JdbcTemplate jdbcTemplate,
     FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase,
+    MigrationService migrationService,
     PrepareSystemUserService prepareSystemUserService
   ) {
     super(jdbcTemplate, context, folioSpringLiquibase);
+    this.migrationService = migrationService;
     this.prepareSystemUserService = prepareSystemUserService;
   }
 
@@ -33,5 +36,8 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.info("Initializing system user");
     prepareSystemUserService.setupSystemUser();
+
+    log.info("Verifying lists are up to date");
+    migrationService.verifyListsAreUpToDate();
   }
 }

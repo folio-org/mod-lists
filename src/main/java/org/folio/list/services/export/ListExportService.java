@@ -26,7 +26,6 @@ import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
-import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -59,7 +58,7 @@ public class ListExportService {
     validationService.validateCreateExport(list);
     List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
     entityTypeClient
-      .getEntityType(list.getEntityTypeId())
+      .getEntityType(list.getEntityTypeId(), ListActions.EXPORT)
       .getColumns()
       .stream()
       .filter(column -> Boolean.TRUE.equals(column.getIsIdColumn()))
