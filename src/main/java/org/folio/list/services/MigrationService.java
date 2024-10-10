@@ -10,6 +10,7 @@ import org.folio.list.repository.LatestMigratedVersionRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MigrationService {
 
+  private final FolioExecutionContext executionContext;
   private final LatestMigratedVersionRepository latestMigratedVersionRepository;
   private final ListMigrationMapper mapper;
   private final ListRepository listRepository;
@@ -40,22 +42,20 @@ public class MigrationService {
       throw new IllegalArgumentException("FQL query is required for migration");
     }
 
-    return systemUserScopedExecutionService.executeSystemUserScoped(() -> {
-      FqmMigrateResponse result = migrationClient.migrate(mapper.toMigrationRequest(list));
+    FqmMigrateResponse result = migrationClient.migrate(mapper.toMigrationRequest(list));
 
-      // the query contains the version, so even if there were no substantial changes,
-      // a migration will still change update that
-      if (result.getFqlQuery().equals(list.getFqlQuery())) {
-        log.info("Attempted migration of list {} yielded no changes", list.getId());
-        return false;
-      }
+    // the query contains the version, so even if there were no substantial changes,
+    // a migration will still change update that
+    if (result.getFqlQuery().equals(list.getFqlQuery())) {
+      log.info("Attempted migration of list {} yielded no changes", list.getId());
+      return false;
+    }
 
-      listRepository.save(mapper.updateListWithMigration(list, result));
+    listRepository.save(mapper.updateListWithMigration(list, result));
 
-      log.info("Upgraded list {}", list.getId());
+    log.info("Upgraded list {}", list.getId());
 
-      return true;
-    });
+    return true;
   }
 
   /**
@@ -65,12 +65,27 @@ public class MigrationService {
    * caller is certain that lists need to be migrated.</strong>
    */
   public CompletableFuture<Void> migrateAllLists() {
+    String tenant = executionContext.getTenantId();
+
     return CompletableFuture.allOf(
       StreamSupport
         .stream(listRepository.findAll().spliterator(), true)
         .filter(list -> list.getFqlQuery() != null)
         .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
-        .map(list -> executor.submitCompletable(() -> migrateList(list)))
+        .map(list ->
+          executor.submitCompletable(() ->
+            // attempting to set the scope inside migrateList fails, as its in another thread,
+            // and so we've lost all context. Therefore, we need to create the context here,
+            // and specifically pass in the tenant, too.
+            systemUserScopedExecutionService.executeSystemUserScoped(
+              tenant,
+              () -> {
+                migrateList(list);
+                return null;
+              }
+            )
+          )
+        )
         .toArray(s -> new CompletableFuture[s])
     );
   }

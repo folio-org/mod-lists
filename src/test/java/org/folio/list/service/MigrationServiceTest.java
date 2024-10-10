@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,6 +23,7 @@ import org.folio.list.rest.MigrationClient;
 import org.folio.list.services.MigrationService;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +40,9 @@ class MigrationServiceTest {
     .entityTypeId(UUID.fromString("21b97d9f-46e8-5cde-ab64-d09da7403780"))
     .fqlQuery("new query")
     .fields(List.of("a", "b", "c"));
+
+  @Mock
+  FolioExecutionContext executionContext;
 
   @Mock
   LatestMigratedVersionRepository latestMigratedVersionRepository;
@@ -71,8 +76,6 @@ class MigrationServiceTest {
   void testMigrateListWithNoChange() {
     ListEntity sourceList = TestDataFixture.getListEntityWithSuccessRefresh();
 
-    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
-      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
     when(migrationClient.migrate(mapper.toMigrationRequest(sourceList)))
       .thenReturn(new FqmMigrateResponse().fqlQuery(sourceList.getFqlQuery()));
 
@@ -87,8 +90,6 @@ class MigrationServiceTest {
   void testMigrateListWithChanges() {
     ListEntity sourceList = TestDataFixture.getListEntityWithSuccessRefresh();
 
-    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
-      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
     when(migrationClient.migrate(mapper.toMigrationRequest(sourceList))).thenReturn(CHANGED_RESPONSE);
 
     assertThat(migrationService.migrateList(sourceList), is(true));
@@ -109,8 +110,9 @@ class MigrationServiceTest {
       TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("f778600e-d680-52ff-90c7-3e524e555d29"))
     );
 
-    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
-      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
+    when(executionContext.getTenantId()).thenReturn("tenant");
+    when(systemUserScopedExecutionService.executeSystemUserScoped(eq("tenant"), any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(1)).call());
     when(listRepository.findAll()).thenReturn(sourceLists);
     when(migrationClient.migrate(any()))
       .thenReturn(
