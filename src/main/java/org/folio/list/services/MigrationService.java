@@ -77,6 +77,7 @@ public class MigrationService {
   public void verifyListsAreUpToDate(String latestVersion) {
     String currentVersion = latestMigratedVersionRepository.getLatestMigratedVersion();
     if (currentVersion.equals(latestVersion)) {
+      log.info("Lists are up to date!");
       return;
     }
 

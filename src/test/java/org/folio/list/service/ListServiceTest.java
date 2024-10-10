@@ -33,6 +33,7 @@ import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.services.MigrationService;
 import org.folio.list.util.TaskTimer;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
@@ -68,12 +69,6 @@ class ListServiceTest {
   @InjectMocks
   private ListService listService;
 
-  @Mock
-  private ListRepository listRepository;
-
-  @Mock
-  private ListSummaryMapper listSummaryMapper;
-
   @Spy
   private ListMapper listMapper = new ListMapperImpl(new MappingMethods(), new ListRefreshMapperImpl(new MappingMethods()));
 
@@ -81,37 +76,46 @@ class ListServiceTest {
   private ListEntityMapper listEntityMapper = new org.folio.list.mapper.ListEntityMapperImpl();
 
   @Mock
-  private FolioExecutionContext executionContext;
-
-  @Mock
-  private UsersClient usersClient;
+  private AppShutdownService appShutdownService;
 
   @Mock
   private EntityTypeClient entityTypeClient;
 
   @Mock
-  private ListValidationService validationService;
-
-  @Mock
-  private ListRefreshService listRefreshService;
-
-  @Mock
-  private ListContentsRepository listContentsRepository;
-
-  @Mock
-  private UserFriendlyQueryService userFriendlyQueryService;
+  private FolioExecutionContext executionContext;
 
   @Mock
   private FqlService fqlService;
 
   @Mock
-  private AppShutdownService appShutdownService;
+  private ListContentsRepository listContentsRepository;
+
+  @Mock
+  private ListRefreshService listRefreshService;
+
+  @Mock
+  private ListRepository listRepository;
+
+  @Mock
+  private ListSummaryMapper listSummaryMapper;
+
+  @Mock
+  private ListValidationService validationService;
+
+  @Mock
+  private ListVersionMapper listVersionMapper;
 
   @Mock
   private ListVersionRepository listVersionRepository;
 
   @Mock
-  private ListVersionMapper listVersionMapper;
+  private MigrationService migrationService;
+
+  @Mock
+  private UserFriendlyQueryService userFriendlyQueryService;
+
+  @Mock
+  private UsersClient usersClient;
 
   @Test
   void testGetAllLists() {
@@ -144,10 +148,7 @@ class ListServiceTest {
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
     when(entityTypeClient.getEntityTypeSummary(null))
-      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2, expectedSummary3), ""));
-    when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
-                                                        listSummaryDto2.getEntityTypeId())))
-      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2, expectedSummary3), "newest and bestest"));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
 
@@ -161,6 +162,8 @@ class ListServiceTest {
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
+
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
   }
 
   @Test
@@ -193,10 +196,7 @@ class ListServiceTest {
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
     when(entityTypeClient.getEntityTypeSummary(null))
-      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
-    when(entityTypeClient.getEntityTypeSummary(List.of(listSummaryDto1.getEntityTypeId(),
-                                                      listSummaryDto2.getEntityTypeId())))
-      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), ""));
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
 
@@ -210,13 +210,13 @@ class ListServiceTest {
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
+
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
   }
 
   @Test
   void getAllListsShouldReturnEmptyPageForEmptySearchEntityTypeIds() {
-    UUID currentUserId = UUID.randomUUID();
-    when(executionContext.getUserId()).thenReturn(currentUserId);
-    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(new EntityTypeSummaryResponse(List.of(), ""));
+    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(new EntityTypeSummaryResponse(List.of(), "newest and bestest"));
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of());
     var actual = listService.getAllLists(
       Pageable.ofSize(100),
@@ -228,6 +228,8 @@ class ListServiceTest {
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
+
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
   }
 
   @Test

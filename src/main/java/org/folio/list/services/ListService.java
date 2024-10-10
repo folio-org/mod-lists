@@ -37,6 +37,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummaryResponse;
 import org.folio.list.rest.UsersClient;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
@@ -61,33 +62,37 @@ import static org.springframework.util.StringUtils.hasText;
 @Transactional
 @RequiredArgsConstructor
 public class ListService {
-  private final EntityManagerFlushService entityManagerFlushService;
-  private final ListRepository listRepository;
-  private final ListContentsRepository listContentsRepository;
-  private final ListMapper listMapper;
-  private final ListSummaryMapper summaryMapper;
-  private final ListRefreshMapper refreshMapper;
-  private final ListEntityMapper listEntityMapper;
-  private final FolioExecutionContext executionContext;
-  private final ListRefreshService listRefreshService;
-  private final ListValidationService validationService;
-  private final UsersClient usersClient;
-  private final EntityTypeClient entityTypeClient;
-  private final FqlService fqlService;
-  private final UserFriendlyQueryService userFriendlyQueryService;
   private final AppShutdownService appShutdownService;
-  private final RefreshFailedCallback refreshFailedCallback;
-  private final QueryClient queryClient;
-  private final ListVersionRepository listVersionRepository;
+  private final EntityManagerFlushService entityManagerFlushService;
+  private final EntityTypeClient entityTypeClient;
+  private final FolioExecutionContext executionContext;
+  private final FqlService fqlService;
+  private final ListContentsRepository listContentsRepository;
+  private final ListEntityMapper listEntityMapper;
+  private final ListMapper listMapper;
+  private final ListRefreshMapper refreshMapper;
+  private final ListRefreshService listRefreshService;
+  private final ListRepository listRepository;
+  private final ListSummaryMapper summaryMapper;
+  private final ListValidationService validationService;
   private final ListVersionMapper listVersionMapper;
+  private final ListVersionRepository listVersionRepository;
+  private final MigrationService migrationService;
+  private final QueryClient queryClient;
+  private final RefreshFailedCallback refreshFailedCallback;
+  private final UserFriendlyQueryService userFriendlyQueryService;
+  private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
                                            Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
-    UUID currentUserId = executionContext.getUserId();
-    List<UUID> permittedEntityTypeIds = entityTypeClient
-      .getEntityTypeSummary(null)
+
+    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null);
+
+    migrationService.verifyListsAreUpToDate(entityTypeSummaryResponse._version());
+
+    List<UUID> permittedEntityTypeIds = entityTypeSummaryResponse
       .entityTypes()
       .stream()
       .map(EntityTypeSummary::id)
@@ -103,6 +108,8 @@ public class ListService {
         .totalPages(0);
     }
 
+    UUID currentUserId = executionContext.getUserId();
+
     Page<ListEntity> lists = listRepository.searchList(
       pageable,
       isEmpty(ids) ? null : ids,
@@ -115,8 +122,7 @@ public class ListService {
     );
 
     // List database do not store entity type labels. Only entity type ID is available in List database.
-    // Get the corresponding entity type labels from FQM
-    Map<UUID, String> entityTypeIdLabelPair = getEntityTypeLabels(lists.getContent());
+    Map<UUID, String> entityTypeIdLabelPair = getEntityTypeLabelMap(entityTypeSummaryResponse.entityTypes());
     List<ListSummaryDTO> content = lists
       .map(l -> summaryMapper.toListSummaryDTO(l, entityTypeIdLabelPair.get(l.getEntityTypeId())))
       .getContent();
@@ -309,18 +315,10 @@ public class ListService {
     return new ResultsetPage().content(sortedContents).totalRecords(list.getRecordsCount());
   }
 
-  private Map<UUID, String> getEntityTypeLabels(List<ListEntity> lists) {
-    try {
-      List<UUID> entityTypeIds = lists.stream().map(ListEntity::getEntityTypeId).distinct().toList();
-      log.info("Getting entity type summary for entityTypeIds: {}", entityTypeIds);
-      return entityTypeClient.getEntityTypeSummary(entityTypeIds)
-        .entityTypes()
-        .stream()
-        .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
-    } catch (Exception exception) {
-      log.error("Unexpected error when fetching summaries: {}", exception.getMessage(), exception);
-      return Map.of();
-    }
+  private Map<UUID, String> getEntityTypeLabelMap(List<EntityTypeSummary> entityTypes) {
+    return entityTypes
+      .stream()
+      .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
   }
 
   private UsersClient.User getCurrentUser() {
