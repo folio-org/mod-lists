@@ -5,6 +5,7 @@ import org.folio.fql.model.ContainsAllCondition;
 import org.folio.fql.model.ContainsAnyCondition;
 import org.folio.fql.model.EmptyCondition;
 import org.folio.fql.model.EqualsCondition;
+import org.folio.fql.model.Fql;
 import org.folio.fql.model.GreaterThanCondition;
 import org.folio.fql.model.InCondition;
 import org.folio.fql.model.LessThanCondition;
@@ -14,7 +15,11 @@ import org.folio.fql.model.NotEqualsCondition;
 import org.folio.fql.model.NotInCondition;
 import org.folio.fql.model.RegexCondition;
 import org.folio.fql.model.field.FqlField;
+import org.folio.fql.service.FqlService;
+import org.folio.list.domain.ListEntity;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
@@ -31,6 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,8 +44,57 @@ class UserFriendlyQueryServiceTest {
 
   @InjectMocks
   private UserFriendlyQueryService userFriendlyQueryService;
+
+  @Mock
+  private EntityTypeClient entityTypeClient;
+
+  @Mock
+  private FqlService fqlService;
+
   @Mock
   private QueryClient queryClient;
+
+  @Test
+  void testGetAndDeserialize() {
+    EntityType entityType = new EntityType();
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
+    String expectedEqualsCondition = "field1 == some value";
+
+    when(fqlService.getFql("query")).thenReturn(new Fql("", equalsCondition));
+
+    String actualEqualsConditions = userFriendlyQueryService.getUserFriendlyQuery("query", entityType);
+    assertEquals(expectedEqualsCondition, actualEqualsConditions);
+  }
+
+  @Test
+  void testUpdateWithProvidedEntityType() {
+    EntityType entityType = new EntityType();
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
+    String expectedEqualsCondition = "field1 == some value";
+    ListEntity testList = new ListEntity().withFqlQuery("query");
+
+    when(fqlService.getFql("query")).thenReturn(new Fql("", equalsCondition));
+
+    userFriendlyQueryService.updateListUserFriendlyQuery(testList, entityType);
+    assertEquals(expectedEqualsCondition, testList.getUserFriendlyQuery());
+
+    verifyNoInteractions(entityTypeClient);
+  }
+
+  @Test
+  void testUpdateWithoutProvidedEntityType() {
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "some value");
+    String expectedEqualsCondition = "field1 == some value";
+    ListEntity testList = new ListEntity()
+      .withEntityTypeId(UUID.fromString("39bf039d-a582-5758-878c-185aeb88e679"))
+      .withFqlQuery("query");
+
+    when(fqlService.getFql("query")).thenReturn(new Fql("", equalsCondition));
+    when(entityTypeClient.getEntityType(testList.getEntityTypeId(), ListActions.UPDATE)).thenReturn(new EntityType());
+
+    userFriendlyQueryService.updateListUserFriendlyQuery(testList);
+    assertEquals(expectedEqualsCondition, testList.getUserFriendlyQuery());
+  }
 
   @Test
   void shouldGetStringForFqlEqualsConditionWithoutIdColumn() {
