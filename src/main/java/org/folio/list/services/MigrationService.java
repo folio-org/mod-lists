@@ -88,14 +88,13 @@ public class MigrationService {
     log.info("Lists are not up to date; migrating all lists from {} to {}", currentVersion, latestVersion);
     migrateAllLists().join();
     latestMigratedVersionRepository.setLatestMigratedVersion(latestVersion);
-    return;
   }
 
   /**
    * Check that lists are up to date with the current FQM entity types version, fetched via API
    */
   public void verifyListsAreUpToDate() {
-    String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(() -> migrationClient.getVersion());
+    String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(migrationClient::getVersion);
     verifyListsAreUpToDate(latestVersion);
   }
 }
