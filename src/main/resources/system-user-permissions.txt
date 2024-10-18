@@ -37,3 +37,4 @@ usergroups.collection.get
 users.collection.get
 users.item.get
 inventory-storage.classification-types.collection.get
+inventory-storage.instance-date-types.collection.get
