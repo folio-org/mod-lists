@@ -6,6 +6,11 @@ configuration.entries.collection.get
 departments.collection.get
 finance.exchange-rate.item.get
 fqm.entityTypes.item.get
+fqm.entityTypes.collection.get
+fqm.entityTypes.item.columnValues.get
+fqm.version.get
+fqm.migrate.post
+fqm.query.async.results.get
 fqm.query.async.results.get
 inventory-storage.call-number-types.collection.get
 inventory-storage.contributor-name-types.collection.get
@@ -31,3 +36,5 @@ organizations.organizations.collection.get
 usergroups.collection.get
 users.collection.get
 users.item.get
+inventory-storage.classification-types.collection.get
+inventory-storage.instance-date-types.collection.get

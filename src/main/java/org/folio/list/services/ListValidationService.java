@@ -1,6 +1,5 @@
 package org.folio.list.services;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.folio.fql.service.FqlValidationService;
 import org.folio.list.domain.AsyncProcessStatus;
@@ -14,7 +13,6 @@ import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -165,12 +163,6 @@ public class ListValidationService {
   }
 
   private void assertUserHasEntityTypePermissions(UUID entityTypeId, ListActions failedAction) {
-    try {
-      entityTypeClient.getEntityType(entityTypeId);
-    } catch(FeignException.Unauthorized e) {
-      throw new InsufficientEntityTypePermissionsException(entityTypeId, failedAction, e.getMessage());
-    } catch(FeignException.NotFound e) {
-      throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
-    }
+    entityTypeClient.getEntityType(entityTypeId, failedAction);
   }
 }

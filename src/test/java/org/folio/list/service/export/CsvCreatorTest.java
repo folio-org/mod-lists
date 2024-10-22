@@ -9,6 +9,7 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
+import org.folio.list.services.ListActions;
 import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
 import org.folio.list.utils.TestDataFixture;
@@ -93,7 +94,7 @@ class CsvCreatorTest {
           .toList()));
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId())).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
 
 
     when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));

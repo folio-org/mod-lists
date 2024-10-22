@@ -55,7 +55,7 @@ public class CsvCreator {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
-    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId());
+    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
 
     OutputStream localStorageOutputStream = localStorage.outputStream();
     var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());

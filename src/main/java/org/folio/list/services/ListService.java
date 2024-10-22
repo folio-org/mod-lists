@@ -1,12 +1,9 @@
 package org.folio.list.services;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.fql.service.FqlService;
-import org.folio.fql.model.Fql;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.domain.ListVersion;
@@ -17,7 +14,6 @@ import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
-import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
 import org.folio.list.exception.VersionNotFoundException;
@@ -37,10 +33,10 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummaryResponse;
 import org.folio.list.rest.UsersClient;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
-import org.folio.spring.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,33 +57,36 @@ import static org.springframework.util.StringUtils.hasText;
 @Transactional
 @RequiredArgsConstructor
 public class ListService {
-  private final EntityManagerFlushService entityManagerFlushService;
-  private final ListRepository listRepository;
-  private final ListContentsRepository listContentsRepository;
-  private final ListMapper listMapper;
-  private final ListSummaryMapper summaryMapper;
-  private final ListRefreshMapper refreshMapper;
-  private final ListEntityMapper listEntityMapper;
-  private final FolioExecutionContext executionContext;
-  private final ListRefreshService listRefreshService;
-  private final ListValidationService validationService;
-  private final UsersClient usersClient;
-  private final EntityTypeClient entityTypeClient;
-  private final FqlService fqlService;
-  private final UserFriendlyQueryService userFriendlyQueryService;
   private final AppShutdownService appShutdownService;
-  private final RefreshFailedCallback refreshFailedCallback;
-  private final QueryClient queryClient;
-  private final ListVersionRepository listVersionRepository;
+  private final EntityManagerFlushService entityManagerFlushService;
+  private final EntityTypeClient entityTypeClient;
+  private final FolioExecutionContext executionContext;
+  private final ListContentsRepository listContentsRepository;
+  private final ListEntityMapper listEntityMapper;
+  private final ListMapper listMapper;
+  private final ListRefreshMapper refreshMapper;
+  private final ListRefreshService listRefreshService;
+  private final ListRepository listRepository;
+  private final ListSummaryMapper summaryMapper;
+  private final ListValidationService validationService;
   private final ListVersionMapper listVersionMapper;
+  private final ListVersionRepository listVersionRepository;
+  private final MigrationService migrationService;
+  private final QueryClient queryClient;
+  private final RefreshFailedCallback refreshFailedCallback;
+  private final UserFriendlyQueryService userFriendlyQueryService;
+  private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
                                            Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
-    UUID currentUserId = executionContext.getUserId();
-    List<UUID> permittedEntityTypeIds = entityTypeClient
-      .getEntityTypeSummary(null)
+
+    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null);
+
+    migrationService.verifyListsAreUpToDate(entityTypeSummaryResponse._version());
+
+    List<UUID> permittedEntityTypeIds = entityTypeSummaryResponse
       .entityTypes()
       .stream()
       .map(EntityTypeSummary::id)
@@ -103,6 +102,8 @@ public class ListService {
         .totalPages(0);
     }
 
+    UUID currentUserId = executionContext.getUserId();
+
     Page<ListEntity> lists = listRepository.searchList(
       pageable,
       isEmpty(ids) ? null : ids,
@@ -115,8 +116,7 @@ public class ListService {
     );
 
     // List database do not store entity type labels. Only entity type ID is available in List database.
-    // Get the corresponding entity type labels from FQM
-    Map<UUID, String> entityTypeIdLabelPair = getEntityTypeLabels(lists.getContent());
+    Map<UUID, String> entityTypeIdLabelPair = getEntityTypeLabelMap(entityTypeSummaryResponse.entityTypes());
     List<ListSummaryDTO> content = lists
       .map(l -> summaryMapper.toListSummaryDTO(l, entityTypeIdLabelPair.get(l.getEntityTypeId())))
       .getContent();
@@ -128,7 +128,7 @@ public class ListService {
 
   public ListDTO createList(ListRequestDTO listRequest) {
     log.info("Attempting to create a list");
-    EntityType entityType = getEntityType(listRequest.getEntityTypeId(), ListActions.CREATE);
+    EntityType entityType = entityTypeClient.getEntityType(listRequest.getEntityTypeId(), ListActions.CREATE);
     validationService.validateCreate(listRequest, entityType);
     UsersClient.User currentUser = getCurrentUser();
     ListEntity listEntity = listEntityMapper.toListEntity(listRequest, currentUser);
@@ -140,8 +140,7 @@ public class ListService {
     }
 
     if (hasText(listRequest.getFqlQuery())) {
-      String userFriendlyQuery = getUserFriendlyQuery(listRequest.getFqlQuery(), entityType);
-      listEntity.setUserFriendlyQuery(userFriendlyQuery);
+      userFriendlyQueryService.updateListUserFriendlyQuery(listEntity, entityType);
     }
     ListEntity savedEntity = listRepository.save(listEntity);
     ListVersion previousVersions = new ListVersion();
@@ -160,7 +159,7 @@ public class ListService {
     log.info("Attempting to update a list with id : {}", id);
     Optional<ListEntity> listEntity = listRepository.findByIdAndIsDeletedFalse(id);
     listEntity.ifPresent(list -> {
-      EntityType entityType = getEntityType(list.getEntityTypeId(), ListActions.UPDATE);
+      EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.UPDATE);
       validationService.validateUpdate(list, request, entityType);
       if (!request.getIsActive()) {
         // If we're deactivating a list, clear its contents and refresh data
@@ -174,7 +173,7 @@ public class ListService {
       }
       String userFriendlyQuery = "";
       if (hasText(request.getFqlQuery())) {
-        userFriendlyQuery = getUserFriendlyQuery(request.getFqlQuery(), entityType);
+        userFriendlyQuery = userFriendlyQueryService.getUserFriendlyQuery(request.getFqlQuery(), entityType);
       }
       list.update(request, getCurrentUser(), userFriendlyQuery);
 
@@ -293,7 +292,7 @@ public class ListService {
   private ResultsetPage getListContents(ListEntity list, List<String> fields, Integer offset, Integer limit) {
     // If fields are not provided, retrieve all fields from the entity type definition
     if (isEmpty(fields)) {
-      EntityType entityType = getEntityType(list.getEntityTypeId(), ListActions.READ);
+      EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.READ);
       fields = getFieldsFromEntityType(entityType, true);
     }
     List<Map<String, Object>> sortedContents = List.of();
@@ -310,18 +309,10 @@ public class ListService {
     return new ResultsetPage().content(sortedContents).totalRecords(list.getRecordsCount());
   }
 
-  private Map<UUID, String> getEntityTypeLabels(List<ListEntity> lists) {
-    try {
-      List<UUID> entityTypeIds = lists.stream().map(ListEntity::getEntityTypeId).distinct().toList();
-      log.info("Getting entity type summary for entityTypeIds: {}", entityTypeIds);
-      return entityTypeClient.getEntityTypeSummary(entityTypeIds)
-        .entityTypes()
-        .stream()
-        .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
-    } catch (Exception exception) {
-      log.error("Unexpected error when fetching summaries: {}", exception.getMessage(), exception);
-      return Map.of();
-    }
+  private Map<UUID, String> getEntityTypeLabelMap(List<EntityTypeSummary> entityTypes) {
+    return entityTypes
+      .stream()
+      .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
   }
 
   private UsersClient.User getCurrentUser() {
@@ -344,22 +335,6 @@ public class ListService {
       queryId,
       registerShutdownTask(savedEntity, "Cancel refresh for list " + savedEntity.getId()),
       timer);
-  }
-
-  private String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {
-    Fql fql = fqlService.getFql(fqlCriteria);
-    return userFriendlyQueryService.getUserFriendlyQuery(fql.fqlCondition(), entityType);
-  }
-
-  private EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction) {
-    try {
-      return entityTypeClient.getEntityType(entityTypeId);
-    } catch(FeignException.Unauthorized e) {
-      String message = e.getMessage();
-      throw new InsufficientEntityTypePermissionsException(entityTypeId, attemptedAction, message);
-    } catch(FeignException.NotFound e) {
-      throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
-    }
   }
 
   private AppShutdownService.ShutdownTask registerShutdownTask(ListEntity list, String taskName) {

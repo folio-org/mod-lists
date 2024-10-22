@@ -3,7 +3,10 @@ package org.folio.list.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.fql.model.*;
+import org.folio.fql.service.FqlService;
 import org.folio.fql.service.FqlValidationService;
+import org.folio.list.domain.ListEntity;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserFriendlyQueryService {
 
+  private final EntityTypeClient entityTypeClient;
+  private final FqlService fqlService;
   private final QueryClient queryClient;
 
   private final Map<Class<? extends FqlCondition<?>>, BiFunction<FqlCondition<?>, EntityType, String>> userFriendlyQuery = Map.ofEntries(
@@ -41,6 +46,23 @@ public class UserFriendlyQueryService {
   public String getUserFriendlyQuery(FqlCondition<?> fqlCondition, EntityType entityType) {
     log.info("Computing user friendly query for fqlCondition: {}, entityType: {}", fqlCondition, entityType.getId());
     return userFriendlyQuery.get(fqlCondition.getClass()).apply(fqlCondition, entityType);
+  }
+
+  public String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {
+    Fql fql = fqlService.getFql(fqlCriteria);
+    return getUserFriendlyQuery(fql.fqlCondition(), entityType);
+  }
+
+  public void updateListUserFriendlyQuery(ListEntity listEntity) {
+    listEntity.setUserFriendlyQuery(
+      getUserFriendlyQuery(listEntity.getFqlQuery(), entityTypeClient.getEntityType(listEntity.getEntityTypeId(), ListActions.UPDATE))
+    );
+  }
+
+  public void updateListUserFriendlyQuery(ListEntity listEntity, EntityType entityType) {
+    listEntity.setUserFriendlyQuery(
+      getUserFriendlyQuery(listEntity.getFqlQuery(), entityType)
+    );
   }
 
   private String handleGreaterThan(GreaterThanCondition greaterThanCondition) {
