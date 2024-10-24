@@ -78,9 +78,11 @@ public class CsvCreator {
         }
       }
       log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
-      ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
+      ContentsRequest contentsRequest = new ContentsRequest()
+        .entityTypeId(list.getEntityTypeId())
         .fields(exportDetails.getFields())
-        .ids(ids);
+        .ids(ids)
+        .localize(true);
       var sortedContents = queryClient.getContents(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
