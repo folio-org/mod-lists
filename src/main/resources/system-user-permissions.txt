@@ -12,6 +12,7 @@ fqm.version.get
 fqm.migrate.post
 fqm.query.async.results.get
 fqm.query.async.results.get
+fqm.version.get
 inventory-storage.call-number-types.collection.get
 inventory-storage.contributor-name-types.collection.get
 inventory-storage.contributor-types.collection.get
