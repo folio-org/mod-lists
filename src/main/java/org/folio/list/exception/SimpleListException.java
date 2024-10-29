@@ -1,24 +1,32 @@
 package org.folio.list.exception;
 
+import java.util.Optional;
+import java.util.UUID;
+import javax.annotation.CheckForNull;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.services.ListActions;
 import org.folio.list.domain.dto.ListAppError;
 import org.folio.list.domain.dto.Parameter;
+import org.folio.list.services.ListActions;
 import org.springframework.http.HttpStatus;
 
-import java.util.UUID;
-
 public abstract class SimpleListException extends AbstractListException {
-  private final UUID listId;
-  private final String listName;
+
+  @CheckForNull
+  private final ListEntity list;
+
   private final ListActions failedAction;
   private final String errorMessage;
   private final String errorCode;
   private final HttpStatus httpStatus;
 
-  protected SimpleListException(ListEntity list, ListActions failedAction, String errorMessage, String errorCode, HttpStatus httpStatus) {
-    this.listId = list.getId();
-    this.listName = list.getName();
+  protected SimpleListException(
+    @CheckForNull ListEntity list,
+    ListActions failedAction,
+    String errorMessage,
+    String errorCode,
+    HttpStatus httpStatus
+  ) {
+    this.list = list;
     this.failedAction = failedAction;
     this.errorMessage = errorMessage;
     this.errorCode = errorCode;
@@ -35,13 +43,18 @@ public abstract class SimpleListException extends AbstractListException {
     return new org.folio.list.domain.dto.ListAppError()
       .code(getErrorCode(failedAction, errorCode))
       .message(getMessage())
-      .addParametersItem(new Parameter().key("id").value(listId.toString()))
-      .addParametersItem(new Parameter().key("name").value(listName));
+      .addParametersItem(
+        new Parameter()
+          .key("id")
+          .value(Optional.ofNullable(list).map(ListEntity::getId).map(UUID::toString).orElse(null))
+      )
+      .addParametersItem(
+        new Parameter().key("name").value(Optional.ofNullable(list).map(ListEntity::getName).orElse(null))
+      );
   }
 
   @Override
   public final HttpStatus getHttpStatus() {
     return httpStatus;
   }
-
 }

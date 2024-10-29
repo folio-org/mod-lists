@@ -34,7 +34,7 @@ public interface EntityTypeClient {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  record EntityTypeSummary(UUID id, String label) {}
+  record EntityTypeSummary(UUID id, String label, Boolean crossTenantQueriesEnabled) {}
 
   record EntityTypeSummaryResponse(List<EntityTypeSummary> entityTypes, String _version) {}
 }

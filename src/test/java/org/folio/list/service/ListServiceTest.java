@@ -119,9 +119,9 @@ class ListServiceTest {
 
     ListSummaryDTO listSummaryDto1 = TestDataFixture.getListSummaryDTO(entity1.getId()).entityTypeId(entityTypeId1);
     ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
-    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
-    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
-    EntityTypeSummary expectedSummary3 = new EntityTypeClient.EntityTypeSummary(UUID.randomUUID(), "Other");
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item", false);
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan", false);
+    EntityTypeSummary expectedSummary3 = new EntityTypeClient.EntityTypeSummary(UUID.randomUUID(), "Other", false);
 
     Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
     when(executionContext.getUserId()).thenReturn(currentUserId);
@@ -168,8 +168,8 @@ class ListServiceTest {
 
     ListSummaryDTO listSummaryDto1 = TestDataFixture.getListSummaryDTO(entity1.getId()).entityTypeId(entityTypeId1);
     ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
-    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item");
-    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan");
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(listSummaryDto1.getEntityTypeId(), "Item", false);
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(listSummaryDto2.getEntityTypeId(), "Loan", false);
 
     Page<ListEntity> listEntities = new PageImpl<>(List.of(entity1, entity2));
     when(executionContext.getUserId()).thenReturn(currentUserId);

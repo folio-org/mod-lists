@@ -9,4 +9,11 @@
       <column name="version" type="text" />
     </createTable>
   </changeSet>
+
+  <changeSet id="MODLISTS-152" author="novercash@ebsco.com">
+    <comment>Add a column to indicate if OLD cross-tenant lists were set to private</comment>
+    <addColumn tableName="latest_migrated_version">
+      <column name="modlists_152_cross_tenant_set_to_private" type="boolean" defaultValue="false" />
+    </addColumn>
+  </changeSet>
 </databaseChangeLog>

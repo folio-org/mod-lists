@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -26,7 +28,7 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "list_refresh_details")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ListRefreshDetails {
+public class ListRefreshDetails implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

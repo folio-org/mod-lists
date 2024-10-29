@@ -50,14 +50,13 @@ public class CustomTenantService extends TenantService {
       .withTimeout(Duration.of(2, ChronoUnit.MINUTES))
       .build()
       .execute(ctx -> {
-        log.info("Verifying lists are up to date. Attempt #" + (ctx.getRetryCount() + 1));
-        migrationService.verifyListsAreUpToDate();
+        log.info("Performing tenant install migrations. Attempt #" + (ctx.getRetryCount() + 1));
+        migrationService.performTenantInstallMigrations();
         return null;
       }, ctx -> {
-        log.error("Unable to verify lists are up to date", ctx.getLastThrowable());
-        // This RetryTemplate only deals with InsufficientEntityTypePermissionsException, so we know that's what this
-        // Throwable really is. Rethrow it to fail the tenant update process.
-        throw (InsufficientEntityTypePermissionsException) ctx.getLastThrowable();
+        log.error("Unable to perform tenant install migration activities", ctx.getLastThrowable());
+        // Rethrow it to fail the tenant update process.
+        throw new RuntimeException(ctx.getLastThrowable());
       });
   }
 }

@@ -1,13 +1,17 @@
 package org.folio.list.services;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.mapper.ListMigrationMapper;
-import org.folio.list.repository.LatestMigratedVersionRepository;
 import org.folio.list.repository.ListRepository;
+import org.folio.list.repository.MigrationRepository;
+import org.folio.list.rest.EntityTypeClient;
+import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
@@ -21,8 +25,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MigrationService {
 
+  private final EntityTypeClient entityTypeClient;
   private final FolioExecutionContext executionContext;
-  private final LatestMigratedVersionRepository latestMigratedVersionRepository;
+  private final MigrationRepository migrationRepository;
   private final ListMigrationMapper mapper;
   private final ListRepository listRepository;
   private final MigrationClient migrationClient;
@@ -94,7 +99,7 @@ public class MigrationService {
    * Check that lists are up to date with the provided {@code latestVersion}
    */
   public void verifyListsAreUpToDate(String latestVersion) {
-    String currentVersion = latestMigratedVersionRepository.getLatestMigratedVersion();
+    String currentVersion = migrationRepository.getLatestMigratedVersion();
     if (currentVersion.equals(latestVersion)) {
       log.info("Lists are up to date!");
       return;
@@ -102,7 +107,7 @@ public class MigrationService {
 
     log.info("Lists are not up to date; migrating all lists from {} to {}", currentVersion, latestVersion);
     migrateAllLists().join();
-    latestMigratedVersionRepository.setLatestMigratedVersion(latestVersion);
+    migrationRepository.setLatestMigratedVersion(latestVersion);
   }
 
   /**
@@ -111,5 +116,54 @@ public class MigrationService {
   public void verifyListsAreUpToDate() {
     String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(migrationClient::getVersion);
     verifyListsAreUpToDate(latestVersion);
+  }
+
+  /**
+   * Marks all cross-tenant lists as private. This is a one-time migration, and is needed to catch
+   * lists created before this requirement was enforced at the API level.
+   *
+   * @see https://folio-org.atlassian.net/browse/MODLISTS-152
+   */
+  public void handleModlists152CrossTenantSetToPrivateMigration() {
+    if (Boolean.TRUE.equals(migrationRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred())) {
+      log.info("MODLISTS-152 migration has already occurred, not doing extra work");
+      return;
+    }
+
+    log.info("Migrating cross-tenant lists to private, to cover cases in MODLISTS-152");
+
+    List<EntityTypeSummary> crossTenantEntityTypes = systemUserScopedExecutionService
+      .executeSystemUserScoped(() -> entityTypeClient.getEntityTypeSummary(null))
+      .entityTypes()
+      .stream()
+      .filter(EntityTypeSummary::crossTenantQueriesEnabled)
+      .toList();
+
+    log.info(
+      "Determined that {} entity types are cross-tenant; setting their lists to private",
+      () -> crossTenantEntityTypes.stream().map(EntityTypeSummary::label).toList()
+    );
+
+    List<UUID> crossTenantEntityTypeIds = crossTenantEntityTypes.stream().map(EntityTypeSummary::id).toList();
+
+    List<ListEntity> updatedLists = StreamSupport
+      .stream(listRepository.findAll().spliterator(), false)
+      .filter(list -> crossTenantEntityTypeIds.contains(list.getEntityTypeId()))
+      .map(list -> {
+        list.setIsPrivate(true);
+        return list;
+      })
+      .toList();
+
+    listRepository.saveAll(updatedLists);
+
+    migrationRepository.setModlists152CrossTenantSetToPrivateMigrationOccurred();
+
+    log.info("Marked {} lists as private", updatedLists.size());
+  }
+
+  public void performTenantInstallMigrations() {
+    this.verifyListsAreUpToDate();
+    this.handleModlists152CrossTenantSetToPrivateMigration();
   }
 }
