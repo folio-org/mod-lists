@@ -142,7 +142,9 @@ public class ListService {
     if (hasText(listRequest.getFqlQuery())) {
       userFriendlyQueryService.updateListUserFriendlyQuery(listEntity, entityType);
     }
+
     ListEntity savedEntity = listRepository.save(listEntity);
+
     ListVersion previousVersions = new ListVersion();
     previousVersions.setDataFromListEntity(savedEntity);
     listVersionRepository.save(previousVersions);

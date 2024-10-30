@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
-class LatestMigratedVersionRepositoryTest {
+class MigrationRepositoryTest {
 
   @Mock
   EntityManager entityManager;
@@ -33,7 +33,7 @@ class LatestMigratedVersionRepositoryTest {
   PlatformTransactionManager platformTransactionManager;
 
   @InjectMocks
-  LatestMigratedVersionRepository latestMigratedVersionRepository;
+  MigrationRepository latestMigratedVersionRepository;
 
   @Test
   void testGetLatestVersionWhenAlreadyPresent() {
@@ -107,6 +107,47 @@ class LatestMigratedVersionRepositoryTest {
       captor.getAllValues(),
       contains(startsWithIgnoringCase("select"), startsWithIgnoringCase("insert"), startsWithIgnoringCase("update"))
     );
+    verifyNoMoreInteractions(entityManager);
+  }
+
+  @Test
+  void testHasModlists152MigrationOccurredWhenEmpty() {
+    Query query = mock(Query.class);
+    when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+    when(query.getSingleResult()).thenThrow(new NoResultException());
+
+    assertThat(latestMigratedVersionRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred(), is(false));
+
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    verify(entityManager, times(2)).createNativeQuery(captor.capture());
+    assertThat(captor.getAllValues(), contains(startsWithIgnoringCase("select"), startsWithIgnoringCase("insert")));
+    verifyNoMoreInteractions(entityManager);
+  }
+
+  @Test
+  void testHasModlists152MigrationOccurredWhenAlreadyPresent() {
+    Query query = mock(Query.class);
+    when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+    when(query.getSingleResult()).thenReturn(Boolean.TRUE);
+
+    assertThat(latestMigratedVersionRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred(), is(true));
+
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    verify(entityManager, times(1)).createNativeQuery(captor.capture());
+    assertThat(captor.getValue(), startsWithIgnoringCase("select"));
+    verifyNoMoreInteractions(entityManager);
+  }
+
+  @Test
+  void testSetModlists152MigrationOccurred() {
+    Query query = mock(Query.class);
+    when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+
+    latestMigratedVersionRepository.setModlists152CrossTenantSetToPrivateMigrationOccurred();
+
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    verify(entityManager, times(1)).createNativeQuery(captor.capture());
+    assertThat(captor.getAllValues(), contains(startsWithIgnoringCase("update")));
     verifyNoMoreInteractions(entityManager);
   }
 }

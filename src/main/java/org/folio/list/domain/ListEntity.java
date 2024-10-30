@@ -11,6 +11,8 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +33,7 @@ import org.folio.list.util.TaskTimer;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "list_details")
-public class ListEntity {
+public class ListEntity implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

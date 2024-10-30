@@ -33,6 +33,7 @@ public class ListValidationService {
 
   public void validateCreate(ListRequestDTO saveRequest, EntityType entityType) {
     assertIsValidFql(entityType, saveRequest.getFqlQuery(), CREATE);
+    assertListIsNotCrossTenantAndShared(entityType, saveRequest.getIsPrivate(), CREATE);
   }
 
   public void validateUpdate(ListEntity list, ListUpdateRequestDTO updateRequest, EntityType entityType) {
@@ -42,6 +43,7 @@ public class ListValidationService {
     assertListVersionMatched(list, updateRequest.getVersion());
     assertIsValidFql(entityType, updateRequest.getFqlQuery(), UPDATE);
     assertListNotExporting(list, UPDATE);
+    assertListIsNotCrossTenantAndShared(entityType, updateRequest.getIsPrivate(), UPDATE);
   }
 
   public void validateDelete(ListEntity list) {
@@ -164,5 +166,12 @@ public class ListValidationService {
 
   private void assertUserHasEntityTypePermissions(UUID entityTypeId, ListActions failedAction) {
     entityTypeClient.getEntityType(entityTypeId, failedAction);
+  }
+
+  // cross-tenant lists MUST be private
+  private void assertListIsNotCrossTenantAndShared(EntityType entityType, Boolean isPrivate, ListActions failedAction) {
+    if (Boolean.FALSE.equals(isPrivate) && Boolean.TRUE.equals(entityType.getCrossTenantQueriesEnabled())) {
+      throw new CrossTenantListMustBePrivateException(entityType, failedAction);
+    }
   }
 }
