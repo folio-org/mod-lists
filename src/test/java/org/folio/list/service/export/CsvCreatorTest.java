@@ -84,6 +84,7 @@ class CsvCreatorTest {
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
       new ContentsRequest().entityTypeId(entity.getEntityTypeId())
         .fields(entity.getFields())
+        .localize(true)
         .ids(contentIds.stream().skip((long) i * batchSize).limit(batchSize).toList()))).thenReturn(contentsWithData));
 
     AtomicInteger indexBatch = new AtomicInteger(0);
