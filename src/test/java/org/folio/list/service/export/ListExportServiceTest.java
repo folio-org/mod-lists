@@ -111,7 +111,7 @@ class ListExportServiceTest {
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
-    when(listExportWorkerService.doAsyncExport(exportDetails)).thenReturn(CompletableFuture.completedFuture(true));
+    when(listExportWorkerService.doAsyncExport(exportDetails, userId)).thenReturn(CompletableFuture.completedFuture(true));
     when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
     doAnswer(invocation -> {
       Runnable runnable = invocation.getArgument(1);
@@ -157,7 +157,7 @@ class ListExportServiceTest {
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
-    when(listExportWorkerService.doAsyncExport(exportDetails))
+    when(listExportWorkerService.doAsyncExport(exportDetails, userId))
       .thenReturn(CompletableFuture.failedFuture(new RuntimeException("something went wrong")));
     doAnswer(invocation -> {
       Runnable runnable = invocation.getArgument(1);

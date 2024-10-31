@@ -29,4 +29,7 @@ public interface QueryClient {
 
   @PostMapping("/contents")
   List<Map<String, Object>> getContents(@RequestBody ContentsRequest contentsRequest);
+
+  @PostMapping("/contents/privileged")
+  List<Map<String, Object>> getContentsPrivileged(@RequestBody ContentsRequest contentsRequest);
 }
