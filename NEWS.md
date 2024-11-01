@@ -1,4 +1,41 @@
+# 3.0.x
+
+## 3.0.0
+- Add allocated resource recommendations to README ([MODLISTS-97](https://folio-org.atlassian.net/browse/MODLISTS-97))
+- Always include ID columns in exports
+- Restrict list access to lists, based on the user's permissions ([MODLISTS-112](https://folio-org.atlassian.net/browse/MODLISTS-112))
+- Handle new entity type respone format from mod-fqm-manager ([MODLISTS-128](https://folio-org.atlassian.net/browse/MODLISTS-128))
+- Rename the "lists.item.refresh" permission to follow naming conventions ([MODLISTS-136](https://folio-org.atlassian.net/browse/MODLISTS-136))
+- Add support for automatic list query migration ([MODLISTS-126](https://folio-org.atlassian.net/browse/MODLISTS-126))
+- Localize dates in user-friendly query ([MODLISTS-145](https://folio-org.atlassian.net/browse/MODLISTS-145))
+- Integrate permission name changes from mod-fqm-manager ([MODLISTS-153](https://folio-org.atlassian.net/browse/MODLISTS-153))
+- Add retry logic to list query migration during tenant initialization ([MODLISTS-155](https://folio-org.atlassian.net/browse/MODLISTS-155))
+- Migrate cross-tenant lists to private ([MODLISTS-152](https://folio-org.atlassian.net/browse/MODLISTS-152))
+- Convert dates to local time when exporting lists ([MODLISTS-135](https://folio-org.atlassian.net/browse/MODLISTS-135))
+
 # 2.0.x
+
+## 2.0.6
+- Fix artifact version (2.0.5 was accidentally released as a snapshot)
+
+## 2.0.5
+- Add system user to handle long-lived exports ([MODLISTS-109](https://folio-org.atlassian.net/browse/MODLISTS-109))
+
+## 2.0.4
+- Add a startup check to verify that S3/MinIO are accessible ([MODLISTS-108](https://folio-org.atlassian.net/browse/MODLISTS-108))
+- Fix a bug where records deleted after a list refresh caused exports to fail ([MODLISTS-105](https://folio-org.atlassian.net/browse/MODLISTS-105))
+
+## 2.0.3
+- Add more detail about S3/MinIO config to the README ([MODLISTS-107](https://folio-org.atlassian.net/browse/MODLISTS-107))
+- Only select columns that are visibleByDefault when none are specified in the list ([MODLISTS-98](https://folio-org.atlassian.net/browse/MODLISTS-98))
+- Fix bug where data was never retrieved for non-default columns ([MODLISTS-99](https://folio-org.atlassian.net/browse/MODLISTS-99))
+
+## 2.0.2
+- Fix bug where the Missing Items canned list could not be duplicated ([MODLISTS-104](https://folio-org.atlassian.net/browse/MODLISTS-104))
+
+## 2.0.1
+- Bump folio-s3-client dependency to the latest version ([MODLISTS-96](https://folio-org.atlassian.net/browse/MODLISTS-96))
+- Fix bug with multipart uploads of CSVs ([MODFQMMGR-218](https://folio-org.atlassian.net/browse/MODFQMMGR-218))
 
 ## 2.0.0
 - Manually flush the entity manager, to address race condition ([MODLISTS-66](https://folio-org.atlassian.net/browse/MODLISTS-66))
