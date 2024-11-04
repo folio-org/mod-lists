@@ -211,6 +211,7 @@
     "user": {
       "type": "system",
       "permissions": [
+        "inventory-storage.classification-types.collection.get",
         "acquisitions-units.units.collection.get",
         "addresstypes.collection.get",
         "circulation-storage.loan-policies.collection.get",
@@ -218,17 +219,23 @@
         "configuration.entries.collection.get",
         "departments.collection.get",
         "finance.exchange-rate.item.get",
+        "fqm.entityTypes.collection.get",
+        "fqm.entityTypes.item.columnValues.get",
         "fqm.entityTypes.item.get",
-        "fqm.query.async.results.query.get",
-        "fqm.query.async.results.sortedids.get",
+        "fqm.migrate.post",
         "fqm.query.async.results.get",
         "fqm.query.async.results.post",
+        "fqm.query.async.results.query.get",
+        "fqm.query.async.results.sortedids.get",
         "fqm.query.privileged.async.results.post",
         "fqm.version.get",
+        "fqm.version.get",
         "inventory-storage.call-number-types.collection.get",
+        "inventory-storage.classification-types.collection.get",
         "inventory-storage.contributor-name-types.collection.get",
         "inventory-storage.contributor-types.collection.get",
         "inventory-storage.holdings.item.get",
+        "inventory-storage.instance-date-types.collection.get",
         "inventory-storage.instance-statuses.collection.get",
         "inventory-storage.instance-types.collection.get",
         "inventory-storage.instance-types.item.get",
@@ -248,9 +255,7 @@
         "organizations.organizations.collection.get",
         "usergroups.collection.get",
         "users.collection.get",
-        "users.item.get",
-        "inventory-storage.instance-date-types.collection.get",
-        "inventory-storage.classification-types.collection.get"
+        "users.item.get"
       ]
     }
   },
