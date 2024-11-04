@@ -132,12 +132,13 @@ public class ListExportService {
       cancelExport,
       "Cancel export for list " + exportDetails.getList().getId()
     );
-
+    UUID userId = executionContext.getUserId();
+    log.debug("Using user {} as proxy user for export", userId);
     systemUserScopedExecutionService.executeAsyncSystemUserScoped(
       executionContext.getTenantId(),
       () ->
         listExportWorkerService
-          .doAsyncExport(exportDetails)
+          .doAsyncExport(exportDetails, userId)
           .whenComplete((success, throwable) -> {
             // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
             try (ShutdownTask autoClose = shutdownTask) {

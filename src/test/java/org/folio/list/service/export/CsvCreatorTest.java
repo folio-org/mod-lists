@@ -56,7 +56,7 @@ class CsvCreatorTest {
   @Test
   void shouldCreateCsvFromList() throws IOException {
     int batchSize = 100000;
-
+    UUID userId = UUID.randomUUID();
     String destinationFileName = "destinationFileName";
     String uploadId = "uploadId";
     var partETags = new ArrayList<String>();
@@ -81,10 +81,11 @@ class CsvCreatorTest {
       }
     );
 
-    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContents(
+    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContentsPrivileged(
       new ContentsRequest().entityTypeId(entity.getEntityTypeId())
         .fields(entity.getFields())
         .localize(true)
+        .userId(userId)
         .ids(contentIds.stream().skip((long) i * batchSize).limit(batchSize).toList()))).thenReturn(contentsWithData));
 
     AtomicInteger indexBatch = new AtomicInteger(0);
@@ -103,7 +104,7 @@ class CsvCreatorTest {
     when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(secondPartNumber), any())).thenReturn(partETag);
 
 
-    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags)) {
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actualCsv = new String(csvStorage.inputStream().readAllBytes());
       assertEquals(toCSV(contentsWithData), actualCsv);
       assertEquals(2, partETags.size());

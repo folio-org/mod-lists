@@ -51,7 +51,7 @@ public class CsvCreator {
   private static final String IS_DELETED = "_deleted";
 
   @SneakyThrows
-  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags) {
+  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
@@ -82,8 +82,9 @@ public class CsvCreator {
         .entityTypeId(list.getEntityTypeId())
         .fields(exportDetails.getFields())
         .ids(ids)
-        .localize(true);
-      var sortedContents = queryClient.getContents(contentsRequest)
+        .localize(true)
+        .userId(userId);
+      var sortedContents = queryClient.getContentsPrivileged(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
         .toList();

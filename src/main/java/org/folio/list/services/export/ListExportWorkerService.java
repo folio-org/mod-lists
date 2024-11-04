@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -26,7 +27,7 @@ public class ListExportWorkerService {
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails) {
+  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
     String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
     String uploadId = null;
@@ -35,7 +36,7 @@ public class ListExportWorkerService {
       uploadId = folioS3Client.initiateMultipartUpload(destinationFileName);
       log.info("S3 multipart upload initialized for exportId {}", exportDetails.getExportId());
 
-      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags);
+      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId);
       andUploadCSV.close();
 
       folioS3Client.completeMultipartUpload(destinationFileName, uploadId, partETags);
