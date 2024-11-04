@@ -47,13 +47,21 @@ public class CustomTenantService extends TenantService {
     // case of failures related to missing permissions
     RetryTemplate.builder()
       .retryOn(InsufficientEntityTypePermissionsException.class)
-      .retryOn(CompletionException.class)
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
       .withTimeout(Duration.of(2, ChronoUnit.MINUTES))
       .build()
       .execute(ctx -> {
-        log.info("Performing tenant install migrations. Attempt #" + (ctx.getRetryCount() + 1));
-        migrationService.performTenantInstallMigrations();
+        int attempt = (ctx.getRetryCount() + 1);
+        log.info("Performing tenant install migrations. Attempt #" + attempt);
+        try {
+          migrationService.performTenantInstallMigrations();
+        } catch (Exception e) {
+          // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
+          log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
+          if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe)
+            throw ietpe; // Retry
+          throw e; // Don't retry
+        }
         return null;
       }, ctx -> {
         log.error("Unable to perform tenant install migration activities", ctx.getLastThrowable());
