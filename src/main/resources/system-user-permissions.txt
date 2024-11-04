@@ -1,4 +1,3 @@
-        inventory-storage.classification-types.collection.get
 acquisitions-units.units.collection.get
 addresstypes.collection.get
 circulation-storage.loan-policies.collection.get
@@ -15,7 +14,6 @@ fqm.query.async.results.post
 fqm.query.async.results.query.get
 fqm.query.async.results.sortedids.get
 fqm.query.privileged.async.results.post
-fqm.version.get
 fqm.version.get
 inventory-storage.call-number-types.collection.get
 inventory-storage.classification-types.collection.get
