@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.CompletionException;
 
 @Log4j2
 @Primary
@@ -46,6 +47,7 @@ public class CustomTenantService extends TenantService {
     // case of failures related to missing permissions
     RetryTemplate.builder()
       .retryOn(InsufficientEntityTypePermissionsException.class)
+      .retryOn(CompletionException.class)
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
       .withTimeout(Duration.of(2, ChronoUnit.MINUTES))
       .build()
