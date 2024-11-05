@@ -85,7 +85,7 @@ folio:
   okapi-url: ${OKAPI_URL}
   system-user:
     username: mod-lists
-    enabled: ${SYSTEM_USER_ENABLED:true}
+    enabled: ${SYSTEM_USER_ENABLED:false}
     password: ${SYSTEM_USER_PASSWORD}
     lastname: System
     permissionsFilePath: system-user-permissions.txt
