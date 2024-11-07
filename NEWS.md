@@ -1,5 +1,14 @@
 # 3.0.x
 
+## 3.0.1
+- Use the new /query/contents/privileged API endpoint for exports ([MODFQMMGR-563])
+- Retry migrating queries when enabling the module when requests fail due to missing entity type permissions ([MODLISTS-155])
+- Synchronize system user permissions in the module descriptor and system-user-permissions.txt ([MODLISTS-157])
+
+[MODFQMMGR-563]: https://folio-org.atlassian.net/browse/MODFQMMGR-563
+[MODLISTS-155]: https://folio-org.atlassian.net/browse/MODLISTS-155
+[MODLISTS-157]: https://folio-org.atlassian.net/browse/MODLISTS-157
+
 ## 3.0.0
 - Add allocated resource recommendations to README ([MODLISTS-97](https://folio-org.atlassian.net/browse/MODLISTS-97))
 - Always include ID columns in exports
