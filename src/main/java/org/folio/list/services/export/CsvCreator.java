@@ -21,6 +21,7 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.exception.S3ClientException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
@@ -49,6 +51,8 @@ public class CsvCreator {
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
   private static final String IS_DELETED = "_deleted";
+  private static final int MAX_RETRIES = 5;
+  private static final long INITIAL_BACKOFF = 1000;
 
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
@@ -101,9 +105,32 @@ public class CsvCreator {
 
   private void uploadCSVPart(String destinationFileName, String uploadId, int partNumber, String localStorage,
                              List<String> partETags, ExportDetails exportDetails) {
-    String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
-    partETags.add(partETag);
-    log.info("Generated CSV multipart file for exportID {}. Uploading to S3, Part Number {}", exportDetails.getExportId(), partNumber);
+    int attempt = 0;
+    long backoff = INITIAL_BACKOFF;
+
+    while (attempt < MAX_RETRIES) {
+      try {
+        String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
+        partETags.add(partETag);
+        log.info("Generated CSV multipart file for exportID {}. Uploading to S3, Part Number {}", exportDetails.getExportId(), partNumber);
+        return;
+      } catch (S3ClientException e) {
+        attempt++;
+        if (attempt >= MAX_RETRIES) {
+          log.error("Upload failed after {} attempts: {}", attempt, e.getMessage());
+          throw e;
+        }
+
+        log.info("Upload part failed, retrying attempt {} after backoff...", attempt);
+        try {
+          TimeUnit.MILLISECONDS.sleep(backoff);
+          backoff = Math.min(backoff * 2, 16000);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Upload interrupted", ie);
+        }
+      }
+    }
   }
 
   private void checkIfExportCancelled(UUID listId, UUID exportId) {

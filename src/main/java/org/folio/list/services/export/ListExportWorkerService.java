@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.exception.ExportCancelledException;
+import org.folio.list.services.AppShutdownService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -24,10 +26,19 @@ public class ListExportWorkerService {
   private final FolioExecutionContext folioExecutionContext;
   private final FolioS3Client folioS3Client;
   private final CsvCreator csvCreator;
+  private final FolioExecutionContext executionContext;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
+
+  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
+    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+      executionContext.getTenantId(),
+      () -> doAsyncExportPrivate(exportDetails, userId)
+    );
+  }
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
+  private CompletableFuture<Boolean> doAsyncExportPrivate(ExportDetails exportDetails, UUID userId) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
     String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
     String uploadId = null;

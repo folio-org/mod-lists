@@ -148,6 +148,7 @@ public class ListExportService {
             }
           })
     );
+//    listExportWorkerService.doAsyncExport(exportDetails, userId);
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {
