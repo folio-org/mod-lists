@@ -9,24 +9,24 @@ import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.stereotype.Component;
 
+/**
+ * Convenience methods wrapping {@link ConfigurationClientRaw}.
+ */
+// this must be a separate class as feign clients must be interfaces,
+// disallowing any injection (ObjectMapper) or fields (our logger)
 @Log4j2
-@Service
-@FeignClient(name = "configurations")
+@Component
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public abstract class ConfigurationClient {
+public class ConfigurationClient {
 
   private final ObjectMapper objectMapper;
-
-  @GetMapping("/entries?query=(module==ORG and configName==localeSettings)")
-  public abstract String getLocaleSettings();
+  private final ConfigurationClientRaw underlyingClient;
 
   public ZoneId getTenantTimezone() {
     try {
-      String localeSettingsResponse = this.getLocaleSettings();
+      String localeSettingsResponse = underlyingClient.getLocaleSettings();
       JsonNode localeSettingsNode = objectMapper.readTree(localeSettingsResponse);
       String valueString = localeSettingsNode.path("configs").get(0).path("value").asText();
       JsonNode valueNode = objectMapper.readTree(valueString);
