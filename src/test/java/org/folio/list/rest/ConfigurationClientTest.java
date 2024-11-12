@@ -5,12 +5,14 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,6 +49,9 @@ class ConfigurationClientTest {
 
   @Mock
   private ConfigurationClientRaw underlyingClient;
+
+  @Spy // lazy way to make it inject into ConfigurationClient
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   void testTenantTimezoneWhenPresent() {
