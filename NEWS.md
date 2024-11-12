@@ -1,5 +1,12 @@
 # 3.0.x
 
+## 3.0.2
+- Consider daylight savings when determining dates to show for user-friendly queries ([MODLISTS-161])
+- Add a missing interface to the MD ([MODLISTS-160])
+
+[MODLISTS-160]: https://folio-org.atlassian.net/browse/MODLISTS-160
+[MODLISTS-161]: https://folio-org.atlassian.net/browse/MODLISTS-161
+
 ## 3.0.1
 - Use the new /query/contents/privileged API endpoint for exports ([MODFQMMGR-563])
 - Retry migrating queries when enabling the module when requests fail due to missing entity type permissions ([MODLISTS-155])
