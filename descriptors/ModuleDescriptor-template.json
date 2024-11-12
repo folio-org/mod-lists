@@ -187,16 +187,16 @@
   ],
   "requires": [
     {
-      "id": "fqm-query",
-      "version": "2.1"
+      "id": "configuration",
+      "version": "2.0"
     },
     {
-      "id": "entity-types",
+    "id": "entity-types",
       "version": "1.0 2.0"
     },
     {
-      "id": "users",
-      "version": "16.0"
+      "id": "fqm-query",
+      "version": "2.1"
     },
     {
       "id": "login",
@@ -205,6 +205,10 @@
     {
       "id": "permissions",
       "version": "5.3"
+    },
+    {
+      "id": "users",
+      "version": "16.0"
     }
   ],
   "metadata": {
