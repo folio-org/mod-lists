@@ -29,63 +29,30 @@ import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.RangedUUIDType;
 import org.folio.querytool.domain.dto.SourceColumn;
 import org.folio.querytool.domain.dto.StringType;
+import org.folio.spring.i18n.service.TranslationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserFriendlyQueryServiceTest {
-
-  private static final String UTC_PLUS_ONE_LOCALE = """
-    {
-      "configs": [
-        {
-           "id":"2a132a01-623b-4d3a-9d9a-2feb777665c2",
-           "module":"ORG",
-           "configName":"localeSettings",
-           "enabled":true,
-           "value":"{\\"locale\\":\\"en-US\\",\\"timezone\\":\\"Africa/Lagos\\",\\"currency\\":\\"USD\\"}","metadata":{"createdDate":"2024-03-25T17:37:22.309+00:00","createdByUserId":"db760bf8-e05a-4a5d-a4c3-8d49dc0d4e48"}
-        }
-      ],
-      "totalRecords": 1,
-      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
-    }
-    """;
-
-  private static final String UTC_MINUS_THREE_LOCALE = """
-    {
-      "configs": [
-        {
-           "id":"2a132a01-623b-4d3a-9d9a-2feb777665c2",
-           "module":"ORG",
-           "configName":"localeSettings",
-           "enabled":true,
-           "value":"{\\"locale\\":\\"en-US\\",\\"timezone\\":\\"America/Montevideo\\",\\"currency\\":\\"USD\\"}","metadata":{"createdDate":"2024-03-25T17:37:22.309+00:00","createdByUserId":"db760bf8-e05a-4a5d-a4c3-8d49dc0d4e48"}
-        }
-      ],
-      "totalRecords": 1,
-      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
-    }
-    """;
-
-  private static final String EMPTY_LOCALE_JSON = """
-    {
-      "configs": [],
-      "totalRecords": 0,
-      "resultInfo": {"totalRecords":1,"facets":[],"diagnostics":[]}
-    }
-    """;
 
   @InjectMocks
   private UserFriendlyQueryService userFriendlyQueryService;
@@ -98,8 +65,12 @@ class UserFriendlyQueryServiceTest {
 
   @Mock
   private QueryClient queryClient;
+
   @Mock
   private ConfigurationClient configurationClient;
+
+  @Mock
+  private TranslationService translationService;
 
   @Test
   void testGetAndDeserialize() {
@@ -612,58 +583,61 @@ class UserFriendlyQueryServiceTest {
     assertEquals(expectedCondition, actualRegexCondition);
   }
 
-  @Test
-  void shouldLocalizeDateConditionWithoutTimeComponent() {
+  static List<Arguments> dateConditionCases() {
+    return List.of(
+      // zone, input, expected timestamp
+      // (will be printed in m/d/yy in normal usage; we expose verbose expected here to ensure we get the right time)
+
+      // date only + during summer/daylight savings
+      Arguments.of(ZoneId.of("UTC"), "2024-09-01", "2024-09-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-09-01", "2024-09-01T00:00-04:00[America/New_York]"),
+      Arguments.of(ZoneId.of("Australia/Adelaide"), "2024-09-01", "2024-09-01T00:00+09:30[Australia/Adelaide]"),
+
+      // date only + non-summer time
+      Arguments.of(ZoneId.of("UTC"), "2024-02-01", "2024-02-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-02-01", "2024-02-01T00:00-05:00[America/New_York]"),
+      Arguments.of(ZoneId.of("Australia/Adelaide"), "2024-02-01", "2024-02-01T00:00+10:30[Australia/Adelaide]"),
+
+      // full timestamp + during summer/daylight savings
+      Arguments.of(ZoneId.of("UTC"), "2024-09-01T00:00:00.000", "2024-09-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("UTC"), "2024-09-01T00:00:00.000Z", "2024-09-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-09-01T04:00:00.000", "2024-09-01T00:00-04:00[America/New_York]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-09-01T04:00:00.000Z", "2024-09-01T00:00-04:00[America/New_York]"),
+      Arguments.of(ZoneId.of("Australia/Adelaide"), "2024-08-31T14:30:00.000", "2024-09-01T00:00+09:30[Australia/Adelaide]"),
+
+      // full timestamp + non-summer time
+      Arguments.of(ZoneId.of("UTC"), "2024-02-01T00:00:00.000", "2024-02-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("UTC"), "2024-02-01T00:00:00.000Z", "2024-02-01T00:00Z[UTC]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-02-01T05:00:00.000", "2024-02-01T00:00-05:00[America/New_York]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-02-01T05:00:00.000Z", "2024-02-01T00:00-05:00[America/New_York]"),
+      Arguments.of(ZoneId.of("Australia/Adelaide"), "2024-01-31T13:30:00.000", "2024-02-01T00:00+10:30[Australia/Adelaide]"),
+
+      // and, why not, some non-midnight times (we won't display them, but we might support these in the future?)
+      Arguments.of(ZoneId.of("UTC"), "2024-02-01T12:30:00.000", "2024-02-01T12:30Z[UTC]"),
+      Arguments.of(ZoneId.of("America/New_York"), "2024-02-01T09:00:00.000", "2024-02-01T04:00-05:00[America/New_York]"),
+      Arguments.of(ZoneId.of("Australia/Adelaide"), "2024-02-01T12:00:00.000", "2024-02-01T22:30+10:30[Australia/Adelaide]")
+    );
+  }
+
+  @ParameterizedTest(name = "date conversion for tz {0} input {1} gives {2}")
+  @MethodSource("dateConditionCases")
+  void testDateConditionLocalization(ZoneId zone, String input, String expected) {
     EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
     EntityType entityType = new EntityType().columns(List.of(column));
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01");
+    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), input);
 
-    when(configurationClient.getLocaleSettings()).thenReturn(EMPTY_LOCALE_JSON);
+    when(configurationClient.getTenantTimezone()).thenReturn(zone);
+    when(translationService.formatString(any(), any(String.class), any(Object[].class)))
+      .thenAnswer(iv -> {
+        // the actual conversion is handled by the translation service, so we just need to check the arguments
+        assertEquals((ZoneId) iv.getArgument(0), zone);
 
-    String expectedQuery = "field1 == 2024-10-01";
+        // verbose version from ZonedDateTime, to ensure we get midnight
+        return ((Instant) iv.getArgument(3)).atZone(zone).toString();
+      });
+
+    String expectedQuery = "field1 == " + expected;
     String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
-    assertEquals(expectedQuery, actualQuery);
-  }
-
-  @Test
-  void shouldLocalizeDateConditionWithTimestampInUtcPlusTimezone() {
-    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
-    EntityType entityType = new EntityType().columns(List.of(column));
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01T23:00:00.000");
-
-    when(configurationClient.getLocaleSettings()).thenReturn(UTC_PLUS_ONE_LOCALE);
-
-    String expectedQuery = "field1 == 2024-10-02";
-    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType);
-    assertEquals(expectedQuery, actualQuery);
-  }
-
-  @Test
-  void shouldLocalizeDateConditionWithTimestampInUtcMinusTimezone() {
-    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
-    EntityType entityType = new EntityType().columns(List.of(column));
-    // Use a timezone 1h ahead of UTC, should convert below time to midnight, then truncate it
-
-    GreaterThanCondition greaterThanCondition = new GreaterThanCondition(new FqlField("field1"), false, "2024-10-01T03:00:00.000");
-
-    when(configurationClient.getLocaleSettings()).thenReturn(UTC_MINUS_THREE_LOCALE);
-
-    String expectedQuery = "field1 > 2024-10-01";
-    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(greaterThanCondition, entityType);
-    assertEquals(expectedQuery, actualQuery);
-  }
-
-  @Test
-  void shouldUseUtcAsDefaultForLocalization() {
-    EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
-    EntityType entityType = new EntityType().columns(List.of(column));
-
-    LessThanCondition lessThanCondition = new LessThanCondition(new FqlField("field1"), false, "2024-10-01T00:00:00.000");
-
-    when(configurationClient.getLocaleSettings()).thenReturn(EMPTY_LOCALE_JSON);
-
-    String expectedQuery = "field1 < 2024-10-01";
-    String actualQuery = userFriendlyQueryService.getUserFriendlyQuery(lessThanCondition, entityType);
     assertEquals(expectedQuery, actualQuery);
   }
 

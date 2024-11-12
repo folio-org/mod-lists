@@ -1,9 +1,5 @@
 package org.folio.list.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.fql.model.*;
@@ -18,18 +14,21 @@ import org.folio.querytool.domain.dto.DateType;
 import org.folio.querytool.domain.dto.EntityDataType;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.Field;
+import org.folio.spring.i18n.service.TranslationService;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-
 
 @Log4j2
 @Service
@@ -38,10 +37,14 @@ public class UserFriendlyQueryService {
 
   private final EntityTypeClient entityTypeClient;
   private final FqlService fqlService;
-  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+  private final TranslationService translationService;
+
+  private static final DateTimeFormatter DATE_TIME_FORMATTER =  new DateTimeFormatterBuilder()
+    .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    .optionalStart().appendOffsetId() // optional Z/tz at end
+    .toFormatter().withZone(ZoneOffset.UTC); // force interpretation as UTC
   private static final String DATE_REGEX = "^\\d{4}-\\d{2}-\\d{2}$";
-  private static final String DATE_TIME_REGEX = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$";
+  private static final String DATE_TIME_REGEX = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?$";
   private static final String INVALID_DATE_STRING = "Date %s is not valid. Dates should match format 'yyyy-MM-dd' or 'yyyy-MM-dd'T'HH:mm:ss.SSS'";
 
   private final QueryClient queryClient;
@@ -187,41 +190,30 @@ public class UserFriendlyQueryService {
       .findFirst()
       .map(Field::getDataType)
       .orElseThrow();
+
     if (!(dataType instanceof DateType)) {
       return fieldCondition.value();
     }
-    LocalDateTime dateTime;
-    String timezone;
-    String dateString = (String) fieldCondition.value();
-    if (dateString.matches(DATE_REGEX)) {
-      dateTime = LocalDate.parse(dateString, DATE_FORMATTER).atStartOfDay();
-    } else if (dateString.matches(DATE_TIME_REGEX)) {
-      dateTime = LocalDateTime.parse(dateString, DATE_TIME_FORMATTER);
+
+    ZoneId tenantTimezone = configurationClient.getTenantTimezone();
+
+    return translationService.formatString(
+      tenantTimezone,
+      "{value, date, short}", "value",
+      handleDateValue((String) fieldCondition.value(), tenantTimezone)
+    );
+  }
+
+  private Instant handleDateValue(String value, ZoneId timezone) {
+    String dateString = value;
+    if (value.matches(DATE_REGEX)) {
+      return LocalDate.parse(value).atStartOfDay(timezone).toInstant();
+    } else if (value.matches(DATE_TIME_REGEX)) {
+      return Instant.from(DATE_TIME_FORMATTER.parse(value));
     } else {
       // We should never end up here because mod-fqm-manager validates queries first, but just in case
       throw new IllegalArgumentException(INVALID_DATE_STRING.formatted(dateString));
     }
-
-    try {
-      String localeSettingsResponse = configurationClient.getLocaleSettings();
-      ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode localeSettingsNode = objectMapper.readTree(localeSettingsResponse);
-      String valueString = localeSettingsNode
-        .path("configs")
-        .get(0)
-        .path("value")
-        .asText();
-      JsonNode valueNode = objectMapper.readTree(valueString);
-      timezone = valueNode.path("timezone").asText();
-    } catch (JsonProcessingException | FeignException.Unauthorized | NullPointerException e) {
-      log.error("Failed to retrieve locale information from mod-configuration. Defaulting to UTC.");
-      return dateTime.toLocalDate();
-    }
-    ZoneId zoneId = ZoneId.of(timezone);
-    ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId);
-    ZoneOffset offset = zonedDateTime.getOffset();
-    LocalDateTime adjustedTime = dateTime.plusSeconds(offset.getTotalSeconds());
-    return adjustedTime.toLocalDate();
   }
 
   private <T> String handleConditionWithPossibleIdValue(FieldCondition<T> condition,
