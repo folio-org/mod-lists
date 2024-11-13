@@ -93,7 +93,8 @@
         }, {
           "methods": ["POST"],
           "pathPattern": "/lists/{id}/exports",
-          "permissionsRequired": ["lists.item.export.post"]
+          "permissionsRequired": ["lists.item.export.post"],
+          "modulePermissions": ["users.item.get"]
         }, {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/exports/{exportId}",

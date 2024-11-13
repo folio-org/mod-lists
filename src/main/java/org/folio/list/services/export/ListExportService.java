@@ -28,7 +28,10 @@ import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserScopedExecutionService;
+import org.folio.spring.service.SystemUserService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,8 @@ public class ListExportService {
   private final ListValidationService validationService;
   private final AppShutdownService appShutdownService;
   private final EntityTypeClient entityTypeClient;
+  private final SystemUserService systemUserService;
+  private final ExecutionContextBuilder contextBuilder;
 
   @Transactional
   public ListExportDTO createExport(UUID listId, List<String> fields) {
@@ -134,21 +139,42 @@ public class ListExportService {
     );
     UUID userId = executionContext.getUserId();
     log.debug("Using user {} as proxy user for export", userId);
-    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
-      executionContext.getTenantId(),
-      () ->
-        listExportWorkerService
-          .doAsyncExport(exportDetails, userId)
-          .whenComplete((success, throwable) -> {
-            // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
-            try (ShutdownTask autoClose = shutdownTask) {
-              setExportStatus(exportDetails, throwable);
-              exportDetails.setEndDate(OffsetDateTime.now());
-              listExportRepository.save(exportDetails);
-            }
-          })
-    );
-//    listExportWorkerService.doAsyncExport(exportDetails, userId);
+
+
+//    listExportWorkerService
+//      .doAsyncExport2(exportDetails, userId)
+//      .whenComplete((success, throwable) -> {
+//        // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
+//        try (ShutdownTask autoClose = shutdownTask) {
+//          setExportStatus(exportDetails, throwable);
+//          exportDetails.setEndDate(OffsetDateTime.now());
+//          listExportRepository.save(exportDetails);
+//        }
+//      });
+
+    log.info("Starting async export");
+//    var newExecutionContext = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()));
+//    var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
+//    systemUserService.authSystemUser(systemUser);
+//    log.info("Got system user: {} | {} | {}", systemUser.userId(), systemUser.username(), systemUser.tenantId());
+//    systemUserScopedExecutionService.setSystemUserService(systemUserService);
+//    log.info("Set system user service");
+    try(var context = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()))) {
+      systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+        executionContext.getTenantId(),
+        () ->
+          listExportWorkerService
+            .doAsyncExport(exportDetails, userId)
+            .whenComplete((success, throwable) -> {
+              // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
+              try (ShutdownTask autoClose = shutdownTask) {
+                setExportStatus(exportDetails, throwable);
+                exportDetails.setEndDate(OffsetDateTime.now());
+                listExportRepository.save(exportDetails);
+              }
+            })
+      );
+    }
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {
@@ -159,5 +185,9 @@ public class ListExportService {
     } else {
       exportDetails.setStatus(AsyncProcessStatus.FAILED);
     }
+  }
+
+  private FolioExecutionContext folioExecutionContext(String tenantId) {
+    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenantId));
   }
 }
