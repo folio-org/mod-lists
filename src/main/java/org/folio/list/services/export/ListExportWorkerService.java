@@ -26,19 +26,10 @@ public class ListExportWorkerService {
   private final FolioExecutionContext folioExecutionContext;
   private final FolioS3Client folioS3Client;
   private final CsvCreator csvCreator;
-  private final FolioExecutionContext executionContext;
-  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
-
-  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
-    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
-      executionContext.getTenantId(),
-      () -> doAsyncExportPrivate(exportDetails, userId)
-    );
-  }
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  private CompletableFuture<Boolean> doAsyncExportPrivate(ExportDetails exportDetails, UUID userId) {
+  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
     String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
     String uploadId = null;
