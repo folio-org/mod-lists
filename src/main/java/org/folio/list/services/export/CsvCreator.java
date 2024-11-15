@@ -16,6 +16,8 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
+import org.folio.list.rest.SystemUserClient;
+import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
@@ -47,6 +49,7 @@ public class CsvCreator {
   private final QueryClient queryClient;
   private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
+  private final SystemUserQueryClient systemUserQueryClient;
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -88,7 +91,7 @@ public class CsvCreator {
         .ids(ids)
         .localize(true)
         .userId(userId);
-      var sortedContents = queryClient.getContentsPrivileged(contentsRequest)
+      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
         .toList();
