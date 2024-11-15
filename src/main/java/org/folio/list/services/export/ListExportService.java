@@ -161,6 +161,7 @@ public class ListExportService {
 //    log.info("Set system user service");
     try(var context = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()))) {
       SystemUserScopedExecutionService newScopedExecutionService = new SystemUserScopedExecutionService(folioExecutionContext(executionContext.getTenantId()), contextBuilder);
+      newScopedExecutionService.setSystemUserService(systemUserService);
       newScopedExecutionService.executeAsyncSystemUserScoped(
 //      systemUserScopedExecutionService.executeAsyncSystemUserScoped(
         executionContext.getTenantId(),
