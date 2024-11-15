@@ -16,7 +16,6 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
-import org.folio.list.rest.SystemUserClient;
 import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;

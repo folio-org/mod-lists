@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.Map;
 
 @Log4j2
-public class SystemUserClient implements Client {
+public class SystemUserClientImpl implements Client {
 
   private final OkHttpClient delegate;
   private final FolioExecutionContext executionContext;
   private final SystemUserService systemUserService;
 
-  public SystemUserClient(FolioExecutionContext executionContext, okhttp3.OkHttpClient okHttpClient, SystemUserService systemUserService) {
+  public SystemUserClientImpl(FolioExecutionContext executionContext, okhttp3.OkHttpClient okHttpClient, SystemUserService systemUserService) {
     this.delegate = new OkHttpClient(okHttpClient);
     this.executionContext = executionContext;
     this.systemUserService = systemUserService;
@@ -47,14 +47,6 @@ public class SystemUserClient implements Client {
     }
   }
 
-  /**
-   * Prepare headers. Copies all okapi headers from FolioExecutionContext excluding x-okapi-tenant. The exclusion of
-   * x-okapi-tenant allows for manual specification of the desired tenant, enabling cross-tenant requests.
-   *
-   * @param request Feign request
-   * @param context Folio execution context
-   * @return Map of headers to be included in the request
-   */
   Map<String, Collection<String>> prepareHeaders(Request request, FolioExecutionContext context) {
     log.info("System user client preparing headers");
     Map<String, Collection<String>> allHeaders = new HashMap<>(request.headers());
@@ -62,6 +54,7 @@ public class SystemUserClient implements Client {
     var okapiToken = okapiHeaders.get("x-okapi-token").stream().findFirst().get();
     var okapiTenant = okapiHeaders.get("x-okapi-tenant").stream().findFirst().get();
     var authedSystemUser = systemUserService.getAuthedSystemUser(okapiTenant);
+
     var newOkapiHeaders = new HashMap<>(okapiHeaders);
     newOkapiHeaders.put("x-okapi-token", List.of(authedSystemUser.token().accessToken()));
     allHeaders.putAll(newOkapiHeaders);
