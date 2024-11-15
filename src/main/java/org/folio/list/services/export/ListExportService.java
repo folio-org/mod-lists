@@ -159,9 +159,11 @@ public class ListExportService {
 //    log.info("Got system user: {} | {} | {}", systemUser.userId(), systemUser.username(), systemUser.tenantId());
 //    systemUserScopedExecutionService.setSystemUserService(systemUserService);
 //    log.info("Set system user service");
-    try(var context = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()))) {
+    try (var context = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()))) {
       SystemUserScopedExecutionService newScopedExecutionService = new SystemUserScopedExecutionService(folioExecutionContext(executionContext.getTenantId()), contextBuilder);
       newScopedExecutionService.setSystemUserService(systemUserService);
+      systemUserScopedExecutionService.toString();
+      var userToken = systemUserService.authSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
       newScopedExecutionService.executeAsyncSystemUserScoped(
 //      systemUserScopedExecutionService.executeAsyncSystemUserScoped(
         executionContext.getTenantId(),
@@ -177,6 +179,18 @@ public class ListExportService {
               }
             })
       );
+
+
+//      listExportWorkerService
+//        .doAsyncExport2(exportDetails, userId)
+//        .whenComplete((success, throwable) -> {
+//          // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
+//          try (ShutdownTask autoClose = shutdownTask) {
+//            setExportStatus(exportDetails, throwable);
+//            exportDetails.setEndDate(OffsetDateTime.now());
+//            listExportRepository.save(exportDetails);
+//          }
+//        });
     }
   }
 
