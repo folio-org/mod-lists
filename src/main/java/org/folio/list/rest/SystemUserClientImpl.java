@@ -51,13 +51,17 @@ public class SystemUserClientImpl implements Client {
     log.info("System user client preparing headers");
     Map<String, Collection<String>> allHeaders = new HashMap<>(request.headers());
     var okapiHeaders = new HashMap<>(context.getOkapiHeaders());
-    var okapiToken = okapiHeaders.get("x-okapi-token").stream().findFirst().get();
-    var okapiTenant = okapiHeaders.get("x-okapi-tenant").stream().findFirst().get();
-    var authedSystemUser = systemUserService.getAuthedSystemUser(okapiTenant);
-
-    var newOkapiHeaders = new HashMap<>(okapiHeaders);
-    newOkapiHeaders.put("x-okapi-token", List.of(authedSystemUser.token().accessToken()));
-    allHeaders.putAll(newOkapiHeaders);
+//    var newOkapiHeaders = new HashMap<>(okapiHeaders);
+//    var okapiToken = okapiHeaders.get("x-okapi-token").stream().findFirst().get();
+//    var okapiTenant = okapiHeaders.get("x-okapi-tenant").stream().findFirst().orElse(null);
+    var okapiTenant = okapiHeaders.getOrDefault("x-okapi-tenant", List.of()).stream()
+      .findFirst()
+      .orElse(null);
+    if (okapiTenant != null) {
+      var authedSystemUser = systemUserService.getAuthedSystemUser(okapiTenant);
+      okapiHeaders.put("x-okapi-token", List.of(authedSystemUser.token().accessToken()));
+    }
+    allHeaders.putAll(okapiHeaders);
     context.getAllHeaders()
       .keySet()
       .stream()
