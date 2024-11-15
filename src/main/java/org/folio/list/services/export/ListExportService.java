@@ -139,19 +139,6 @@ public class ListExportService {
     );
     UUID userId = executionContext.getUserId();
     log.debug("Using user {} as proxy user for export", userId);
-
-
-//    listExportWorkerService
-//      .doAsyncExport2(exportDetails, userId)
-//      .whenComplete((success, throwable) -> {
-//        // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
-//        try (ShutdownTask autoClose = shutdownTask) {
-//          setExportStatus(exportDetails, throwable);
-//          exportDetails.setEndDate(OffsetDateTime.now());
-//          listExportRepository.save(exportDetails);
-//        }
-//      });
-
     log.info("Starting async export");
 //    var newExecutionContext = new FolioExecutionContextSetter(folioExecutionContext(executionContext.getTenantId()));
 //    var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
@@ -164,8 +151,8 @@ public class ListExportService {
       newScopedExecutionService.setSystemUserService(systemUserService);
       systemUserScopedExecutionService.toString();
       var userToken = systemUserService.authSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
-      newScopedExecutionService.executeAsyncSystemUserScoped(
-//      systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+//      newScopedExecutionService.executeAsyncSystemUserScoped(
+      systemUserScopedExecutionService.executeAsyncSystemUserScoped(
         executionContext.getTenantId(),
         () ->
           listExportWorkerService
@@ -179,18 +166,6 @@ public class ListExportService {
               }
             })
       );
-
-
-//      listExportWorkerService
-//        .doAsyncExport2(exportDetails, userId)
-//        .whenComplete((success, throwable) -> {
-//          // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
-//          try (ShutdownTask autoClose = shutdownTask) {
-//            setExportStatus(exportDetails, throwable);
-//            exportDetails.setEndDate(OffsetDateTime.now());
-//            listExportRepository.save(exportDetails);
-//          }
-//        });
     }
   }
 
