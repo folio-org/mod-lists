@@ -24,7 +24,9 @@ import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserService;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +56,7 @@ public class CsvCreator {
   private final SystemUserService systemUserService;
   private FolioExecutionContext executionContext;
   private final ExecutionContextBuilder contextBuilder;
+  private final FolioModuleMetadata folioModuleMetadata;
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -108,14 +111,23 @@ public class CsvCreator {
 //        var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
         log.info("Current user: {}", executionContext.getUserId());
         log.info("Current token: {}", executionContext.getToken());
-        executionContext = contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
-        log.info("System user access token: {}", executionContext.getToken());
-        var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
-          .stream()
-          .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
-          .toList();
-        csvWriter.writeCsv(sortedContents, localStorageOutputStream);
-        batchNumber++;
+        var headers = executionContext.getAllHeaders();
+        log.info("Headers: {}", headers);
+        var newToken = systemUserService.getAuthedSystemUser(executionContext.getTenantId()).token().accessToken();
+        headers.put("x-okapi-token", List.of(newToken));
+        log.info("\n\nNew Headers: {}", headers);
+        try (var x = new FolioExecutionContextSetter(folioModuleMetadata, headers)) {
+          log.info("New token: {}", executionContext.getToken());
+          var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+            .stream()
+            .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+            .toList();
+          csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+          batchNumber++;
+        }
+
+//        executionContext = contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
+
       }
     }
 
