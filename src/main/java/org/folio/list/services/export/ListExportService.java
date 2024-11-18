@@ -29,7 +29,6 @@ import org.folio.list.services.ListValidationService;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.context.ExecutionContextBuilder;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.folio.spring.service.SystemUserService;
 import org.springframework.context.annotation.Lazy;
@@ -151,7 +150,6 @@ public class ListExportService {
 //      newScopedExecutionService.setSystemUserService(systemUserService);
     systemUserScopedExecutionService.toString();
 //      var userToken = systemUserService.authSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
-//      newScopedExecutionService.executeAsyncSystemUserScoped(
     systemUserScopedExecutionService.executeAsyncSystemUserScoped(
       executionContext.getTenantId(),
       () ->
@@ -166,7 +164,6 @@ public class ListExportService {
             }
           })
     );
-//    }
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {
@@ -179,7 +176,7 @@ public class ListExportService {
     }
   }
 
-  private FolioExecutionContext folioExecutionContext(String tenantId) {
-    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenantId));
-  }
+//  private FolioExecutionContext folioExecutionContext(String tenantId) {
+//    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenantId));
+//  }
 }
