@@ -36,11 +36,13 @@ class SystemUserClientImplTest {
   private SystemUserService systemUserService;
   private FolioExecutionContext executionContext;
   private SystemUserClientImpl systemUserClient;
+  private OkHttpClient okHttpClient;
 
   @BeforeEach
   void setup() {
     executionContext = mock(FolioExecutionContext.class);
     systemUserService = mock(SystemUserService.class);
+    okHttpClient = mock(OkHttpClient.class);
     systemUserClient = new SystemUserClientImpl(executionContext, new okhttp3.OkHttpClient(), systemUserService);
   }
 
@@ -139,10 +141,9 @@ class SystemUserClientImplTest {
       null
     );
 
-    final FolioExecutionContext context = mock(FolioExecutionContext.class);
-    when(context.getOkapiUrl()).thenReturn("http://okapi");
-    when(context.getOkapiHeaders()).thenReturn(Map.of("z", List.of("z-val")));
-    when(context.getAllHeaders())
+    when(executionContext.getOkapiUrl()).thenReturn("http://okapi");
+    when(executionContext.getOkapiHeaders()).thenReturn(Map.of("z", List.of("z-val")));
+    when(executionContext.getAllHeaders())
       .thenReturn(
         Map.of(
           "misc-1", List.of("misc-1-val"),
@@ -152,14 +153,9 @@ class SystemUserClientImplTest {
       );
 
     final Request.Options options = new Request.Options();
+    ReflectionTestUtils.setField(systemUserClient, "delegate", okHttpClient);
 
-//    final SystemUserClientImpl client = new SystemUserClientImpl(context, null);
-
-    // best way to check for this without having to do a bunch of feign/okhttp logic
-    final OkHttpClient mockedDelegate = mock(OkHttpClient.class);
-    ReflectionTestUtils.setField(systemUserClient, "delegate", mockedDelegate);
-
-    when(mockedDelegate.execute(any(Request.class), eq(options)))
+    when(okHttpClient.execute(any(Request.class), eq(options)))
       .thenReturn(Response.builder().request(request).status(299).build());
 
     // ensure response is returned upon execution
@@ -167,7 +163,7 @@ class SystemUserClientImplTest {
 
     // verify that the correct request was sent with the correct options
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    verify(mockedDelegate, times(1)).execute(requestCaptor.capture(), eq(options));
+    verify(okHttpClient, times(1)).execute(requestCaptor.capture(), eq(options));
 
     assertThat(requestCaptor.getValue().httpMethod(), is(Request.HttpMethod.GET));
     assertThat(requestCaptor.getValue().url(), is("http://okapi/test-url"));
