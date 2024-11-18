@@ -105,6 +105,7 @@ public class CsvCreator {
 
   }
 
+  @SneakyThrows
   private void uploadCSVPart(String destinationFileName, String uploadId, int partNumber, String localStorage,
                              List<String> partETags, ExportDetails exportDetails) {
     int attempt = 0;
@@ -122,15 +123,9 @@ public class CsvCreator {
           log.error("Upload failed after {} attempts: {}", attempt, e.getMessage());
           throw e;
         }
-
         log.info("Upload part failed, retrying attempt {} after backoff...", attempt);
-        try {
-          TimeUnit.MILLISECONDS.sleep(backoff);
-          backoff = Math.min(backoff * 2, 16000);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          throw new RuntimeException("Upload interrupted", ie);
-        }
+        TimeUnit.MILLISECONDS.sleep(backoff);
+        backoff = Math.min(backoff * 2, 16000);
       }
     }
   }
