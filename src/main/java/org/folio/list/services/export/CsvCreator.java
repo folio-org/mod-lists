@@ -25,7 +25,6 @@ import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.context.ExecutionContextBuilder;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserService;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +53,6 @@ public class CsvCreator {
   private final SystemUserQueryClient systemUserQueryClient;
   private final SystemUserService systemUserService;
   private FolioExecutionContext executionContext;
-  private final FolioExecutionContextSetter setter;
   private final ExecutionContextBuilder contextBuilder;
 
   //Minimal s3 part size is 5 MB
