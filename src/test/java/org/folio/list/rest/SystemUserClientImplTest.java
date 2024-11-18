@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.model.SystemUser;
+import org.folio.spring.model.UserToken;
 import org.folio.spring.service.SystemUserService;
 import org.folio.spring.testing.type.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +67,7 @@ class SystemUserClientImplTest {
 
   @Test
   void testHeaderPreparationWithNoLanguage() {
+    String tenantId = "tenant_01";
     Request request = mock(Request.class);
     when(request.headers())
       .thenReturn(
@@ -75,9 +78,9 @@ class SystemUserClientImplTest {
         )
       );
 
-//    FolioExecutionContext context = mock(FolioExecutionContext.class);
-    when(executionContext.getOkapiHeaders()).thenReturn(Map.of("z", List.of("z-val")));
+    when(executionContext.getOkapiHeaders()).thenReturn(Map.of("z", List.of("z-val"), "x-okapi-tenant", List.of(tenantId)));
     when(executionContext.getAllHeaders()).thenReturn(Map.of("misc-1", List.of("misc-1-val"), "misc-2", List.of("misc-2-val")));
+    when(systemUserService.getAuthedSystemUser(tenantId)).thenReturn(new SystemUser("", "", "", new UserToken("accessToken", null), ""));
 
     assertThat(
       systemUserClient.prepareHeaders(request, executionContext),
@@ -87,7 +90,9 @@ class SystemUserClientImplTest {
           hasEntry("b", List.of("b-val")),
           hasEntry("c", List.of("c-val")),
           hasEntry("z", List.of("z-val")),
-          is(aMapWithSize(4))
+          hasEntry("x-okapi-tenant", List.of("tenant_01")),
+          hasEntry("x-okapi-token", List.of("accessToken")),
+          is(aMapWithSize(6))
         )
       )
     );
