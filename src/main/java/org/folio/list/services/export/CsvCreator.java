@@ -54,7 +54,7 @@ public class CsvCreator {
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
   private final SystemUserService systemUserService;
-  private FolioExecutionContext executionContext;
+  private final FolioExecutionContext executionContext;
   private final ExecutionContextBuilder contextBuilder;
   private final FolioModuleMetadata folioModuleMetadata;
 
