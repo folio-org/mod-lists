@@ -24,6 +24,8 @@ import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserService;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +53,9 @@ public class CsvCreator {
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
   private final SystemUserService systemUserService;
-  private final FolioExecutionContext executionContext;
+  private FolioExecutionContext executionContext;
+  private final FolioExecutionContextSetter setter;
+  private final ExecutionContextBuilder contextBuilder;
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -103,12 +107,11 @@ public class CsvCreator {
       } catch (FeignException.Unauthorized e) {
         // TODO: Re-authenticate system user here
         log.info("Received 401 from query client. System user token may have expired. Attempting to re-issue system user token for tenant {}", executionContext.getTenantId());
-        var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
-        log.info("Reauthenticated system user {}", systemUser.userId());
+//        var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
         log.info("Current user: {}", executionContext.getUserId());
         log.info("Current token: {}", executionContext.getToken());
-        log.info("System user token: {}", systemUser.token());
-        log.info("System user access token: {}", systemUser.token().accessToken());
+        executionContext = contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(executionContext.getTenantId()));
+        log.info("System user access token: {}", executionContext.getToken());
         var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
           .stream()
           .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
