@@ -25,7 +25,7 @@ public class ListExportWorkerService {
   private final FolioExecutionContext folioExecutionContext;
   private final FolioS3Client folioS3Client;
   private final CsvCreator csvCreator;
-  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService; // TODO: REMOVE
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)

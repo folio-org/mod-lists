@@ -3,6 +3,7 @@ package org.folio.list.services.export;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -15,7 +16,6 @@ import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
-import org.folio.list.rest.QueryClient;
 import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
@@ -23,6 +23,8 @@ import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserService;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -48,6 +50,8 @@ public class CsvCreator {
   private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
+  private final SystemUserService systemUserService;
+  private final FolioExecutionContext executionContext;
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -89,12 +93,29 @@ public class CsvCreator {
         .ids(ids)
         .localize(true)
         .userId(userId);
-      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
-        .stream()
-        .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
-        .toList();
-      csvWriter.writeCsv(sortedContents, localStorageOutputStream);
-      batchNumber++;
+      try {
+        var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+          .stream()
+          .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+          .toList();
+        csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+        batchNumber++;
+      } catch (FeignException.Unauthorized e) {
+        // TODO: Re-authenticate system user here
+        log.info("Received 401 from query client. System user token may have expired. Attempting to re-issue system user token for tenant {}", executionContext.getTenantId());
+        var systemUser = systemUserService.getAuthedSystemUser(executionContext.getTenantId());
+        log.info("Reauthenticated system user {}", systemUser.userId());
+        log.info("Current user: {}", executionContext.getUserId());
+        log.info("Current token: {}", executionContext.getToken());
+        log.info("System user token: {}", systemUser.token());
+        log.info("System user access token: {}", systemUser.token().accessToken());
+        var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+          .stream()
+          .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+          .toList();
+        csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+        batchNumber++;
+      }
     }
 
     uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
