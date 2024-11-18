@@ -18,6 +18,7 @@ import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.StringType;
 import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.exception.S3ClientException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,8 +33,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -109,6 +113,27 @@ class CsvCreatorTest {
       assertEquals(toCSV(contentsWithData), actualCsv);
       assertEquals(2, partETags.size());
     }
+  }
+
+  @Test
+  void shouldRetryUploadPartIfExceptionIsThrown() throws IOException {
+    int batchSize = 100000;
+    UUID userId = UUID.randomUUID();
+    String destinationFileName = "destinationFileName";
+    String uploadId = "uploadId";
+    var partETags = new ArrayList<String>();
+    int firstPartNumber = 1;
+
+    ListEntity entity = TestDataFixture.getPrivateListEntity();
+    EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
+    ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
+
+    when(exportProperties.getBatchSize()).thenReturn(batchSize);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any())).thenThrow(S3ClientException.class);
+
+    assertThrows(S3ClientException.class, () -> csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId));
+    verify(folioS3Client, times(5)).uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any());
   }
 
   private static String toCSV(List<Map<String, Object>> list) {
