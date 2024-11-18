@@ -45,7 +45,6 @@ public class CsvCreator {
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
-  private final QueryClient queryClient;
   private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
