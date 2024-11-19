@@ -15,12 +15,13 @@ import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
-import org.folio.list.rest.QueryClient;
+import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.exception.S3ClientException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
@@ -42,13 +44,16 @@ public class CsvCreator {
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
-  private final QueryClient queryClient;
   private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
+  private final SystemUserQueryClient systemUserQueryClient;
 
   //Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
   private static final String IS_DELETED = "_deleted";
+  private static final int MAX_RETRIES = 5;
+  private static final long INITIAL_BACKOFF = 1000;
+  private static final long MAX_BACKOFF = 16000;
 
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
@@ -84,7 +89,7 @@ public class CsvCreator {
         .ids(ids)
         .localize(true)
         .userId(userId);
-      var sortedContents = queryClient.getContentsPrivileged(contentsRequest)
+      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
         .toList();
@@ -99,11 +104,29 @@ public class CsvCreator {
 
   }
 
+  @SneakyThrows
   private void uploadCSVPart(String destinationFileName, String uploadId, int partNumber, String localStorage,
                              List<String> partETags, ExportDetails exportDetails) {
-    String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
-    partETags.add(partETag);
-    log.info("Generated CSV multipart file for exportID {}. Uploading to S3, Part Number {}", exportDetails.getExportId(), partNumber);
+    int attempt = 0;
+    long backoff = INITIAL_BACKOFF;
+
+    while (attempt < MAX_RETRIES) {
+      try {
+        String partETag = folioS3Client.uploadMultipartPart(destinationFileName, uploadId, partNumber, localStorage);
+        partETags.add(partETag);
+        log.info("Generated CSV multipart file for exportID {}. Uploading to S3, Part Number {}", exportDetails.getExportId(), partNumber);
+        return;
+      } catch (S3ClientException e) {
+        attempt++;
+        if (attempt >= MAX_RETRIES) {
+          log.error("Upload failed after {} attempts: {}", attempt, e.getMessage());
+          throw e;
+        }
+        log.info("Upload part failed, retrying attempt {} after backoff...", attempt);
+        TimeUnit.MILLISECONDS.sleep(backoff);
+        backoff = Math.min(backoff * 2, MAX_BACKOFF);
+      }
+    }
   }
 
   private void checkIfExportCancelled(UUID listId, UUID exportId) {
