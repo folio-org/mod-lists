@@ -7,7 +7,9 @@ import static org.folio.list.services.export.ExportUtils.getFileName;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -26,6 +28,8 @@ import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.Field;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -56,20 +60,31 @@ public class ListExportService {
       .findByIdAndIsDeletedFalse(listId)
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
-    List<String> fieldsToExport = isEmpty(fields) ? list.getFields() : fields;
-    entityTypeClient
+    List<String> exportFields = isEmpty(fields) ? list.getFields() : fields;
+    List<EntityTypeColumn> columns = entityTypeClient
       .getEntityType(list.getEntityTypeId(), ListActions.EXPORT)
-      .getColumns()
+      .getColumns();
+
+    // Ensure id columns are included in export
+    Set<String> idColumnNames = columns
       .stream()
       .filter(column -> Boolean.TRUE.equals(column.getIsIdColumn()))
-      .forEach(column -> {
-        if (!fieldsToExport.contains(column.getName())) {
-          fieldsToExport.add(column.getName());
-        }
-      });
+      .map(Field::getName)
+      .collect(Collectors.toSet());
+    exportFields.addAll(idColumnNames);
 
+    // Remove any fields that are not present in the entity type definition
+    Set<String> columnNames = columns
+      .stream()
+      .map(Field::getName)
+      .collect(Collectors.toSet());
+    List<String> validExportFields = exportFields
+      .stream()
+      .filter(columnNames::contains)
+      .distinct()
+      .toList();
 
-    ExportDetails exportDetails = createExportDetails(list, fieldsToExport);
+    ExportDetails exportDetails = createExportDetails(list, validExportFields);
     ExportDetails savedExport = listExportRepository.save(exportDetails);
     doAsyncExport(savedExport);
     return listExportMapper.toListExportDTO(savedExport);
