@@ -1,5 +1,14 @@
 # 3.0.x
 
+## 3.0.3
+- Retry failed S3 uploads during export ([MODLISTS-158])
+- Use custom SystemUserClient only when system user is enabled ([MODLISTS-165])
+- Ignore unrecognized fields during export ([MODLISTS-170])
+
+[MODLISTS-158]: https://folio-org.atlassian.net/browse/MODLISTS-158
+[MODLISTS-165]: https://folio-org.atlassian.net/browse/MODLISTS-165
+[MODLISTS-170]: https://folio-org.atlassian.net/browse/MODLISTS-170
+
 ## 3.0.2
 - Consider daylight savings when determining dates to show for user-friendly queries ([MODLISTS-161])
 - Add a missing interface to the MD ([MODLISTS-160])
