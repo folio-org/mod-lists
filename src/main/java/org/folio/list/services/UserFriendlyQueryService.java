@@ -73,6 +73,9 @@ public class UserFriendlyQueryService {
 
   public String getUserFriendlyQuery(String fqlCriteria, EntityType entityType) {
     Fql fql = fqlService.getFql(fqlCriteria);
+    if (fql.fqlCondition() == null) {
+      return "";
+    }
     return getUserFriendlyQuery(fql.fqlCondition(), entityType);
   }
 
