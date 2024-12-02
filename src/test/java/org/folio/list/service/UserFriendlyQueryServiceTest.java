@@ -117,7 +117,7 @@ class UserFriendlyQueryServiceTest {
     );
 
     when(fqlService.getFql("query")).thenReturn(new Fql("", equalsCondition));
-    when(entityTypeClient.getEntityType(testList.getEntityTypeId(), ListActions.UPDATE)).thenReturn(new EntityType().columns(columns));
+    when(entityTypeClient.getEntityType(testList.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(new EntityType().columns(columns));
 
     userFriendlyQueryService.updateListUserFriendlyQuery(testList);
     assertEquals(expectedEqualsCondition, testList.getUserFriendlyQuery());

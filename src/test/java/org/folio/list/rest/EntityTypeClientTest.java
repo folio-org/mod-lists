@@ -3,6 +3,8 @@ package org.folio.list.rest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,14 +31,14 @@ class EntityTypeClientTest {
 
   @Test
   void testReturnsOnSuccess() {
-    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID)).thenReturn(ENTITY_TYPE);
+    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false)).thenReturn(ENTITY_TYPE);
 
-    assertThat(entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ), is(ENTITY_TYPE));
+    assertThat(entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false), is(ENTITY_TYPE));
   }
 
   @Test
   void testHandlesUnauthorized() {
-    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID))
+    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false))
       .thenThrow(
         new FeignException.Unauthorized(
           "[{\"User is missing permissions: [foo.bar]\"}]",
@@ -48,15 +50,15 @@ class EntityTypeClientTest {
 
     assertThrows(
       InsufficientEntityTypePermissionsException.class,
-      () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ)
+      () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false)
     );
   }
 
   @Test
   void testHandlesNotFound() {
-    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID))
+    when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false))
       .thenThrow(new FeignException.NotFound("Entity type not found", mock(feign.Request.class), null, null));
 
-    assertThrows(NotFoundException.class, () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ));
+    assertThrows(NotFoundException.class, () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false));
   }
 }

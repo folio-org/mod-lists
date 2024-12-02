@@ -78,7 +78,7 @@ public class UserFriendlyQueryService {
 
   public void updateListUserFriendlyQuery(ListEntity listEntity) {
     listEntity.setUserFriendlyQuery(
-      getUserFriendlyQuery(listEntity.getFqlQuery(), entityTypeClient.getEntityType(listEntity.getEntityTypeId(), ListActions.UPDATE))
+      getUserFriendlyQuery(listEntity.getFqlQuery(), entityTypeClient.getEntityType(listEntity.getEntityTypeId(), ListActions.UPDATE, true))
     );
   }
 

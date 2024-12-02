@@ -21,16 +21,24 @@ public interface EntityTypeClient {
   @GetMapping("/{entityTypeId}")
   EntityType getEntityType(@RequestHeader UUID entityTypeId);
 
+  @GetMapping("/{entityTypeId}")
+  EntityType getEntityType(@RequestHeader UUID entityTypeId, @RequestParam boolean includeHidden);
+
   /** Gets an entity type; includes wrappers for feign exceptions */
-  default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction) {
+  default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction, boolean includeHidden) {
     try {
-      return getEntityType(entityTypeId);
+      return getEntityType(entityTypeId, includeHidden);
     } catch (FeignException.Unauthorized e) {
       String message = e.getMessage();
       throw new InsufficientEntityTypePermissionsException(entityTypeId, attemptedAction, message);
     } catch (FeignException.NotFound e) {
       throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
     }
+  }
+  
+  /** Gets an entity type; includes wrappers for feign exceptions */
+  default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction) {
+    return getEntityType(entityTypeId, attemptedAction, false);
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
