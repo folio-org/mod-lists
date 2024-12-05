@@ -211,6 +211,12 @@
       "version": "16.0"
     }
   ],
+  "optional": [
+    {
+      "id": "consortia",
+      "version": "1.0"
+    }
+  ],
   "metadata": {
     "user": {
       "type": "system",
@@ -220,6 +226,7 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation.loans.collection.get",
         "configuration.entries.collection.get",
+        "consortia.user-tenants.collection.get",
         "departments.collection.get",
         "finance.exchange-rate.item.get",
         "fqm.entityTypes.collection.get",
