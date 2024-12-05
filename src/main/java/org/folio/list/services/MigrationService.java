@@ -85,7 +85,11 @@ public class MigrationService {
             systemUserScopedExecutionService.executeSystemUserScoped(
               tenant,
               () -> {
-                migrateList(list);
+                try {
+                  migrateList(list);
+                } catch (Exception e) {
+                  log.error("Error migrating list {}. This list may not function correctly", list, e);
+                }
                 return null;
               }
             )
