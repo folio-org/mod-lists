@@ -2,6 +2,7 @@ acquisitions-units.units.collection.get
 addresstypes.collection.get
 circulation-storage.loan-policies.collection.get
 circulation.loans.collection.get
+consortia.user-tenants.collection.get
 configuration.entries.collection.get
 departments.collection.get
 finance.exchange-rate.item.get
