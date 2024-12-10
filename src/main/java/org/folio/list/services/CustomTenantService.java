@@ -1,20 +1,24 @@
 package org.folio.list.services;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Iterator;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.i18n.service.TranslationService;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.PrepareSystemUserService;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 @Log4j2
 @Primary
@@ -23,6 +27,7 @@ public class CustomTenantService extends TenantService {
 
   protected final MigrationService migrationService;
   protected final PrepareSystemUserService prepareSystemUserService;
+  private final ResourcePatternResolver resourceResolver;
 
   @Autowired
   public CustomTenantService(
@@ -30,11 +35,13 @@ public class CustomTenantService extends TenantService {
     FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase,
     MigrationService migrationService,
-    PrepareSystemUserService prepareSystemUserService
+    PrepareSystemUserService prepareSystemUserService,
+    ResourcePatternResolver resourceResolver
   ) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.migrationService = migrationService;
     this.prepareSystemUserService = prepareSystemUserService;
+    this.resourceResolver = resourceResolver;
   }
 
   @Override
@@ -42,30 +49,39 @@ public class CustomTenantService extends TenantService {
     log.info("Initializing system user");
     prepareSystemUserService.setupSystemUser();
 
+    try {
+      Arrays.stream(resourceResolver.getResources("classpath:/**/*")).forEach(r -> log.info(r));
+    } catch (IOException e) {
+      log.error(e);
+    }
+
     // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
     // case of failures related to missing permissions
-    RetryTemplate.builder()
+    RetryTemplate
+      .builder()
       .retryOn(InsufficientEntityTypePermissionsException.class)
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
       .withTimeout(Duration.of(2, ChronoUnit.MINUTES))
       .build()
-      .execute(ctx -> {
-        int attempt = (ctx.getRetryCount() + 1);
-        log.info("Performing tenant install migrations. Attempt #" + attempt);
-        try {
-          migrationService.performTenantInstallMigrations();
-        } catch (Exception e) {
-          // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
-          log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
-          if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe)
-            throw ietpe; // Retry
-          throw e; // Don't retry
+      .execute(
+        ctx -> {
+          int attempt = (ctx.getRetryCount() + 1);
+          log.info("Performing tenant install migrations. Attempt #" + attempt);
+          try {
+            migrationService.performTenantInstallMigrations();
+          } catch (Exception e) {
+            // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
+            log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
+            if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe) throw ietpe; // Retry
+            throw e; // Don't retry
+          }
+          return null;
+        },
+        ctx -> {
+          log.error("Unable to perform tenant install migration activities", ctx.getLastThrowable());
+          // Rethrow it to fail the tenant update process.
+          throw new RuntimeException(ctx.getLastThrowable());
         }
-        return null;
-      }, ctx -> {
-        log.error("Unable to perform tenant install migration activities", ctx.getLastThrowable());
-        // Rethrow it to fail the tenant update process.
-        throw new RuntimeException(ctx.getLastThrowable());
-      });
+      );
   }
 }
