@@ -1,5 +1,15 @@
 # 3.0.x
 
+## 3.0.4
+- Require interface `entity-types v2.0`
+- Allow hidden fields in user-friendly query generation ([MODLISTS-175])
+- Handle null conditions during user-friendly query generation ([MODLISTS-176])
+- Make migration errors non-fatal ([MODLISTS-178])
+
+[MODLISTS-175]: https://folio-org.atlassian.net/browse/MODLISTS-175
+[MODLISTS-176]: https://folio-org.atlassian.net/browse/MODLISTS-176
+[MODLISTS-178]: https://folio-org.atlassian.net/browse/MODLISTS-178
+
 ## 3.0.3
 - Retry failed S3 uploads during export ([MODLISTS-158])
 - Use custom SystemUserClient only when system user is enabled ([MODLISTS-165])
