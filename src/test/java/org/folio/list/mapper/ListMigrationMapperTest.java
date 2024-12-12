@@ -1,7 +1,10 @@
 package org.folio.list.mapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -98,6 +101,43 @@ class ListMigrationMapperTest {
     assertThat(
       updatedEntity.getDescription(),
       stringContainsInOrder(sourceEntity.getDescription(), "mod-lists.migration.warning-header", "warning description")
+    );
+    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
+  }
+
+  /** @see https://folio-org.atlassian.net/browse/MODLISTS-180 */
+  @Test
+  void testFromMigrationResponseWithWarningAndNullOriginalDescription() {
+    ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh().withDescription(null);
+
+    when(translationService.format(any(String.class), any(Object[].class)))
+      .thenAnswer(invocation -> invocation.getArgument(0));
+
+    doAnswer(invocation -> {
+        ListEntity list = invocation.getArgument(0);
+        list.setUserFriendlyQuery(list.getFqlQuery());
+        return list;
+      })
+      .when(userFriendlyQueryService)
+      .updateListUserFriendlyQuery(any());
+
+    FqmMigrateResponse response = new FqmMigrateResponse()
+      .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
+      .fields(List.of("a", "b", "c"))
+      .fqlQuery("new query")
+      .warnings(List.of(new FqmMigrateWarning("warning description", "unused")));
+
+    ListEntity updatedEntity = mapper.updateListWithMigration(sourceEntity, response);
+    assertThat(updatedEntity.getEntityTypeId(), is(response.getEntityTypeId()));
+    assertThat(updatedEntity.getFqlQuery(), is(response.getFqlQuery()));
+    assertThat(updatedEntity.getFields(), is(response.getFields()));
+    assertThat(
+      updatedEntity.getDescription(),
+      allOf(
+        stringContainsInOrder("mod-lists.migration.warning-header", "warning description"),
+        startsWith("mod-lists.migration.warning-header"),
+        not(stringContainsInOrder("null"))
+      )
     );
     assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
