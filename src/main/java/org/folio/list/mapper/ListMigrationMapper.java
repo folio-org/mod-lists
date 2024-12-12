@@ -1,6 +1,7 @@
 package org.folio.list.mapper;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.services.UserFriendlyQueryService;
@@ -56,7 +57,7 @@ public abstract class ListMigrationMapper {
 
     list.setDescription(
       (
-        list.getDescription() +
+        Optional.ofNullable(list.getDescription()).orElse("") +
         "\n\n" +
         translationService.format(
           "mod-lists.migration.warning-header",
