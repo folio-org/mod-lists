@@ -304,6 +304,9 @@
       { "name": "MAX_LIST_SIZE",
         "value": "1250000"
       },
+      { "name": "REFRESH_QUERY_TIMEOUT_MINUTES",
+        "value": "90"
+      },
       { "name": "LIST_EXPORT_BATCH_SIZE",
         "value": "1000"
       },
