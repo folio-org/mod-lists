@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -52,7 +54,7 @@ class ListServiceValidateCreateExportTest {
     UUID listId = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
     when(folioExecutionContext.getUserId()).thenReturn(entity.getCreatedBy());
-    when(listExportRepository.isUserAlreadyExporting(listId, entity.getCreatedBy())).thenReturn(false);
+    when(listExportRepository.isUserAlreadyExporting(listId, entity.getCreatedBy(), LocalDateTime.now().minus(2, ChronoUnit.HOURS))).thenReturn(false);
     assertDoesNotThrow(() -> validationService.validateCreateExport(entity));
   }
 
@@ -60,7 +62,7 @@ class ListServiceValidateCreateExportTest {
   void shouldReturnErrorWhenExportInProgressForSameListBySameUser() {
     ListEntity entity = TestDataFixture.getListExportDetails().getList();
     when(folioExecutionContext.getUserId()).thenReturn(entity.getCreatedBy());
-    when(listExportRepository.isUserAlreadyExporting(entity.getId(), entity.getCreatedBy())).thenReturn(true);
+    when(listExportRepository.isUserAlreadyExporting(entity.getId(), entity.getCreatedBy(), LocalDateTime.now().minus(2, ChronoUnit.HOURS))).thenReturn(true);
     assertThrows(ExportInProgressException.class, () -> validationService.validateCreateExport(entity));
   }
 }
