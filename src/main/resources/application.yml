@@ -73,7 +73,7 @@ spring:
   task:
     execution:
       pool:
-        core-size: 10
+        core-size: 9
         max-size: 10 # Max number of concurrent async tasks
         queue-capacity: 1000
       thread-name-prefix: mod-lists-task-
