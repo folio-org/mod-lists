@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet id="MODLISTS-183" author="mweaver@ebsco.com">
+    <comment>Convert the list description columns from varchar(1024) to text</comment>
+    <modifyDataType tableName="list_details" columnName="description" newDataType="text" />
+    <modifyDataType tableName="list_versions" columnName="description" newDataType="text" />
+  </changeSet>
+
+</databaseChangeLog>
