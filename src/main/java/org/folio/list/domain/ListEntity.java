@@ -46,7 +46,6 @@ public class ListEntity implements Serializable {
   private String name;
 
   @Column(name = "description")
-  @Size(max = 1024)
   private String description;
 
   @Column(name = "entity_type_id")
