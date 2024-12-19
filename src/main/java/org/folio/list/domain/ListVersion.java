@@ -37,7 +37,6 @@ public class ListVersion {
   private String name;
 
   @Column(name = "description")
-  @Size(max = 1024)
   private String description;
 
   @Column(name = "fql_query")
