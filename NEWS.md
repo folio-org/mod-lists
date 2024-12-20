@@ -1,5 +1,10 @@
 # 3.0.x
 
+## 3.0.5
+- Check for null description before appending warnings during list migrations ([MODLISTS-180](https://folio-org.atlassian.net/browse/MODLISTS-180))
+- Update to lib-fqm-query-processor 3.0.1 to add support for JSONB array fields ([MODFQMMGR-548](https://folio-org.atlassian.net/browse/MODFQMMGR-548))
+- Increase description column widths ([MODLISTS-183](https://folio-org.atlassian.net/browse/MODLISTS-183))
+
 ## 3.0.4
 - Require interface `entity-types v2.0`
 - Allow hidden fields in user-friendly query generation ([MODLISTS-175])
