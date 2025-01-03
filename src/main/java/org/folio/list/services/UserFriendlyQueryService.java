@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Log4j2
 @Service
@@ -258,13 +259,22 @@ public class UserFriendlyQueryService {
   }
 
   private String getLabel(List<List<String>> ids, Field field, Boolean addBrackets) {
-    log.info("Getting label for ids: {} on field {}", ids, field.getName());
     UUID sourceEntityTypeId = field.getSource().getEntityTypeId();
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
+
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(List.of("id", field.getSource().getColumnName()))
+      .fields(Stream.of(field.getIdColumnName(), field.getSource().getColumnName()).distinct().toList())
       .ids(ids);
+
+    log.info(
+      "Getting label for ids {} on field {} (derived to {} in entity type {})",
+      ids,
+      field.getName(),
+      contentsRequest.getFields(),
+      contentsRequest.getEntityTypeId()
+    );  
+
     return queryClient.getContents(contentsRequest)
       .stream()
       .map(map -> map.get(field.getSource().getColumnName()).toString())
