@@ -45,12 +45,12 @@ class UserFriendlyQueryServiceIdColumnTest {
   @Mock
   private QueryClient queryClient;
 
-  static UUID ENTITY_TYPE_ID = UUID.fromString("7ad9f9de-40dc-5d88-a49e-515adb4b470c");
+  static final UUID ENTITY_TYPE_ID = UUID.fromString("7ad9f9de-40dc-5d88-a49e-515adb4b470c");
 
-  static UUID VALUE_ID1 = UUID.fromString("165c959a-0838-55e1-b878-d0f9476dc582");
-  static UUID VALUE_ID2 = UUID.fromString("d901ca34-c1db-58ec-8942-6d9335675899");
-  static String VALUE_RESOLVED1 = "value1";
-  static String VALUE_RESOLVED2 = "value2";
+  static final UUID VALUE_ID1 = UUID.fromString("165c959a-0838-55e1-b878-d0f9476dc582");
+  static final UUID VALUE_ID2 = UUID.fromString("d901ca34-c1db-58ec-8942-6d9335675899");
+  static final String VALUE_RESOLVED1 = "value1";
+  static final String VALUE_RESOLVED2 = "value2";
 
   static List<Arguments> idColumnTestCases() {
     return Stream
