@@ -267,7 +267,13 @@ public class UserFriendlyQueryService {
       .fields(Stream.of(field.getIdColumnName(), field.getSource().getColumnName()).distinct().toList())
       .ids(ids);
 
-    log.info("Getting label for ids: {} on field {} (derived to {})", ids, field.getName(), contentsRequest.getFields());
+    log.info(
+      "Getting label for ids {} on field {} (derived to {} in entity type {})",
+      ids,
+      field.getName(),
+      contentsRequest.getFields(),
+      contentsRequest.getEntityTypeId()
+    );  
 
     return queryClient.getContents(contentsRequest)
       .stream()
