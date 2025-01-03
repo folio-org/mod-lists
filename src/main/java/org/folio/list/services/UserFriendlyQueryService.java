@@ -263,7 +263,7 @@ public class UserFriendlyQueryService {
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(List.of("id", field.getSource().getColumnName()))
+      .fields(List.of(field.getIdColumnName(), field.getSource().getColumnName()))
       .ids(ids);
     return queryClient.getContents(contentsRequest)
       .stream()
