@@ -259,7 +259,6 @@ public class UserFriendlyQueryService {
   }
 
   private String getLabel(List<List<String>> ids, Field field, Boolean addBrackets) {
-    log.info("Getting label for ids: {} on field {}", ids, field.getName());
     UUID sourceEntityTypeId = field.getSource().getEntityTypeId();
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
@@ -267,6 +266,8 @@ public class UserFriendlyQueryService {
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
       .fields(Stream.of(field.getIdColumnName(), field.getSource().getColumnName()).distinct().toList())
       .ids(ids);
+
+    log.info("Getting label for ids: {} on field {} (derived to {})", ids, field.getName(), contentsRequest.getFields());
 
     return queryClient.getContents(contentsRequest)
       .stream()
