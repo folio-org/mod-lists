@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Log4j2
 @Service
@@ -262,9 +263,11 @@ public class UserFriendlyQueryService {
     UUID sourceEntityTypeId = field.getSource().getEntityTypeId();
     var collector = Boolean.TRUE.equals(addBrackets) ? Collectors.joining(", ", "[", "]") :
       Collectors.joining(",");
+
     ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(sourceEntityTypeId)
-      .fields(List.of(field.getIdColumnName(), field.getSource().getColumnName()))
+      .fields(Stream.of(field.getIdColumnName(), field.getSource().getColumnName()).distinct().toList())
       .ids(ids);
+
     return queryClient.getContents(contentsRequest)
       .stream()
       .map(map -> map.get(field.getSource().getColumnName()).toString())
