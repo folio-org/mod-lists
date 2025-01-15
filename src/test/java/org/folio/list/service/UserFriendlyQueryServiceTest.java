@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
+
 import org.folio.fql.model.AndCondition;
 import org.folio.fql.model.ContainsAllCondition;
 import org.folio.fql.model.ContainsAnyCondition;
@@ -37,6 +38,7 @@ import org.folio.querytool.domain.dto.DateType;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.StringType;
+import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.spring.i18n.service.TranslationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -154,7 +156,9 @@ class UserFriendlyQueryServiceTest {
           )
         ),
         "(field1 starts with some value) AND (field1 < some value)"
-      )
+      ),
+      Arguments.of(new EqualsCondition(new FqlField("customField"), "value1"), "customField == label1"),
+      Arguments.of(new InCondition(new FqlField("customField"), List.of("value1", "value2")), "customField in [label1, label2]")
     );
   }
 
@@ -162,7 +166,23 @@ class UserFriendlyQueryServiceTest {
   @MethodSource("basicConditionCases")
   void testBasicConditionGeneration(FqlCondition<Object> condition, String expected) {
     EntityType entityType = new EntityType()
-      .columns(List.of(new EntityTypeColumn().name("field1").dataType(new StringType().dataType("stringType"))));
+      .columns(
+        List.of(
+          new EntityTypeColumn()
+            .name("field1")
+            .dataType(new StringType().dataType("stringType")),
+          new EntityTypeColumn()
+            .name("customField")
+            .isCustomField(true)
+            .dataType(new StringType().dataType("stringType"))
+            .values(
+              List.of(
+                new ValueWithLabel().value("value1").label("label1"),
+                new ValueWithLabel().value("value2").label("label2")
+              )
+            )
+        )
+      );
 
     String actual = userFriendlyQueryService.getUserFriendlyQuery(condition, entityType);
     assertEquals(expected, actual);
@@ -230,10 +250,10 @@ class UserFriendlyQueryServiceTest {
   void testThrowsExceptionForInvalidDateFormat() {
     EntityTypeColumn column = new EntityTypeColumn().name("field1").dataType(new DateType().dataType("dateType"));
     EntityType entityType = new EntityType().columns(List.of(column));
-    EqualsCondition equalsCondition = new EqualsCondition(new FqlField("field1"), "2024-10-01T23:00:00");
+    GreaterThanCondition greaterThanCondition = new GreaterThanCondition(new FqlField("field1"), true, "2024-10-01T23:00:00");
     assertThrows(
       IllegalArgumentException.class,
-      () -> userFriendlyQueryService.getUserFriendlyQuery(equalsCondition, entityType)
+      () -> userFriendlyQueryService.getUserFriendlyQuery(greaterThanCondition, entityType)
     );
   }
 }
