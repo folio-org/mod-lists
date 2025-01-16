@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.domain.ListEntity;
@@ -103,18 +102,21 @@ public class ListExportService {
    *
    * @param listId   id for the list.
    * @param exportId id for the list export.
-   * @return a pair containing String and InputStream.
-   * The String contains the listName and the InputStream streams the CSV contents of the list.
+   * @return a {@link ExportDownloadContents} with list name, download stream, and length
    */
-  public Pair<String, InputStream> downloadExport(UUID listId, UUID exportId) {
+  public ExportDownloadContents downloadExport(UUID listId, UUID exportId) {
     String fileName = getFileName(executionContext.getTenantId(), exportId);
     ListEntity list = listExportRepository
       .findByListIdAndExportId(listId, exportId)
       .map(ExportDetails::getList)
       .orElseThrow(() -> exportNotFound(listId, exportId, ListActions.EXPORT));
     validationService.validateExport(list);
-    InputStream csvStream = folioS3Client.read(fileName);
-    return Pair.of(list.getName(), csvStream);
+
+    return new ExportDownloadContents(
+      list.getName(),
+      folioS3Client.read(fileName),
+      folioS3Client.getSize(fileName)
+    );
   }
 
   @Transactional
@@ -174,4 +176,6 @@ public class ListExportService {
       exportDetails.setStatus(AsyncProcessStatus.FAILED);
     }
   }
+
+  public record ExportDownloadContents(String listName, InputStream stream, long length) {}
 }
