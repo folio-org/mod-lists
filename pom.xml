@@ -63,9 +63,20 @@
 
   <dependencies>
     <dependency>
-        <groupId>com.github.folio-org</groupId>
-        <artifactId>folio-spring-support</artifactId>
+        <groupId>com.github.folio-org.folio-spring-support</groupId>
+        <artifactId>folio-spring-system-user</artifactId>
         <version>folsprings-183-for-test-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-spring-base</artifactId>
+      <version>${folio-spring-base.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-spring-i18n</artifactId>
+      <version>${folio-spring-base.version}</version>
     </dependency>
 
     <dependency>
