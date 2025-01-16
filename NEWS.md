@@ -1,5 +1,8 @@
 # 3.0.x
 
+## 3.0.7
+- Add instance-format permission to mod-lists system user
+
 ## 3.0.6
 - Use applicable ID columns in user-friendly query generation ([MODLISTS-185])
 - Spring Boot 3.3.7, folio-s3-client 2.2.1, aws s3 2.29.47 fixing vulns ([MODLISTS-187])
