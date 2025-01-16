@@ -1,5 +1,14 @@
 # 3.0.x
 
+## 3.0.6
+- Use applicable ID columns in user-friendly query generation ([MODLISTS-185])
+- Spring Boot 3.3.7, folio-s3-client 2.2.1, aws s3 2.29.47 fixing vulns ([MODLISTS-187])
+- Update UserFriendlyQueryService to handle string-based custom fields ([MODFQMMGR-82])
+
+[MODLISTS-185]: https://folio-org.atlassian.net/browse/MODLISTS-185
+[MODLISTS-187]: https://folio-org.atlassian.net/browse/MODLISTS-187
+[MODFQMMGR-82]: https://folio-org.atlassian.net/browse/MODFQMMGR-82
+
 ## 3.0.5
 - Check for null description before appending warnings during list migrations ([MODLISTS-180](https://folio-org.atlassian.net/browse/MODLISTS-180))
 - Update to lib-fqm-query-processor 3.0.1 to add support for JSONB array fields ([MODFQMMGR-548](https://folio-org.atlassian.net/browse/MODFQMMGR-548))
