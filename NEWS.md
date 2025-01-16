@@ -1,4 +1,4 @@
-# 3.0.x
+# 3.0.6
 
 ## 3.0.5
 - Check for null description before appending warnings during list migrations ([MODLISTS-180](https://folio-org.atlassian.net/browse/MODLISTS-180))
