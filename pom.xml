@@ -63,14 +63,13 @@
 
   <dependencies>
     <dependency>
-        <groupId>com.github.folio-org.folio-spring-support</groupId>
-        <artifactId>folio-spring-system-user</artifactId>
-        <version>folsprings-183-for-test-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-spring-base</artifactId>
+      <version>${folio-spring-base.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-spring-system-user</artifactId>
       <version>${folio-spring-base.version}</version>
     </dependency>
     <dependency>
@@ -112,13 +111,13 @@
       <artifactId>jackson-core</artifactId>
     </dependency>
 
-
     <!-- for system user caching -->
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
       <version>3.1.8</version>
     </dependency>
+
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -423,16 +422,11 @@
   </build>
 
   <repositories>
-
     <repository>
       <id>folio-nexus</id>
       <name>FOLIO Maven repository</name>
       <url>https://repository.folio.org/repository/maven-folio</url>
     </repository>
-		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://www.jitpack.io</url>
-		</repository>
   </repositories>
 
   <distributionManagement>
