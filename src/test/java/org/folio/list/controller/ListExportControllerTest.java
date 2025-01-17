@@ -1,12 +1,12 @@
 package org.folio.list.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportInProgressException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.export.ListExportService;
+import org.folio.list.services.export.ListExportService.ExportDownloadContents;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.list.domain.dto.ListExportDTO;
 import org.junit.jupiter.api.Test;
@@ -149,7 +149,8 @@ class ListExportControllerTest {
       .contentType(APPLICATION_JSON)
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
-    when(listExportService.downloadExport(listId, exportId)).thenReturn(Pair.of(listName, csvInputStream));
+    when(listExportService.downloadExport(listId, exportId))
+      .thenReturn(new ExportDownloadContents(listName, csvInputStream, 1234));
 
     var expectedContentDisposition = "attachment; filename=\"=?UTF-8?Q?%s?=\"; filename*=UTF-8''%s".formatted(
             listName.replace(' ', '_') + ".csv",
@@ -157,6 +158,7 @@ class ListExportControllerTest {
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
       .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, expectedContentDisposition))
+      .andExpect(header().longValue(HttpHeaders.CONTENT_LENGTH, 1234L))
       .andExpect(content().contentType(MediaType.valueOf(TEXT_CSV)))
       .andExpect(content().string(containsString(csvData)));
   }

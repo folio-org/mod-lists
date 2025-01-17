@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.domain.ListEntity;
@@ -31,6 +30,7 @@ import org.folio.list.services.ListValidationService;
 import org.folio.list.services.export.ExportUtils;
 import org.folio.list.services.export.ListExportService;
 import org.folio.list.services.export.ListExportWorkerService;
+import org.folio.list.services.export.ListExportService.ExportDownloadContents;
 import org.folio.list.utils.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
@@ -227,15 +227,18 @@ class ListExportServiceTest {
     String csvData = "xyz, item, 25, patron";
     InputStream csvInputStream = new ByteArrayInputStream(csvData.getBytes());
     String fileName = "Missing Items";
-    Pair<String, InputStream> expected = Pair.of(fileName, csvInputStream);
+    long length = 1234;
+    ExportDownloadContents expected = new ExportDownloadContents(fileName, csvInputStream, length);
     ExportDetails exportDetails = TestDataFixture.getListExportDetails();
     exportDetails.setExportId(exportId);
 
-    when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     doNothing().when(validationService).validateExport(exportDetails.getList());
+    when(listExportRepository.findByListIdAndExportId(listId, exportId)).thenReturn(Optional.of(exportDetails));
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
     when(folioS3Client.read(ExportUtils.getFileName(TENANT_ID, exportId))).thenReturn(csvInputStream);
-    Pair<String, InputStream> actual = listExportService.downloadExport(listId, exportId);
+    when(folioS3Client.getSize(ExportUtils.getFileName(TENANT_ID, exportId))).thenReturn(length);
+
+    ExportDownloadContents actual = listExportService.downloadExport(listId, exportId);
     assertEquals(expected, actual);
   }
 

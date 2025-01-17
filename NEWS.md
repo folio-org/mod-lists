@@ -1,4 +1,5 @@
 # 3.0.x
+- Stream export downloads directly without buffering ([MODLISTS-186](https://folio-org.atlassian.net/browse/MODLISTS-186))
 
 ## 3.0.7
 - Add instance-format permission to mod-lists system user
