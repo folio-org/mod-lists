@@ -157,8 +157,8 @@ class UserFriendlyQueryServiceTest {
         ),
         "(field1 starts with some value) AND (field1 < some value)"
       ),
-      Arguments.of(new EqualsCondition(new FqlField("customField"), "value1"), "customField == label1"),
-      Arguments.of(new InCondition(new FqlField("customField"), List.of("value1", "value2")), "customField in [label1, label2]")
+      Arguments.of(new EqualsCondition(new FqlField("customFieldName"), "value1"), "customFieldLabel == label1"),
+      Arguments.of(new InCondition(new FqlField("customFieldName"), List.of("value1", "value2")), "customFieldLabel in [label1, label2]")
     );
   }
 
@@ -172,7 +172,8 @@ class UserFriendlyQueryServiceTest {
             .name("field1")
             .dataType(new StringType().dataType("stringType")),
           new EntityTypeColumn()
-            .name("customField")
+            .name("customFieldName")
+            .labelAlias("customFieldLabel")
             .isCustomField(true)
             .dataType(new StringType().dataType("stringType"))
             .values(
