@@ -1,4 +1,6 @@
 # 3.0.x
+
+## 3.0.8
 - Stream export downloads directly without buffering ([MODLISTS-186](https://folio-org.atlassian.net/browse/MODLISTS-186))
 
 ## 3.0.7
