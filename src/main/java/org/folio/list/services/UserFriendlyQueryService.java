@@ -64,6 +64,8 @@ public class UserFriendlyQueryService {
     Map.entry(ContainsAllCondition.class, (cnd, ent) -> handleContainsAll((ContainsAllCondition) cnd, ent)),
     Map.entry(NotContainsAllCondition.class, (cnd, ent) -> handleNotContainsAll((NotContainsAllCondition) cnd, ent)),
     Map.entry(ContainsAnyCondition.class, (cnd, ent) -> handleContainsAny((ContainsAnyCondition) cnd, ent)),
+    Map.entry(ContainsCondition.class, (cnd, ent) -> handleContains((ContainsCondition) cnd)),
+    Map.entry(StartsWithCondition.class, (cnd, ent) -> handleStartsWith((StartsWithCondition) cnd)),
     Map.entry(NotContainsAnyCondition.class, (cnd, ent) -> handleNotContainsAny((NotContainsAnyCondition) cnd, ent)),
     Map.entry(EmptyCondition.class, (cnd, ent) -> handleEmpty((EmptyCondition) cnd))
   );
@@ -109,6 +111,14 @@ public class UserFriendlyQueryService {
       .map(cnd -> this.getUserFriendlyQuery(cnd, entityType))
       .map(s -> '(' + s + ')')
       .collect(Collectors.joining(" AND "));
+  }
+
+  private String handleContains(ContainsCondition containsCondition) {
+    return containsCondition.field().serialize() + " contains " + containsCondition.value();
+  }
+
+  private String handleStartsWith(StartsWithCondition startsWithCondition) {
+    return startsWithCondition.field().serialize() + " starts with  " + startsWithCondition.value();
   }
 
   private String handleRegEx(RegexCondition regExCondition) {
