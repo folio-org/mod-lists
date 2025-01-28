@@ -42,3 +42,6 @@ organizations.organizations.collection.get
 usergroups.collection.get
 users.collection.get
 users.item.get
+finance.ledgers.collection.get
+voucher.voucher-lines.collection.get
+voucher.vouchers.collection.get
