@@ -45,8 +45,7 @@ public class ListExportController implements ListExportApi {
     headers.setContentDisposition(ContentDisposition.builder("attachment").filename(fileName, StandardCharsets.UTF_8).build());
     return ResponseEntity.ok()
       .headers(headers)
-      .contentType(MediaType.valueOf(TEXT_CSV))
-      .contentLength(download.length())
+      .contentType(MediaType.APPLICATION_OCTET_STREAM)
       .body(new InputStreamResource(download.stream()));
   }
 
