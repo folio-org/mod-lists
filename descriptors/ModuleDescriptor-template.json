@@ -217,6 +217,7 @@
       "permissions": [
         "acquisitions-units.units.collection.get",
         "addresstypes.collection.get",
+        "batch-groups.collection.get",
         "circulation-storage.loan-policies.collection.get",
         "circulation.loans.collection.get",
         "configuration.entries.collection.get",
