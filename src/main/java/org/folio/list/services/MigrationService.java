@@ -3,6 +3,7 @@ package org.folio.list.services;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -39,7 +40,7 @@ public class MigrationService {
    * Upgrade a given list's query/entity type/field list.
    *
    * @param list
-   * @return if the list was migrated or not (false indicates no changes needed, not an error)
+   * @return if the list was migrated or not (false indicates no changes needed, not an error state)
    * @throws IllegalArgumentException if the list does not contain a query
    */
   public boolean migrateList(ListEntity list) {
@@ -69,34 +70,27 @@ public class MigrationService {
    * <strong>This does NOT check if this is actually necessary, and should only be invoked when the
    * caller is certain that lists need to be migrated.</strong>
    */
-  public CompletableFuture<Void> migrateAllLists() {
+  public List<CompletableFuture<Boolean>> migrateAllLists() {
     String tenant = executionContext.getTenantId();
 
-    return CompletableFuture.allOf(
-      StreamSupport
-        .stream(listRepository.findAll().spliterator(), true)
-        .filter(list -> list.getFqlQuery() != null)
-        .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
-        .map(list ->
-          executor.submitCompletable(() ->
+    return StreamSupport
+      .stream(listRepository.findAll().spliterator(), true)
+      .filter(list -> list.getFqlQuery() != null)
+      .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
+      .map(list ->
+        executor
+          .submitCompletable(() ->
             // attempting to set the scope inside migrateList fails, as its in another thread,
             // and so we've lost all context. Therefore, we need to create the context here,
             // and specifically pass in the tenant, too.
-            systemUserScopedExecutionService.executeSystemUserScoped(
-              tenant,
-              () -> {
-                try {
-                  migrateList(list);
-                } catch (Exception e) {
-                  log.error("Error migrating list {}. This list may not function correctly", list, e);
-                }
-                return null;
-              }
-            )
+            systemUserScopedExecutionService.executeSystemUserScoped(tenant, () -> migrateList(list))
           )
-        )
-        .toArray(s -> new CompletableFuture[s])
-    );
+          .exceptionally(e -> {
+            log.error("Error migrating list {}. This list may not function correctly", list, e);
+            throw new CompletionException(e);
+          })
+      )
+      .toList();
   }
 
   /**
@@ -110,7 +104,26 @@ public class MigrationService {
     }
 
     log.info("Lists are not up to date; migrating all lists from {} to {}", currentVersion, latestVersion);
-    migrateAllLists().join();
+
+    List<CompletableFuture<Boolean>> migrationFutures = migrateAllLists();
+    try {
+      CompletableFuture.allOf(migrationFutures.toArray(CompletableFuture[]::new)).join();
+      log.info("All migrations completed successfully!");
+    } catch (CompletionException e) {
+      log.error("Error migrating lists", e);
+
+      // if zero futures were joined, there will be no exceptions to catch,
+      // so we can guarantee that here at least one failed
+      if (migrationFutures.stream().allMatch(f -> f.isCompletedExceptionally())) {
+        log.fatal("All migrations failed! Aborting migration...");
+        throw e;
+      } else {
+        log.warn(
+          "Some migrations failed, but not all. We will assume this is an issue with a few particular lists, not all..."
+        );
+      }
+    }
+
     migrationRepository.setLatestMigratedVersion(latestVersion);
   }
 
