@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -139,7 +138,7 @@ public class CsvCreator {
 
   private static class ListCsvWriter {
 
-    private final Pair<CsvSchema, CsvSchema> csvSchemas;
+    private final EntityTypeCsvSchemas csvSchemas;
     private final ObjectWriter objectWriter;
     private boolean firstBatch;
 
@@ -158,9 +157,9 @@ public class CsvCreator {
     @SneakyThrows
     public void writeCsv(List<Map<String, Object>> listContents, OutputStream destination) {
       if (firstBatch) {
-        objectWriter.with(csvSchemas.getRight().withHeader()).writeValues(destination).write(List.of());
+        objectWriter.with(csvSchemas.labelSchema().withHeader()).writeValues(destination).write(List.of());
       }
-      objectWriter.with(csvSchemas.getLeft().withoutHeader()).writeValues(destination).write(listContents);
+      objectWriter.with(csvSchemas.nameSchema().withoutHeader()).writeValues(destination).write(listContents);
       firstBatch = false;
       destination.flush();
     }
@@ -172,7 +171,7 @@ public class CsvCreator {
      * two schemas: one with the names for serializing the actual data, and the other of label aliases for
      * the header row only.
      */
-    private Pair<CsvSchema, CsvSchema> createSchema(EntityType entityType, List<String> fields) {
+    private EntityTypeCsvSchemas createSchema(EntityType entityType, List<String> fields) {
       List<EntityTypeColumn> usedColumns = entityType
         .getColumns()
         .stream()
@@ -186,7 +185,7 @@ public class CsvCreator {
       usedColumns.forEach(column ->
         builderLabelAlias.addColumn(
           // Excel does not properly handle CSVs with EM/EN unicode dashes, so we convert them to plain ASCII hyphens
-          column.getLabelAlias().replaceAll("—", "-").replaceAll("–", "-"),
+          column.getLabelAlias().replace('—', '-').replace('–', '-'),
           getColumnType(column)
         )
       );
@@ -194,11 +193,13 @@ public class CsvCreator {
       // we want to use the original ET's ordering for the CSV (and this guarantees both will use the same order)
       String[] ordering = usedColumns.stream().map(EntityTypeColumn::getName).toArray(String[]::new);
 
-      return Pair.of(builderName.build().sortedBy(ordering), builderLabelAlias.build().sortedBy(ordering));
+      return new EntityTypeCsvSchemas(builderName.build().sortedBy(ordering), builderLabelAlias.build().sortedBy(ordering));
     }
 
     private CsvSchema.ColumnType getColumnType(EntityTypeColumn column) {
       return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
     }
+
+    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {}
   }
 }

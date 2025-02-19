@@ -28,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,7 +62,7 @@ class CsvCreatorTest {
   private CsvCreator csvCreator;
 
   @Test
-  void shouldCreateCsvFromList() throws IOException {
+  void shouldCreateCsvFromList() {
     int batchSize = 100000;
     UUID userId = UUID.fromString("8cbb467d-629f-5fbe-bcf0-515eee16cddc");
     String destinationFileName = "destinationFileName";
@@ -113,7 +112,7 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actual = data.toString();
-      String expected = "\"[id label]\",\"[item_status label]\"\n" + toCSV(contentsWithData).repeat(numberOfBatch);
+      String expected = "\"[id-label]\",\"[item_status-label]\"\n" + toCSV(contentsWithData).repeat(numberOfBatch);
       assertEquals(actual, expected);
       assertEquals(2, partETags.size());
     }
@@ -168,7 +167,7 @@ class CsvCreatorTest {
     return new EntityTypeColumn()
       .name(columnName)
       .dataType(new StringType().dataType("stringType"))
-      .labelAlias("[%s label]".formatted(columnName))
+      .labelAlias("[%s—label]".formatted(columnName))
       .visibleByDefault(false);
   }
 
