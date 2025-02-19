@@ -112,7 +112,7 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actual = data.toString();
-      String expected = "\"[id-label]\",\"[item_status-label]\"\n" + toCSV(contentsWithData).repeat(numberOfBatch);
+      String expected = "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
       assertEquals(actual, expected);
       assertEquals(2, partETags.size());
     }
