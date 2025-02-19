@@ -185,6 +185,7 @@ public class CsvCreator {
       usedColumns.forEach(column -> builderName.addColumn(column.getName(), getColumnType(column)));
       usedColumns.forEach(column ->
         builderLabelAlias.addColumn(
+          // Excel does not properly handle CSVs with EM/EN unicode dashes, so we convert them to plain ASCII hyphens
           column.getLabelAlias().replaceAll("—", "-").replaceAll("–", "-"),
           getColumnType(column)
         )
