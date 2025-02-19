@@ -1,8 +1,17 @@
 package org.folio.list.services.export;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import java.io.File;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -24,16 +33,6 @@ import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
-
 /**
  * Creates CSV file for the given export details.
  */
@@ -41,6 +40,7 @@ import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 @RequiredArgsConstructor
 @Log4j2
 public class CsvCreator {
+
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
@@ -48,7 +48,7 @@ public class CsvCreator {
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
 
-  //Minimal s3 part size is 5 MB
+  // Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
   private static final String IS_DELETED = "_deleted";
   private static final int MAX_RETRIES = 5;
@@ -100,8 +100,6 @@ public class CsvCreator {
     uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
 
     return localStorage;
-
-
   }
 
   @SneakyThrows
@@ -139,7 +137,8 @@ public class CsvCreator {
   }
 
   private static class ListCsvWriter {
-    private final CsvSchema csvSchema;
+
+    private final EntityTypeCsvSchemas csvSchemas;
     private final ObjectWriter objectWriter;
     private boolean firstBatch;
 
@@ -150,33 +149,57 @@ public class CsvCreator {
     );
 
     private ListCsvWriter(EntityType entityType, List<String> fields) {
-      this.csvSchema = createSchema(entityType, fields);
+      this.csvSchemas = createSchema(entityType, fields);
       this.objectWriter = new CsvMapper().writerFor(List.class);
       this.firstBatch = true;
     }
 
     @SneakyThrows
     public void writeCsv(List<Map<String, Object>> listContents, OutputStream destination) {
-      objectWriter
-        .with(firstBatch ? csvSchema.withHeader() : csvSchema)
-        .writeValues(destination)
-        .write(listContents);
+      if (firstBatch) {
+        objectWriter.with(csvSchemas.labelSchema().withHeader()).writeValues(destination).write(List.of());
+      }
+      objectWriter.with(csvSchemas.nameSchema().withoutHeader()).writeValues(destination).write(listContents);
       firstBatch = false;
       destination.flush();
     }
 
-    private CsvSchema createSchema(EntityType entityType, List<String> fields) {
-      CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
-      entityType
+    /**
+     * Creates schemas for the exported CSV. However, we want to use the label alias for the header row,
+     * which Jackson does not natively support. In some cases you can work around this for POJOs by providing
+     * custom annotations, or a custom PropertyNamingStrategy, but we use Maps. To get around this, we create
+     * two schemas: one with the names for serializing the actual data, and the other of label aliases for
+     * the header row only.
+     */
+    private EntityTypeCsvSchemas createSchema(EntityType entityType, List<String> fields) {
+      List<EntityTypeColumn> usedColumns = entityType
         .getColumns()
         .stream()
         .filter(column -> fields.contains(column.getName()))
-        .forEach(column -> csvSchemaBuilder.addColumn(column.getName(), getColumnType(column)));
-      return csvSchemaBuilder.build();
+        .toList();
+
+      CsvSchema.Builder builderName = CsvSchema.builder();
+      CsvSchema.Builder builderLabelAlias = CsvSchema.builder();
+
+      usedColumns.forEach(column -> builderName.addColumn(column.getName(), getColumnType(column)));
+      usedColumns.forEach(column ->
+        builderLabelAlias.addColumn(
+          // Excel does not properly handle CSVs with EM/EN unicode dashes, so we convert them to plain ASCII hyphens
+          column.getLabelAlias().replace('—', '-').replace('–', '-'),
+          getColumnType(column)
+        )
+      );
+
+      // we want to use the original ET's ordering for the CSV (and this guarantees both will use the same order)
+      String[] ordering = usedColumns.stream().map(EntityTypeColumn::getName).toArray(String[]::new);
+
+      return new EntityTypeCsvSchemas(builderName.build().sortedBy(ordering), builderLabelAlias.build().sortedBy(ordering));
     }
 
     private CsvSchema.ColumnType getColumnType(EntityTypeColumn column) {
       return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
     }
+
+    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {}
   }
 }

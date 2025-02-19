@@ -15,12 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-@RequiredArgsConstructor
-@RestController
 @Lazy // Do not connect to S3 when the application starts
+@RestController
+@RequiredArgsConstructor
 public class ListExportController implements ListExportApi {
-
-  private static final String TEXT_CSV = "text/csv";
 
   private final ListExportService listExportService;
 

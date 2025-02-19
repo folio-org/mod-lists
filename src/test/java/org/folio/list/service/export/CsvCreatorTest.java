@@ -27,7 +27,8 @@ import org.mockito.MockMakers;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -35,10 +36,13 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.apache.commons.io.FileUtils;
 
 @ExtendWith(MockitoExtension.class)
 class CsvCreatorTest {
@@ -58,15 +62,13 @@ class CsvCreatorTest {
   private CsvCreator csvCreator;
 
   @Test
-  void shouldCreateCsvFromList() throws IOException {
+  void shouldCreateCsvFromList() {
     int batchSize = 100000;
-    UUID userId = UUID.randomUUID();
+    UUID userId = UUID.fromString("8cbb467d-629f-5fbe-bcf0-515eee16cddc");
     String destinationFileName = "destinationFileName";
     String uploadId = "uploadId";
-    var partETags = new ArrayList<String>();
+    List<String> partETags = new ArrayList<>();
     String partETag = "partETag";
-    int firstPartNumber = 1;
-    int secondPartNumber = 2;
     int numberOfBatch = 11;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
@@ -74,16 +76,14 @@ class CsvCreatorTest {
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
     List<List<String>> contentIds = new ArrayList<>();
     // generate content ids for ten batches
-    IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(UUID.randomUUID().toString())));
+    IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(new UUID(0, i).toString())));
     List<Map<String, Object>> contentsWithData = new ArrayList<>();
-    IntStream.rangeClosed(1, batchSize).forEach(i ->
-      {
-        LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
-        linkedHashMap.put("id", "value1");
-        linkedHashMap.put("item_status", "value2");
-        contentsWithData.add(linkedHashMap);
-      }
-    );
+    IntStream.rangeClosed(1, batchSize).forEach(i -> {
+      LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+      linkedHashMap.put("id", "value1");
+      linkedHashMap.put("item_status", "value2");
+      contentsWithData.add(linkedHashMap);
+    });
 
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContentsPrivileged(
       new ContentsRequest().entityTypeId(entity.getEntityTypeId())
@@ -102,17 +102,22 @@ class CsvCreatorTest {
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
 
+    StringWriter data = new StringWriter();
 
     when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
-    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any())).thenReturn(partETag);
-    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(secondPartNumber), any())).thenReturn(partETag);
-
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), anyInt(), any())).thenAnswer(i -> {
+      data.append(FileUtils.readFileToString(new File((String) i.getArgument(3)), "UTF-8"));
+      return partETag;
+    });
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
-      String actualCsv = new String(csvStorage.inputStream().readAllBytes());
-      assertEquals(toCSV(contentsWithData), actualCsv);
+      String actual = data.toString();
+      String expected = "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
+      assertEquals(actual, expected);
       assertEquals(2, partETags.size());
     }
+
+    verify(folioS3Client, times(2)).uploadMultipartPart(eq(destinationFileName), eq(uploadId), anyInt(), any());
   }
 
   @Test
@@ -162,7 +167,7 @@ class CsvCreatorTest {
     return new EntityTypeColumn()
       .name(columnName)
       .dataType(new StringType().dataType("stringType"))
-      .labelAlias("label_01")
+      .labelAlias("[%s—label]".formatted(columnName))
       .visibleByDefault(false);
   }
 
