@@ -8,6 +8,7 @@ import org.folio.spring.service.PrepareSystemUserService;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.retry.support.RetryTemplate;
@@ -20,6 +21,8 @@ import java.time.temporal.ChronoUnit;
 @Primary
 @Service
 public class CustomTenantService extends TenantService {
+  @Value("${mod-lists.general.system-user-retry-wait-minutes:10}")
+  private int systemUserRetryWaitMinutes;
 
   protected final MigrationService migrationService;
   protected final PrepareSystemUserService prepareSystemUserService;
@@ -47,7 +50,7 @@ public class CustomTenantService extends TenantService {
     RetryTemplate.builder()
       .retryOn(InsufficientEntityTypePermissionsException.class)
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
-      .withTimeout(Duration.of(2, ChronoUnit.MINUTES))
+      .withTimeout(Duration.of(systemUserRetryWaitMinutes, ChronoUnit.MINUTES))
       .build()
       .execute(ctx -> {
         int attempt = (ctx.getRetryCount() + 1);
