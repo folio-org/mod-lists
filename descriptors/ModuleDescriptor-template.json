@@ -348,6 +348,9 @@
       },
       { "name": "SYSTEM_USER_PASSWORD",
         "value": ""
+      },
+      { "name": "SYSTEM_USER_RETRY_WAIT_MINUTES",
+        "value": "10"
       }
     ]
   }
