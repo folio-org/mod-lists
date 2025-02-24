@@ -62,6 +62,7 @@ mvn clean install
 | OKAPI_URL                                       | http://okapi:9130        | Okapi URL, used for system user authentication/management                                                   |
 | SYSTEM_USER_PASSWORD                            | -                        | Password for the system user; **must be set**                                                               |
 | SYSTEM_USER_ENABLED                             | true                     | Defines if system user must be created at service tenant initialization or used for egress service requests |
+| SYSTEM_USER_RETRY_WAIT_MINUTES                  | 10                       | Max time to wait for the system user to be created, which is used in the Tenant API                         |
 | mod-lists.list-export.s3-startup-check.enabled  | true                     | Verify that S3/MinIO is accessible on startup                                                               |
 | spring.task.execution.pool.max-size             | 10                       | refresh/export/migrate thread pool's max size                                                               |
 | mod-lists.general.refresh-query-timeout-minutes | 90                       | Max time to wait for an FQL query to run during a list refresh                                              |
