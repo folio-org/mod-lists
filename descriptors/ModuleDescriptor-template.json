@@ -264,6 +264,7 @@
         "organizations-storage.categories.collection.get",
         "organizations-storage.organization-types.collection.get",
         "organizations.organizations.collection.get",
+        "search.facets.collection.get",
         "usergroups.collection.get",
         "users.collection.get",
         "users.item.get",
