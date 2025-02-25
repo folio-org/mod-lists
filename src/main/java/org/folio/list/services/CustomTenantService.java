@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.spring.FolioExecutionContext;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Log4j2
 @Primary
@@ -46,9 +48,10 @@ public class CustomTenantService extends TenantService {
     prepareSystemUserService.setupSystemUser();
 
     // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
-    // case of failures related to missing permissions
+    // case of failures related to missing permissions or general Feign exceptions
+    // for cases when mod-roles-keycloak could not retrieve roles for the system user that is not yet created.
     RetryTemplate.builder()
-      .retryOn(InsufficientEntityTypePermissionsException.class)
+      .retryOn(List.of(InsufficientEntityTypePermissionsException.class, FeignException.class))
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
       .withTimeout(Duration.of(systemUserRetryWaitMinutes, ChronoUnit.MINUTES))
       .build()
