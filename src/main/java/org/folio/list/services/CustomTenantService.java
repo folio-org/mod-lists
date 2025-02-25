@@ -65,6 +65,8 @@ public class CustomTenantService extends TenantService {
           log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
           if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe)
             throw ietpe; // Retry
+          if (e.getCause() instanceof FeignException fe)
+            throw fe; // Retry
           throw e; // Don't retry
         }
         return null;
