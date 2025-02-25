@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -65,7 +66,7 @@ class CustomTenantServiceTest {
         if (Instant.now().isAfter(finishTime)) {
           return null;
         }
-        throw exception;
+        throw new CompletionException(exception);
       })
       .when(migrationService)
       .performTenantInstallMigrations();

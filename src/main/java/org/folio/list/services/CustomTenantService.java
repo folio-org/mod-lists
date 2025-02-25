@@ -62,7 +62,7 @@ public class CustomTenantService extends TenantService {
           migrationService.performTenantInstallMigrations();
         } catch (Exception e) {
           // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
-          log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
+          log.error("Exception during tenant install migration (attempt # {} )", attempt, e);
           if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe)
             throw ietpe; // Retry
           if (e.getCause() instanceof FeignException fe)
