@@ -49,7 +49,7 @@ public class CustomTenantService extends TenantService {
 
     // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
     // case of failures related to missing permissions or general Feign exceptions
-    // for cases when mod-roles-keycloak could not retrieve roles for the system user that is not yet created.
+    // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
     RetryTemplate.builder()
       .retryOn(List.of(InsufficientEntityTypePermissionsException.class, FeignException.class))
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
