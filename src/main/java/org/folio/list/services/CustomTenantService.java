@@ -66,7 +66,7 @@ public class CustomTenantService extends TenantService {
           if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe) {
             log.info("Make retry of InsufficientEntityTypePermissionsException with message: {}", ietpe.getMessage());
             throw ietpe; // Retry
-          } if (e.getCause() instanceof FeignException fe) {
+          } else if (e.getCause() instanceof FeignException fe) {
             log.info("Make retry of FeignException with message: {}", fe.getMessage());
             throw fe; // Retry
           }
