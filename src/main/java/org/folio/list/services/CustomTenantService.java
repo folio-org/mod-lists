@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.spring.FolioExecutionContext;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Log4j2
 @Primary
@@ -46,9 +48,10 @@ public class CustomTenantService extends TenantService {
     prepareSystemUserService.setupSystemUser();
 
     // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
-    // case of failures related to missing permissions
+    // case of failures related to missing permissions or general Feign exceptions
+    // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
     RetryTemplate.builder()
-      .retryOn(InsufficientEntityTypePermissionsException.class)
+      .retryOn(List.of(InsufficientEntityTypePermissionsException.class, FeignException.class))
       .exponentialBackoff(Duration.of(2, ChronoUnit.SECONDS), 1.5, Duration.of(1, ChronoUnit.MINUTES))
       .withTimeout(Duration.of(systemUserRetryWaitMinutes, ChronoUnit.MINUTES))
       .build()
@@ -59,9 +62,14 @@ public class CustomTenantService extends TenantService {
           migrationService.performTenantInstallMigrations();
         } catch (Exception e) {
           // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
-          log.error("Exception during tenant install migration (attempt #" + attempt + ")", e);
-          if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe)
+          log.error("Exception during tenant install migration (attempt # {} )", attempt, e);
+          if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe) {
+            log.info("Make retry of InsufficientEntityTypePermissionsException with message: {}", ietpe.getMessage());
             throw ietpe; // Retry
+          } else if (e.getCause() instanceof FeignException fe) {
+            log.info("Make retry of FeignException with message: {}", fe.getMessage());
+            throw fe; // Retry
+          }
           throw e; // Don't retry
         }
         return null;

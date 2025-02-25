@@ -5,8 +5,15 @@ import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.CustomTenantService;
 import org.folio.list.services.ListActions;
@@ -16,6 +23,8 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,8 +55,9 @@ class CustomTenantServiceTest {
     verify(migrationService, times(1)).performTenantInstallMigrations();
   }
 
-  @Test
-  void testMigrationErrorRetry() {
+  @ParameterizedTest
+  @MethodSource("retryExceptionProvider")
+  void testMigrationErrorRetry(Exception exception) {
     // Given a retryable migration error that fails for the first 5 seconds, then succeeds
     Instant finishTime = Instant.now().plus(5, ChronoUnit.SECONDS); // This needs to be greater than the max timeout on the retryTemplate in CustomTenantService
     AtomicInteger attempts = new AtomicInteger(0);
@@ -56,11 +66,7 @@ class CustomTenantServiceTest {
         if (Instant.now().isAfter(finishTime)) {
           return null;
         }
-        throw new InsufficientEntityTypePermissionsException(
-          UUID.randomUUID(),
-          ListActions.UPDATE,
-          "User is missing permissions [{\"missing permission\"]}"
-        );
+        throw new CompletionException(exception);
       })
       .when(migrationService)
       .performTenantInstallMigrations();
@@ -72,6 +78,21 @@ class CustomTenantServiceTest {
     // Verify that we didn't get any unexpected calls to the migration service and that it retried at least once
     verify(migrationService, times(attempts.get())).performTenantInstallMigrations();
     assertTrue(attempts.get() > 1, "Expected migration to be retried at least once");
+  }
+
+  static Stream<Exception> retryExceptionProvider() {
+    return Stream.of(
+      new InsufficientEntityTypePermissionsException(
+        UUID.randomUUID(),
+        ListActions.UPDATE,
+        "User is missing permissions [{\"missing permission\"]}"
+      ),
+      FeignException.errorStatus("GET", Response.builder()
+        .status(403)
+        .reason("Forbidden")
+        .request(Request.create(Request.HttpMethod.GET, "", Map.of(), null, null, null))
+        .build())
+    );
   }
 
   @Test
