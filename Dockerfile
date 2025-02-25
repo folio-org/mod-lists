@@ -1,4 +1,4 @@
-FROM folioci/alpine-jre-openjdk21:latest
+FROM folioci/alpine-jre-openjdk17:latest
 
 # Install latest patch versions of packages
 USER root
