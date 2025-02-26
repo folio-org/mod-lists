@@ -2,6 +2,7 @@ package org.folio.list.services;
 
 import feign.FeignException;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
@@ -63,13 +64,9 @@ public class CustomTenantService extends TenantService {
         } catch (Exception e) {
           // Deal with wrapped permission exceptions by unwrapping and rethrowing the original exception.
           log.error("Exception during tenant install migration (attempt # {} )", attempt, e);
-          if (e.getCause() instanceof InsufficientEntityTypePermissionsException ietpe) {
-            log.info("Make retry of InsufficientEntityTypePermissionsException with message: {}", ietpe.getMessage());
-            throw ietpe; // Retry
-          } else if (e.getCause() instanceof FeignException fe) {
-            log.info("Make retry of FeignException with message: {}", fe.getMessage());
-            throw fe; // Retry
-          }
+
+          checkExceptionEligibleForRetry(e); // Retry in case when this method throws an exception
+
           throw e; // Don't retry
         }
         return null;
@@ -78,5 +75,19 @@ public class CustomTenantService extends TenantService {
         // Rethrow it to fail the tenant update process.
         throw new RuntimeException(ctx.getLastThrowable());
       });
+  }
+
+  private void checkExceptionEligibleForRetry(Throwable e) {
+    List<Throwable> causes = ExceptionUtils.getThrowableList(e);
+    for (Throwable t : causes) {
+      if (t instanceof InsufficientEntityTypePermissionsException ietpe) {
+        log.info("Make retry of InsufficientEntityTypePermissionsException with message: {}", ietpe.getMessage());
+        throw ietpe;
+      }
+      if (t instanceof FeignException fe) {
+        log.info("Make retry of FeignException with message: {}", fe.getMessage());
+        throw  fe;
+      }
+    }
   }
 }

@@ -66,7 +66,7 @@ class CustomTenantServiceTest {
         if (Instant.now().isAfter(finishTime)) {
           return null;
         }
-        throw new CompletionException(exception);
+        throw exception;
       })
       .when(migrationService)
       .performTenantInstallMigrations();
@@ -87,11 +87,24 @@ class CustomTenantServiceTest {
         ListActions.UPDATE,
         "User is missing permissions [{\"missing permission\"]}"
       ),
+      // just exception
       FeignException.errorStatus("GET", Response.builder()
         .status(403)
         .reason("Forbidden")
         .request(Request.create(Request.HttpMethod.GET, "", Map.of(), null, null, null))
-        .build())
+        .build()),
+      // exception with 1 wrapper
+      new CompletionException(FeignException.errorStatus("GET", Response.builder()
+        .status(404)
+        .reason("Not Found")
+        .request(Request.create(Request.HttpMethod.GET, "", Map.of(), null, null, null))
+        .build())),
+      // exception with 2 wrappers
+      new CompletionException(new CompletionException(FeignException.errorStatus("GET", Response.builder()
+        .status(404)
+        .reason("Not Found")
+        .request(Request.create(Request.HttpMethod.GET, "", Map.of(), null, null, null))
+        .build())))
     );
   }
 
