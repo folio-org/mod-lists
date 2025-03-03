@@ -32,7 +32,7 @@ public class DataBatchCallback implements BiConsumer<ListEntity, List<List<Strin
 
   public void accept(ListEntity entity, List<List<String>> contentIds) {
     UUID refreshId = entity.getInProgressRefreshId().orElseThrow(() -> new ListNotRefreshingException(entity, ListActions.REFRESH));
-    log.info("Received data batch for list {}, refreshId {}: {}", entity.getId(), refreshId, contentIds);
+    log.debug("Received data batch for list {}, refreshId {}: {}", entity.getId(), refreshId, contentIds);
     if (batchNumber % 10 == 0) {
       checkIfRefreshCancelled(entity, refreshId);
     }

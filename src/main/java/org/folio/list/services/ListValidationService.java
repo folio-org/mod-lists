@@ -16,6 +16,8 @@ import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 
@@ -159,7 +161,7 @@ public class ListValidationService {
   }
 
   private void assertUserNotExporting(ListEntity list, ListActions failedAction) {
-    if (listExportRepository.isUserAlreadyExporting(list.getId(), folioExecutionContext.getUserId())) {
+    if (listExportRepository.isUserAlreadyExporting(list.getId(), folioExecutionContext.getUserId(), LocalDateTime.now().minus(2, ChronoUnit.HOURS))) {
       throw new ExportInProgressException(list, failedAction);
     }
   }
