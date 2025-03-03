@@ -17,7 +17,8 @@ folio:
       enabled: false
 management:
   endpoints:
-    enabled-by-default: false
+    access:
+      default: none
 logging:
   level:
     org.springframework.web: debug

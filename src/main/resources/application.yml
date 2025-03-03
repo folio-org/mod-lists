@@ -105,7 +105,7 @@ management:
   ###################################################
   health:
     defaults:
-      enabled: false
+      access: none
     readinessstate:
-      enabled: true
+      access: read-only
 debug: false
