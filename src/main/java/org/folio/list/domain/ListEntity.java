@@ -3,8 +3,6 @@ package org.folio.list.domain;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -24,6 +22,7 @@ import lombok.With;
 
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.AbstractListException;
+import org.folio.list.repository.EntityId;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.util.TaskTimer;
 
@@ -36,7 +35,7 @@ import org.folio.list.util.TaskTimer;
 public class ListEntity implements Serializable {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @EntityId
   @Column(updatable = false)
   private UUID id;
 
