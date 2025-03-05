@@ -6,10 +6,12 @@ import org.folio.list.utils.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = {org.folio.list.mapper.ListVersionMapperImpl.class, MappingMethods.class})
+@Transactional
 class ListVersionMapperTest {
   @Autowired
   private ListVersionMapper listVersionMapper;

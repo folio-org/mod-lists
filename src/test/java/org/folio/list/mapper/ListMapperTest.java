@@ -8,6 +8,7 @@ import org.folio.list.utils.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SpringBootTest(classes = {ListMapperImpl.class, MappingMethods.class, ListRefreshMapperImpl.class})
+@Transactional
 class ListMapperTest {
   @Autowired
   private MappingMethods mappingMethods;
