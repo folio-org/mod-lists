@@ -2,8 +2,6 @@ package org.folio.list.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +12,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.folio.list.repository.EntityId;
 
 @Data
 @Entity
@@ -23,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class ListVersion {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @EntityId
   @Column(updatable = false)
   private UUID id;
 
