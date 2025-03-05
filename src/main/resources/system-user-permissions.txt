@@ -55,3 +55,5 @@ finance.ledgers.collection.get
 voucher.voucher-lines.collection.get
 voucher.vouchers.collection.get
 finance.budgets.collection.get
+finance.groups.collection.get
+
