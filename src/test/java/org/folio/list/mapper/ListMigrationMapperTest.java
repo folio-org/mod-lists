@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.services.UserFriendlyQueryService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.querytool.domain.dto.FqmMigrateWarning;

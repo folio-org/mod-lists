@@ -4,7 +4,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ListNotRefreshingException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

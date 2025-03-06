@@ -12,7 +12,7 @@ import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;

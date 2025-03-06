@@ -7,7 +7,7 @@ import org.folio.list.repository.ListRepository;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -43,7 +43,7 @@ class ListServiceDeleteListTest {
   void shouldDeleteList() {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
-    
+
     listValidationService.validateDelete(entity);
     listService.deleteList(entity.getId());
 

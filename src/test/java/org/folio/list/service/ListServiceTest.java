@@ -29,7 +29,7 @@ import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
 import org.folio.list.services.MigrationService;
 import org.folio.list.util.TaskTimer;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.spring.FolioExecutionContext;

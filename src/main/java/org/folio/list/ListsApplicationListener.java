@@ -2,6 +2,7 @@ package org.folio.list;
 
 import lombok.extern.log4j.Log4j2;
 import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.exception.S3ClientException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+
+import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
 @Log4j2
 @Component
@@ -53,15 +56,15 @@ public class ListsApplicationListener implements ApplicationListener<Application
       folioS3Client.write(tempFilePath, inputStream);
       log.info("File uploaded successfully");
     } catch (Exception e) {
-      log.error("S3/MinIO configuration check failed", e);
-      throw e;
+      log.error("S3/MinIO configuration check failed: {}", getSanitizedExceptionMessage(e));
+      throw new S3ClientException("S3/MinIO configuration check failed.");
     } finally {
       try {
         folioS3Client.remove(tempFilePath);
       } catch (Exception e) {
         // Don't throw anything here, since deleting isn't actually all that important for mod-lists
         // If there truly was a fatal error, it'll get thrown in the previous try block
-        log.error("Unable to remove temp file from S3/MinIO (check for previous errors, as this may be because the file from was not successfully created)", e);
+        log.error("Unable to remove temp file from S3/MinIO (check for previous errors, as this may be because the file from was not successfully created). {}", getSanitizedExceptionMessage(e));
       }
     }
   }

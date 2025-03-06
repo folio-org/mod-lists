@@ -2,6 +2,7 @@ package org.folio.list.services.export;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
+import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -117,8 +118,8 @@ public class CsvCreator {
       } catch (S3ClientException e) {
         attempt++;
         if (attempt >= MAX_RETRIES) {
-          log.error("Upload failed after {} attempts: {}", attempt, e.getMessage());
-          throw e;
+          log.error("Upload failed after {} attempts: {}", attempt, getSanitizedExceptionMessage(e));
+          throw new S3ClientException("S3 upload failed");
         }
         log.info("Upload part failed, retrying attempt {} after backoff...", attempt);
         TimeUnit.MILLISECONDS.sleep(backoff);
