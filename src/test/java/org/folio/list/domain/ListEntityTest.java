@@ -5,7 +5,7 @@ import org.folio.list.exception.AbstractListException;
 import org.folio.list.exception.MaxListSizeExceededException;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.util.TaskTimer;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;

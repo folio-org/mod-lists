@@ -4,7 +4,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.PrivateListOfAnotherUserException;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.ListValidationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

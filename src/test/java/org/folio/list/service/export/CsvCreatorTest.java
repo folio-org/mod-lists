@@ -12,7 +12,7 @@ import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;

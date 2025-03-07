@@ -1,4 +1,4 @@
-package org.folio.list.utils;
+package org.folio.list.util;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,10 +43,6 @@ public class TestDataFixture {
   public static ListEntity getListEntityWithSuccessRefresh() {
     var resource = TestDataFixture.class.getResource("/json/list/list-success-refresh.json");
     return objectMapper.readValue(resource, ListEntity.class);
-  }
-
-  public static ListEntity getListEntityWithInProgressRefresh(UUID listId) {
-    return getListEntityWithInProgressRefresh();
   }
 
   @SneakyThrows

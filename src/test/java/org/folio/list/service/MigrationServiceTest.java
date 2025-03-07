@@ -26,7 +26,7 @@ import org.folio.list.repository.MigrationRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.MigrationClient;
 import org.folio.list.services.MigrationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;

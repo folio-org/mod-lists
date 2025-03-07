@@ -1,4 +1,4 @@
-package org.folio.list.utils;
+package org.folio.list.util;
 
 
 import org.hamcrest.BaseMatcher;

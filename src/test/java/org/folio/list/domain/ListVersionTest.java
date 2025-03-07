@@ -2,7 +2,7 @@ package org.folio.list.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 
 class ListVersionTest {

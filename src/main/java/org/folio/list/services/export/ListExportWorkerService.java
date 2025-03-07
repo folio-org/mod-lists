@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.exception.ExportCancelledException;
 import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
 @Service
 @Lazy // Do not connect to S3 when the application starts
@@ -47,10 +50,14 @@ public class ListExportWorkerService {
       abortMultipartUpload(destinationFileName, uploadId, exportDetails);
       return CompletableFuture.failedFuture(ex);
     } catch (Exception ex) {
-      log.error("Cannot complete the export for the list: " + exportDetails.getList().getId() +
-        " with export Id: " + exportDetails.getExportId(), ex);
+
+      log.error("Cannot complete the export for the list: {} with exportId: {}. Failure reason: {}",
+        exportDetails.getList().getId(),
+        exportDetails.getExportId(),
+        getSanitizedExceptionMessage(ex)
+      );
       abortMultipartUpload(destinationFileName, uploadId, exportDetails);
-      return CompletableFuture.failedFuture(ex);
+      return CompletableFuture.failedFuture(new S3ClientException("S3 upload failed"));
     }
   }
 

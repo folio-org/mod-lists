@@ -6,7 +6,7 @@ import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.*;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.services.ListValidationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;

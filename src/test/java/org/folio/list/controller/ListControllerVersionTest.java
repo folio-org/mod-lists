@@ -15,7 +15,7 @@ import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.VersionNotFoundException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;

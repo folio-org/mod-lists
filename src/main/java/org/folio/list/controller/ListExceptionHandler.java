@@ -16,6 +16,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 import java.util.List;
 
+import static org.folio.list.util.LogUtils.sanitizeExceptionMessage;
+
 @ControllerAdvice
 @Slf4j
 public class ListExceptionHandler {
@@ -27,7 +29,7 @@ public class ListExceptionHandler {
   public ResponseEntity<ListAppError> exceptionHandlerForList(AbstractListException exception,
                                                               ServletWebRequest webRequest) {
     String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
-    log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
+    log.error(REQUEST_FAILED_MESSAGE, url, sanitizeExceptionMessage(exception.getMessage()));
     return new ResponseEntity<>(exception.getError(), exception.getHttpStatus());
   }
 
@@ -70,7 +72,7 @@ public class ListExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ListAppError> handleGenericExceptions(Exception exception, ServletWebRequest webRequest) {
-    ListAppError errors = handleGenericError(exception.getMessage(), webRequest, UNHANDLED_ERROR_CODE);
+    ListAppError errors = handleGenericError(sanitizeExceptionMessage(exception.getMessage()), webRequest, UNHANDLED_ERROR_CODE);
     return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 

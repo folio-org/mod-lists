@@ -5,7 +5,7 @@ import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.services.refresh.RefreshFailedCallback;
 import org.folio.list.util.TaskTimer;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

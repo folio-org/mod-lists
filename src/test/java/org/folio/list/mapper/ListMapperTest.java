@@ -3,8 +3,7 @@ package org.folio.list.mapper;
 import lombok.SneakyThrows;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
-import org.folio.list.mapper.ListRefreshMapperImpl;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,8 +59,7 @@ class ListMapperTest {
   @Test
   @SneakyThrows
   void shouldMapEntityToDtoWithInProgressRefresh() {
-    UUID listId = UUID.randomUUID();
-    var listEntity = TestDataFixture.getListEntityWithInProgressRefresh(listId);
+    var listEntity = TestDataFixture.getListEntityWithInProgressRefresh();
 
     ListDTO dto = mapper.toListDTO(listEntity);
     assertEquals(dto.getId(), listEntity.getId());

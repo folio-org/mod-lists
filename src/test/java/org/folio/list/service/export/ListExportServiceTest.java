@@ -31,7 +31,7 @@ import org.folio.list.services.export.ExportUtils;
 import org.folio.list.services.export.ListExportService;
 import org.folio.list.services.export.ListExportWorkerService;
 import org.folio.list.services.export.ListExportService.ExportDownloadContents;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.s3.client.FolioS3Client;
