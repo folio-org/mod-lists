@@ -51,7 +51,7 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
   jackson:
-    default-property-inclusion: non_empty
+    default-property-inclusion: non_null
     deserialization:
       accept-single-value-as-array: true
       # unfortunately, this is required for the system user library, pending FOLSPRINGS-157
