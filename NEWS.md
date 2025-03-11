@@ -1,6 +1,6 @@
 # 3.1.x
 
-## 3.0.0
+## 3.1.0
 - Add support for the new contains and starts-with FQL operators ([MODFQMMGR-613])
 - Update UserFriendlyQueryService to handle new custom field naming scheme (#154) ([MODFQMMGR-376])
 - Update content type, to allow for streaming of data on Eureka to reduce memory usage ([MODLISTS-192])
