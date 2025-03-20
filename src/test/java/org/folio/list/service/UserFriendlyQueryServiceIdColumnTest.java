@@ -2,6 +2,7 @@ package org.folio.list.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,14 +21,15 @@ import org.folio.fql.model.NotContainsAnyCondition;
 import org.folio.fql.model.NotEqualsCondition;
 import org.folio.fql.model.NotInCondition;
 import org.folio.fql.model.field.FqlField;
-import org.folio.list.rest.QueryClient;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.UserFriendlyQueryService;
-import org.folio.querytool.domain.dto.ContentsRequest;
+import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.RangedUUIDType;
 import org.folio.querytool.domain.dto.SourceColumn;
 import org.folio.querytool.domain.dto.StringType;
+import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,7 +45,7 @@ class UserFriendlyQueryServiceIdColumnTest {
   private UserFriendlyQueryService userFriendlyQueryService;
 
   @Mock
-  private QueryClient queryClient;
+  private EntityTypeClient entityTypeClient;
 
   static final UUID ENTITY_TYPE_ID = UUID.fromString("7ad9f9de-40dc-5d88-a49e-515adb4b470c");
 
@@ -92,10 +94,7 @@ class UserFriendlyQueryServiceIdColumnTest {
   @ParameterizedTest(name = "condition {0} gives {1}")
   @MethodSource("idColumnTestCases")
   void testIdColumnQueryValueMapping(FieldCondition<UUID> condition, String expected) {
-    List<Map<String, Object>> entityContents = List.of(
-      Map.of("underlying", VALUE_RESOLVED1),
-      Map.of("underlying", VALUE_RESOLVED2)
-    );
+    Map<String, String> valuesAndLabels = Map.of(VALUE_ID1.toString(), VALUE_RESOLVED1, VALUE_ID2.toString(), VALUE_RESOLVED2);
 
     EntityType entityType = new EntityType()
       .id(ENTITY_TYPE_ID.toString())
@@ -111,29 +110,18 @@ class UserFriendlyQueryServiceIdColumnTest {
       );
 
     lenient()
-      .when(
-        queryClient.getContents(
-          new ContentsRequest()
-            .entityTypeId(ENTITY_TYPE_ID)
-            .fields(List.of("underlying"))
-            .ids(List.of(List.of(VALUE_ID1.toString())))
-        )
-      )
-      .thenReturn(entityContents.subList(0, 1));
-    lenient()
-      .when(
-        queryClient.getContents(
-          new ContentsRequest()
-            .entityTypeId(ENTITY_TYPE_ID)
-            .fields(List.of("underlying"))
-            .ids(List.of(List.of(VALUE_ID1.toString()), List.of(VALUE_ID2.toString())))
-        )
-      )
-      .thenReturn(entityContents);
+      .when(entityTypeClient.getColumnValues(eq(ENTITY_TYPE_ID), eq("underlying")))
+      .thenReturn(new ColumnValues(mapToValueWithLabel(valuesAndLabels)));
 
     String actual = userFriendlyQueryService.getUserFriendlyQuery(condition, entityType);
     assertEquals(expected, actual);
 
-    verify(queryClient, times(1)).getContents(any());
+    verify(entityTypeClient, times(1)).getColumnValues(any(), any());
+  }
+
+  private static List<ValueWithLabel> mapToValueWithLabel(Map<String, String> valuesAndLabels) {
+    return valuesAndLabels.entrySet().stream()
+      .map(e -> new ValueWithLabel(e.getKey()).label(e.getValue()))
+      .toList();
   }
 }
