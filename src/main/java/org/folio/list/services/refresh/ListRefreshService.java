@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.awaitility.Awaitility;
+import org.folio.list.configuration.ListAppConfiguration;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.domain.dto.ListConfiguration;
+import org.folio.list.exception.MaxListSizeExceededException;
 import org.folio.list.exception.RefreshCancelledException;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
@@ -39,6 +42,7 @@ public class ListRefreshService {
   private final Supplier<DataBatchCallback> dataBatchCallbackSupplier;
   private final QueryClient queryClient;
   private final EntityManagerFlushService entityManagerFlushService;
+  private final ListConfiguration listConfiguration;
 
   @Async
   // Long-running method. Running this method within a transaction boundary will hog db connection for
@@ -94,7 +98,13 @@ public class ListRefreshService {
       refreshSuccessCallback.accept(list, resultCount, timer);
     } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.FAILED) {
       refreshFailedCallback.accept(list, timer, new RuntimeException(queryDetails.getFailureReason()));
-    } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {
+    } else if (queryDetails.getStatus() == QueryDetails.StatusEnum.MAX_SIZE_EXCEEDED) {
+      // Technically this isn't perfect because the max list size and max query size could be different values,
+      // but they should be equivalent in all real-world scenarios since they default to the same values and are
+      // not explicitly overridden anywhere
+      refreshFailedCallback.accept(list, timer, new MaxListSizeExceededException(list, listConfiguration.getMaxListSize()));
+    }
+    else if (queryDetails.getStatus() == QueryDetails.StatusEnum.CANCELLED) {
       refreshFailedCallback.accept(list, timer, new RefreshCancelledException(list));
     }
     entityManagerFlushService.flush();
