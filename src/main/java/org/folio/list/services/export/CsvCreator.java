@@ -6,6 +6,7 @@ import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.OutputStream;
@@ -151,7 +152,9 @@ public class CsvCreator {
 
     private ListCsvWriter(EntityType entityType, List<String> fields) {
       this.csvSchemas = createSchema(entityType, fields);
-      this.objectWriter = new CsvMapper().writerFor(List.class);
+      this.objectWriter = new CsvMapper()
+        .enable(CsvParser.Feature.IGNORE_TRAILING_UNMAPPABLE)  // Ignores unexpected columns
+        .writerFor(List.class);
       this.firstBatch = true;
     }
 
