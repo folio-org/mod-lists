@@ -5,6 +5,7 @@ import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -153,7 +154,6 @@ public class CsvCreator {
     private ListCsvWriter(EntityType entityType, List<String> fields) {
       this.csvSchemas = createSchema(entityType, fields);
       this.objectWriter = new CsvMapper()
-        .enable(CsvParser.Feature.IGNORE_TRAILING_UNMAPPABLE)  // Ignores unexpected columns
         .writerFor(List.class);
       this.firstBatch = true;
     }
@@ -176,9 +176,10 @@ public class CsvCreator {
      * the header row only.
      */
     private EntityTypeCsvSchemas createSchema(EntityType entityType, List<String> fields) {
-      List<EntityTypeColumn> usedColumns = entityType
-        .getColumns()
-        .stream()
+      List<EntityTypeColumn> availableColumns = entityType.getColumns();
+
+      // Filter only known columns
+      List<EntityTypeColumn> usedColumns = availableColumns.stream()
         .filter(column -> fields.contains(column.getName()))
         .toList();
 
@@ -188,17 +189,16 @@ public class CsvCreator {
       usedColumns.forEach(column -> builderName.addColumn(column.getName(), getColumnType(column)));
       usedColumns.forEach(column ->
         builderLabelAlias.addColumn(
-          // Excel does not properly handle CSVs with EM/EN unicode dashes, so we convert them to plain ASCII hyphens
           column.getLabelAlias().replace('—', '-').replace('–', '-'),
           getColumnType(column)
         )
       );
 
-      // we want to use the original ET's ordering for the CSV (and this guarantees both will use the same order)
       String[] ordering = usedColumns.stream().map(EntityTypeColumn::getName).toArray(String[]::new);
 
       return new EntityTypeCsvSchemas(builderName.build().sortedBy(ordering), builderLabelAlias.build().sortedBy(ordering));
     }
+
 
     private CsvSchema.ColumnType getColumnType(EntityTypeColumn column) {
       return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
