@@ -1,5 +1,13 @@
 # 3.1.x
 
+# 3.1.1
+- Update translation strings
+- [MODLISTS-202] Use the column values FQM endpoint when building user-friendly queries
+- [MODFQMMGR-723] Mark list refresh as failed if maximum query size is exceeded
+
+[MODLISTS-202]: https://folio-org.atlassian.net/browse/MODLISTS-202
+[MODFQMMGR-723]: https://folio-org.atlassian.net/browse/MODFQMMGR-723
+
 ## 3.1.0
 - Add support for the new contains and starts-with FQL operators ([MODFQMMGR-613])
 - Update UserFriendlyQueryService to handle new custom field naming scheme (#154) ([MODFQMMGR-376])
