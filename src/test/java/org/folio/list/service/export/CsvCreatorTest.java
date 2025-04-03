@@ -1,5 +1,6 @@
 package org.folio.list.service.export;
 
+import org.apache.commons.io.ByteOrderMark;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.io.File;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -75,8 +77,11 @@ class CsvCreatorTest {
     EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
     List<List<String>> contentIds = new ArrayList<>();
-    // generate content ids for ten batches
-    IntStream.rangeClosed(1, batchSize * numberOfBatch).forEach(i -> contentIds.add(List.of(new UUID(0, i).toString())));
+
+    // Generate content IDs for multiple batches
+    IntStream.rangeClosed(1, batchSize * numberOfBatch)
+      .forEach(i -> contentIds.add(List.of(new UUID(0, i).toString())));
+
     List<Map<String, Object>> contentsWithData = new ArrayList<>();
     IntStream.rangeClosed(1, batchSize).forEach(i -> {
       LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
@@ -85,19 +90,30 @@ class CsvCreatorTest {
       contentsWithData.add(linkedHashMap);
     });
 
-    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i -> when(queryClient.getContentsPrivileged(
-      new ContentsRequest().entityTypeId(entity.getEntityTypeId())
-        .fields(entity.getFields())
-        .localize(true)
-        .userId(userId)
-        .ids(contentIds.stream().skip((long) i * batchSize).limit(batchSize).toList()))).thenReturn(contentsWithData));
+    // Mock systemUserQueryClient.getContentsPrivileged() responses for each batch
+    IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i ->
+      when(queryClient.getContentsPrivileged(
+        new ContentsRequest()
+          .entityTypeId(entity.getEntityTypeId())
+          .fields(entity.getFields())
+          .localize(true)
+          .userId(userId)
+          .ids(contentIds.stream().skip((long) i * batchSize).limit(batchSize).toList())
+      )).thenReturn(contentsWithData)
+    );
 
     AtomicInteger indexBatch = new AtomicInteger(0);
     IntStream.rangeClosed(0, numberOfBatch - 1).forEach(i ->
-      when(contentsRepository.getContents(entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize) - 1, PageRequest.ofSize(batchSize)))
-        .thenReturn(contentIds.stream().skip((long) i * batchSize).limit(batchSize)
-          .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
-          .toList()));
+      when(contentsRepository.getContents(
+        entity.getId(), entity.getSuccessRefresh().getId(), (i * batchSize) - 1, PageRequest.ofSize(batchSize)))
+        .thenReturn(
+          contentIds.stream()
+            .skip((long) i * batchSize)
+            .limit(batchSize)
+            .map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, indexBatch.getAndIncrement()))
+            .toList()
+        )
+    );
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
@@ -112,8 +128,9 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actual = data.toString();
-      String expected = "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
-      assertEquals(actual, expected);
+      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8) + "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
+
+      assertEquals(expected, actual);
       assertEquals(2, partETags.size());
     }
 
