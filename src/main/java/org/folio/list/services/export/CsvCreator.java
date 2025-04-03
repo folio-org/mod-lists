@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.FileUtils;
 import org.folio.list.configuration.ListExportProperties;
 import org.folio.list.domain.AsyncProcessStatus;
@@ -158,6 +159,8 @@ public class CsvCreator {
     @SneakyThrows
     public void writeCsv(List<Map<String, Object>> listContents, OutputStream destination) {
       if (firstBatch) {
+        // Adds UTF-8 BOM to help apps like Excel read the file correctly.
+        destination.write(ByteOrderMark.UTF_8.getBytes());
         objectWriter.with(csvSchemas.labelSchema().withHeader()).writeValues(destination).write(List.of());
       }
       objectWriter.with(csvSchemas.nameSchema().withoutHeader()).writeValues(destination).write(listContents);
