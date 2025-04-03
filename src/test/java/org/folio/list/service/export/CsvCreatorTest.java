@@ -74,7 +74,7 @@ class CsvCreatorTest {
     int numberOfBatch = 11;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
-    EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
+    EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status"), createColumn("item_status")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
     List<List<String>> contentIds = new ArrayList<>();
 
@@ -128,8 +128,9 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actual = data.toString();
-      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8) + "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
-
+      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8)
+        + "[id-label],[item_status-label],[item_status-label]_2\n"
+        + toCSV(contentsWithData).repeat(numberOfBatch);
       assertEquals(expected, actual);
       assertEquals(2, partETags.size());
     }

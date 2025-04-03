@@ -7,12 +7,15 @@ import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+
 import java.io.File;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -186,12 +189,26 @@ public class CsvCreator {
       CsvSchema.Builder builderLabelAlias = CsvSchema.builder();
 
       usedColumns.forEach(column -> builderName.addColumn(column.getName(), getColumnType(column)));
-      usedColumns.forEach(column ->
-        builderLabelAlias.addColumn(
+      Map<String, Integer> aliasCounts = new HashMap<>();
+      usedColumns.forEach(column -> {
           // Excel does not properly handle CSVs with EM/EN unicode dashes, so we convert them to plain ASCII hyphens
-          column.getLabelAlias().replace('—', '-').replace('–', '-'),
-          getColumnType(column)
-        )
+          String sanitizedAlias = column
+            .getLabelAlias()
+            .replace('—', '-')
+            .replace('–', '-');
+          String uniqueAlias = sanitizedAlias;
+
+          // Handle any duplicate column aliases by appending _count to the alias
+          if (aliasCounts.containsKey(sanitizedAlias)) {
+            int count = aliasCounts.get(sanitizedAlias) + 1;
+            aliasCounts.put(sanitizedAlias, count);
+            uniqueAlias = sanitizedAlias + "_" + count;
+          } else {
+            aliasCounts.put(sanitizedAlias, 1);
+          }
+
+          builderLabelAlias.addColumn(uniqueAlias, getColumnType(column));
+        }
       );
 
       // we want to use the original ET's ordering for the CSV (and this guarantees both will use the same order)
@@ -204,6 +221,7 @@ public class CsvCreator {
       return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
     }
 
-    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {}
+    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {
+    }
   }
 }
