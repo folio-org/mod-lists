@@ -2,13 +2,12 @@ package org.folio.list.services.refresh;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
 import org.awaitility.Awaitility;
-import org.folio.list.configuration.ListAppConfiguration;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListConfiguration;
 import org.folio.list.exception.MaxListSizeExceededException;
 import org.folio.list.exception.RefreshCancelledException;
+import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.QueryClient;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.EntityManagerFlushService;
@@ -16,16 +15,23 @@ import org.folio.list.util.TaskTimer;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
 import org.folio.querytool.domain.dto.SubmitQuery;
+import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
 
 @Service
 @Log4j2
@@ -41,6 +47,7 @@ public class ListRefreshService {
   private final RefreshFailedCallback refreshFailedCallback;
   private final Supplier<DataBatchCallback> dataBatchCallbackSupplier;
   private final QueryClient queryClient;
+  private final EntityTypeClient entityTypeClient;
   private final EntityManagerFlushService entityManagerFlushService;
   private final ListConfiguration listConfiguration;
 
@@ -53,10 +60,11 @@ public class ListRefreshService {
     try (var autoCloseMe = shutdownTask) {
       log.info("Performing async refresh for list {}, refreshId {}", list.getId(),
         list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
+      EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId());
       SubmitQuery submitQuery = new SubmitQuery()
         .entityTypeId(list.getEntityTypeId())
         .fqlQuery(list.getFqlQuery())
-        .fields(list.getFields());
+        .fields(getIdColumnNames(entityType));
       QueryIdentifier queryIdentifier = timer.time(TimedStage.REQUEST_QUERY, () -> queryClient.executeQuery(submitQuery));
       waitForQueryCompletion(list, queryIdentifier.getQueryId(), timer);
     } catch (Exception exception) {
@@ -89,9 +97,8 @@ public class ListRefreshService {
         .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
         .await()
         .atMost(getQueryTimeoutMinutes, TimeUnit.MINUTES)
-        .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));
-    log.info("Query {} completed for list {}", queryId, list.getId());
-    QueryDetails queryDetails = queryClient.getQuery(queryId);
+        .until(() -> queryClient.getQuery(queryId, false,0,DEFAULT_BATCH_SIZE).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));
+    QueryDetails queryDetails = queryClient.getQuery(queryId ,false,0,DEFAULT_BATCH_SIZE);
 
     if (queryDetails.getStatus() == QueryDetails.StatusEnum.SUCCESS) {
       int resultCount = timer.time(TimedStage.IMPORT_RESULTS, () -> importQueryResults(list, queryId));
@@ -115,12 +122,35 @@ public class ListRefreshService {
       list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
     DataBatchCallback dataBatchCallback = dataBatchCallbackSupplier.get();
     int offset = 0;
-    List<List<String>> ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
-    while (!CollectionUtils.isEmpty(ids)) {
-      offset += ids.size();
-      dataBatchCallback.accept(list, ids);
-      ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
-    }
+    UUID entityTypeId = list.getEntityTypeId();
+    EntityType entityType = entityTypeClient.getEntityType(entityTypeId);
+    List<String> resultIdName = getIdColumnNames(entityType);
+    List<Map<String, Object>> queryContent;
+    do {
+      QueryDetails queryClientQuery = queryClient.getQuery(queryId, true, offset, DEFAULT_BATCH_SIZE);
+      queryContent = queryClientQuery.getContent();
+      List<List<String>> resultIds = queryContent.stream()
+        .map(row -> {
+          List<String> resultIdValues = new ArrayList<>();
+          for (String resultIdComponent : resultIdName) {
+            resultIdValues.add(Objects.toString(row.get(resultIdComponent)));
+          }
+          return resultIdValues;
+        })
+        .toList();
+        dataBatchCallback.accept(list, resultIds);
+        offset += queryContent.size();
+    } while (!queryContent.isEmpty());
     return offset;
   }
+
+  private static List<String> getIdColumnNames(EntityType entityType) {
+    return entityType.getColumns()
+      .stream()
+      .filter(column -> Boolean.TRUE.equals(column.getIsIdColumn()))
+      .map(EntityTypeColumn::getName)
+      .sorted()
+      .toList();
+  }
+
 }
