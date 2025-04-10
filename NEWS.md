@@ -2,9 +2,11 @@
 
 
 # 3.1.2
-- Update translation strings
 - [MODLISTS-203] Fixing export with Arabic Instance title
 - [MODLISTS-211] Remove non-essential fields from canned lists
+
+[MODLISTS-203]: https://folio-org.atlassian.net/browse/MODLISTS-203
+[MODFQMMGR-211]: https://folio-org.atlassian.net/browse/MODLISTS-211
 
 # 3.1.1
 - Update translation strings
