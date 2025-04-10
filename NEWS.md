@@ -1,5 +1,11 @@
 # 3.1.x
 
+
+# 3.1.2
+- Update translation strings
+- [MODLISTS-203] Fixing export with Arabic Instance title
+- [MODLISTS-211] Remove non-essential fields from canned lists
+
 # 3.1.1
 - Update translation strings
 - [MODLISTS-202] Use the column values FQM endpoint when building user-friendly queries
