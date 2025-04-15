@@ -59,49 +59,51 @@ public class CsvCreator {
 
   @SneakyThrows
   public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
-    var localStorage = new ExportLocalStorage(exportDetails.getExportId());
-    ListEntity list = exportDetails.getList();
-    var idsProvider = new ListIdsProvider(contentsRepository, list);
-    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
+    throw new IllegalStateException();
 
-    OutputStream localStorageOutputStream = localStorage.outputStream();
-    var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());
-    int batchSize = exportProperties.getBatchSize();
-    int batchNumber = 0;
-    int partNumber = 1;
+    // var localStorage = new ExportLocalStorage(exportDetails.getExportId());
+    // ListEntity list = exportDetails.getList();
+    // var idsProvider = new ListIdsProvider(contentsRepository, list);
+    // EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
 
-    for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
-      if (batchNumber % 10 == 0) {
-        checkIfExportCancelled(list.getId(), exportDetails.getExportId());
+    // OutputStream localStorageOutputStream = localStorage.outputStream();
+    // var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());
+    // int batchSize = exportProperties.getBatchSize();
+    // int batchNumber = 0;
+    // int partNumber = 1;
 
-        //Skip the first batch since we haven't generated any content yet and do not upload if file size less than 5 mb
-        File multiPartFile = new File(localStorage.getAbsolutePath());
-        long bytes = FileUtils.sizeOf(multiPartFile);
-        if (batchNumber != 0 && bytes > MINIMAL_PART_SIZE) {
-          uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
-          localStorage.rotateFile();
-          localStorageOutputStream = localStorage.outputStream();
-          partNumber++;
-        }
-      }
-      log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
-      ContentsRequest contentsRequest = new ContentsRequest()
-        .entityTypeId(list.getEntityTypeId())
-        .fields(exportDetails.getFields())
-        .ids(ids)
-        .localize(true)
-        .userId(userId);
-      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
-        .stream()
-        .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
-        .toList();
-      csvWriter.writeCsv(sortedContents, localStorageOutputStream);
-      batchNumber++;
-    }
+    // for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
+    //   if (batchNumber % 10 == 0) {
+    //     checkIfExportCancelled(list.getId(), exportDetails.getExportId());
 
-    uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+    //     //Skip the first batch since we haven't generated any content yet and do not upload if file size less than 5 mb
+    //     File multiPartFile = new File(localStorage.getAbsolutePath());
+    //     long bytes = FileUtils.sizeOf(multiPartFile);
+    //     if (batchNumber != 0 && bytes > MINIMAL_PART_SIZE) {
+    //       uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+    //       localStorage.rotateFile();
+    //       localStorageOutputStream = localStorage.outputStream();
+    //       partNumber++;
+    //     }
+    //   }
+    //   log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
+    //   ContentsRequest contentsRequest = new ContentsRequest()
+    //     .entityTypeId(list.getEntityTypeId())
+    //     .fields(exportDetails.getFields())
+    //     .ids(ids)
+    //     .localize(true)
+    //     .userId(userId);
+    //   var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+    //     .stream()
+    //     .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+    //     .toList();
+    //   csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+    //   batchNumber++;
+    // }
 
-    return localStorage;
+    // uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+
+    // return localStorage;
   }
 
   @SneakyThrows

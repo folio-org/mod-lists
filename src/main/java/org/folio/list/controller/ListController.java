@@ -59,8 +59,9 @@ public class ListController implements ListApi {
 
   @Override
   public ResponseEntity<ListDTO> createList(ListRequestDTO listRequest) {
-    var listDto = listService.createList(listRequest);
-    return new ResponseEntity<>(listDto, HttpStatus.CREATED);
+    throw new IllegalStateException();
+    // var listDto = listService.createList(listRequest);
+    // return new ResponseEntity<>(listDto, HttpStatus.CREATED);
   }
 
   @Override
