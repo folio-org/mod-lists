@@ -2,7 +2,7 @@ mod-lists:
   general:
     max-list-size: ${MAX_LIST_SIZE:1250000}
     system-user-retry-wait-minutes: ${SYSTEM_USER_RETRY_WAIT_MINUTES:10}
-    refresh-query-timeout-minutes: 90
+    refresh-query-timeout-minutes: ${REFRESH_QUERY_TIMEOUT_MINUTES:90}
   list-export:
     s3-startup-check:
       enabled: true
