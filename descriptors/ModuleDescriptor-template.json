@@ -354,6 +354,9 @@
       },
       { "name": "SYSTEM_USER_RETRY_WAIT_MINUTES",
         "value": "10"
+      },
+      { "name": "REFRESH_QUERY_TIMEOUT_MINUTES",
+        "value": "90"
       }
     ]
   }
