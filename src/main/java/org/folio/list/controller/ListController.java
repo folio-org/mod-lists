@@ -39,22 +39,23 @@ public class ListController implements ListApi {
                                                            Boolean includeDeleted,
                                                            String updatedAsOf
   ) {
-    OffsetDateTime providedTimestamp;
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-    // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
-    providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
-    Pageable pageable = new OffsetRequest(offset, size);
-    return ResponseEntity.ok(
-      listService.getAllLists(
-        pageable,
-        ids,
-        entityTypeIds,
-        active,
-        isPrivate,
-        Boolean.TRUE.equals(includeDeleted),
-        providedTimestamp
-      )
-    );
+    throw new IllegalStateException();
+    // OffsetDateTime providedTimestamp;
+    // DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    // // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
+    // providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
+    // Pageable pageable = new OffsetRequest(offset, size);
+    // return ResponseEntity.ok(
+    //   listService.getAllLists(
+    //     pageable,
+    //     ids,
+    //     entityTypeIds,
+    //     active,
+    //     isPrivate,
+    //     Boolean.TRUE.equals(includeDeleted),
+    //     providedTimestamp
+    //   )
+    // );
   }
 
   @Override
