@@ -32,4 +32,7 @@ public interface QueryClient {
 
   @PostMapping("/contents/privileged")
   List<Map<String, Object>> getContentsPrivileged(@RequestBody ContentsRequest contentsRequest);
+
+  @GetMapping("/{queryId}/sortedIds")
+  List<List<String>> getSortedIds(@RequestHeader UUID queryId, @RequestParam Integer offset, @RequestParam Integer limit);
 }
