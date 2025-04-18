@@ -24,8 +24,8 @@ public interface QueryClient {
   @GetMapping("/{queryId}")
   QueryDetails getQuery(@RequestHeader UUID queryId);
 
-  @GetMapping("/{queryId}")
-  QueryDetails getQuery(@RequestHeader UUID queryId, @RequestParam boolean includeResults, @RequestParam Integer offset, @RequestParam Integer limit);
+  @GetMapping("/{queryId}/sortedIds")
+  List<List<String>> getSortedIds(@RequestHeader UUID queryId, @RequestParam Integer offset, @RequestParam Integer limit);
 
   @PostMapping("/contents")
   List<Map<String, Object>> getContents(@RequestBody ContentsRequest contentsRequest);
