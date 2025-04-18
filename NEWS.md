@@ -1,5 +1,10 @@
 # 3.1.x
 
+# 3.1.3
+- Update translation strings
+- [MODLISTS-213] Add REFRESH_QUERY_TIMEOUT_MINUTES to module descriptor
+
+[MODLISTS-213]: https://folio-org.atlassian.net/browse/MODLISTS-213
 
 # 3.1.2
 - [MODLISTS-203] Fixing export with Arabic Instance title
