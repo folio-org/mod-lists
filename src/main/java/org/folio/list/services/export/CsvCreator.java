@@ -70,38 +70,40 @@ public class CsvCreator {
     int batchNumber = 0;
     int partNumber = 1;
 
-    for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
-      if (batchNumber % 10 == 0) {
-        checkIfExportCancelled(list.getId(), exportDetails.getExportId());
+    throw new RuntimeException("kaboom");
 
-        //Skip the first batch since we haven't generated any content yet and do not upload if file size less than 5 mb
-        File multiPartFile = new File(localStorage.getAbsolutePath());
-        long bytes = FileUtils.sizeOf(multiPartFile);
-        if (batchNumber != 0 && bytes > MINIMAL_PART_SIZE) {
-          uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
-          localStorage.rotateFile();
-          localStorageOutputStream = localStorage.outputStream();
-          partNumber++;
-        }
-      }
-      log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
-      ContentsRequest contentsRequest = new ContentsRequest()
-        .entityTypeId(list.getEntityTypeId())
-        .fields(exportDetails.getFields())
-        .ids(ids)
-        .localize(true)
-        .userId(userId);
-      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
-        .stream()
-        .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
-        .toList();
-      csvWriter.writeCsv(sortedContents, localStorageOutputStream);
-      batchNumber++;
-    }
+    // for (List<List<String>> ids = idsProvider.nextBatch(batchSize); !isEmpty(ids); ids = idsProvider.nextBatch(batchSize)) {
+    //   if (batchNumber % 10 == 0) {
+    //     checkIfExportCancelled(list.getId(), exportDetails.getExportId());
 
-    uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+    //     //Skip the first batch since we haven't generated any content yet and do not upload if file size less than 5 mb
+    //     File multiPartFile = new File(localStorage.getAbsolutePath());
+    //     long bytes = FileUtils.sizeOf(multiPartFile);
+    //     if (batchNumber != 0 && bytes > MINIMAL_PART_SIZE) {
+    //       uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+    //       localStorage.rotateFile();
+    //       localStorageOutputStream = localStorage.outputStream();
+    //       partNumber++;
+    //     }
+    //   }
+    //   log.info("Export in progress for exportId {}. Fetched a batch of {} IDs.", exportDetails.getExportId(), ids.size());
+    //   ContentsRequest contentsRequest = new ContentsRequest()
+    //     .entityTypeId(list.getEntityTypeId())
+    //     .fields(exportDetails.getFields())
+    //     .ids(ids)
+    //     .localize(true)
+    //     .userId(userId);
+    //   var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+    //     .stream()
+    //     .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
+    //     .toList();
+    //   csvWriter.writeCsv(sortedContents, localStorageOutputStream);
+    //   batchNumber++;
+    // }
 
-    return localStorage;
+    // uploadCSVPart(destinationFileName, uploadId, partNumber, localStorage.getAbsolutePath(), partETags, exportDetails);
+
+    // return localStorage;
   }
 
   @SneakyThrows
