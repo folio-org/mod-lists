@@ -176,7 +176,6 @@ class CsvCreatorTest {
       .id(UUID.randomUUID().toString())
       .name("test_table")
       .labelAlias("derived_table_alias_01")
-      .root(false)
       .columns(entityTypeColumnList);
   }
 
