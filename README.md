@@ -88,6 +88,11 @@ variable `SYSTEM_USER_PASSWORD`, and permissions to interact with `mod-fqm-manag
 
 ### Resource requirements
 
+#### Short version
+- Small/medium institutions: Allocate 2 gigabytes of memory for the heap (`-Xmx2g`)
+- Large institutions: Allocate 5.5 gigabytes of memory for the heap (`-Xmx5500m`)
+
+#### Long version
 Most operations in mod-lists use very little memory, however more memory is required when serving up list exports to
 users. Additionally, sufficient memory is required for good and consistent performance.
 With the default settings, you should provide mod-lists with at least 1 gigabyte of heap space. This will allow it to
@@ -99,6 +104,8 @@ performance and stability.
 
 In addition, at least 200 megabytes of free storage space should be available on the server for mod-lists to use for
 staging temporary files during the list export process.
+
+Note: "memory" here refers to heap space memory (set with the `-Xmx` parameter on the JVM), not total system memory.
 
 ### Installation
 
