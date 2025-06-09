@@ -267,7 +267,8 @@
         "users.item.get",
         "finance.ledgers.collection.get",
         "voucher.voucher-lines.collection.get",
-        "voucher.vouchers.collection.get"
+        "voucher.vouchers.collection.get",
+        "source-storage.records.collection.get"
       ]
     }
   },
