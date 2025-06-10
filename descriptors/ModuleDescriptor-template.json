@@ -323,16 +323,16 @@
       { "name": "LIST_EXPORT_BATCH_SIZE",
         "value": "1000"
       },
-      { "name": "LIST_APP_S3_BUCKET",
-        "value": "list-exports-us-west-2"
+      { "name": "S3_BUCKET",
+        "value": ""
       },
-      { "name": "AWS_REGION",
+      { "name": "S3_REGION",
         "value": "us-west-2"
       },
-      { "name": "AWS_URL",
+      { "name": "S3_URL",
         "value": "https://s3.amazonaws.com"
       },
-      { "name": "USE_AWS_SDK",
+      { "name": "S3_IS_AWS",
         "value": "false"
       },
       { "name": "S3_ACCESS_KEY_ID",
@@ -340,6 +340,9 @@
       },
       { "name": "S3_SECRET_ACCESS_KEY",
         "value": ""
+      },
+      { "name": "S3_SUB_PATH",
+        "value": "mod-lists"
       },
       { "name": "mod-lists.list-export.s3-startup-check.enabled",
         "value": "true"
