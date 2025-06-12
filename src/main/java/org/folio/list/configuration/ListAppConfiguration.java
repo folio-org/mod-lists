@@ -32,6 +32,7 @@ public class ListAppConfiguration {
       .endpoint(s3Config.endpoint())
       .accessKey(s3Config.accessKey())
       .secretKey(s3Config.secretKey())
+      .subPath(s3Config.subPath())
       .build();
     return S3ClientFactory.getS3Client(s3Properties);
   }
