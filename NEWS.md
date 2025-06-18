@@ -1,5 +1,8 @@
 # 3.1.x
 
+# 3.1.4
+- Bump lib-fqm-query-processor version to 4.0.2
+
 # 3.1.3
 - Update translation strings
 - [MODLISTS-213] Add REFRESH_QUERY_TIMEOUT_MINUTES to module descriptor
