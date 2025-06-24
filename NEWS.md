@@ -1,5 +1,10 @@
 # 3.1.x
 
+# 3.1.5
+- [MODFQMMGR-804] Add permission for simple SRS record ET
+
+[MODFQMMGR-804]: https://folio-org.atlassian.net/browse/MODFQMMGR-804
+
 # 3.1.4
 - Bump lib-fqm-query-processor version to 4.0.2
 
