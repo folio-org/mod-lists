@@ -50,6 +50,9 @@
 
 # 3.0.x
 
+## 3.0.10
+- Add permission for simple SRS record ET ([MODFQMMGR-804](https://folio-org.atlassian.net/browse/MODFQMMGR-804))
+
 ## 3.0.9
 - Add permissions to the mod-lists system user ([MODFQMMGR-650](https://folio-org.atlassian.net/browse/MODFQMMGR-650) and [MODFQMMGR-643](https://folio-org.atlassian.net/browse/MODFQMMGR-643))
 
