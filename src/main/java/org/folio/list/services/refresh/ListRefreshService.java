@@ -89,7 +89,16 @@ public class ListRefreshService {
         .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
         .await()
         .atMost(getQueryTimeoutMinutes, TimeUnit.MINUTES)
-        .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));
+        .until(() -> {
+          long start = System.currentTimeMillis();
+          QueryDetails query;
+          try {
+            query = queryClient.getQuery(queryId);
+          } finally {
+            log.info("Query get took {}ms", System.currentTimeMillis() - start);
+          }
+          return query.getStatus() != QueryDetails.StatusEnum.IN_PROGRESS;
+        }));
     log.info("Query {} completed for list {}", queryId, list.getId());
     QueryDetails queryDetails = queryClient.getQuery(queryId);
 
