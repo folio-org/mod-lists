@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.awaitility.Awaitility;
-import org.folio.list.configuration.ListAppConfiguration;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListConfiguration;
 import org.folio.list.exception.MaxListSizeExceededException;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 @Service
@@ -84,12 +84,14 @@ public class ListRefreshService {
 
   private void waitForQueryCompletion(ListEntity list, UUID queryId, TaskTimer timer) {
     log.info("Waiting for completion of query {} for list {}", queryId, list.getId());
+    AtomicInteger checkCount = new AtomicInteger();
     timer.time(TimedStage.WAIT_FOR_QUERY_COMPLETION,
       () -> Awaitility.with()
         .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
         .await()
         .atMost(getQueryTimeoutMinutes, TimeUnit.MINUTES)
         .until(() -> {
+          log.info("Checking for query completion {}", checkCount.incrementAndGet());
           long start = System.currentTimeMillis();
           QueryDetails query;
           try {

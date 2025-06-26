@@ -67,9 +67,9 @@ spring:
     client:
       config:
         default:
-          connectTimeout: 10000
-          readTimeout: 10000
-          loggerLevel: BASIC
+          connectTimeout: 30000
+          readTimeout: 30000
+          loggerLevel: DEBUG
     httpclient:
       enabled: true
   task:
