@@ -25,7 +25,7 @@
     <!-- runtime dependencies -->
     <folio-spring-base.version>9.0.0</folio-spring-base.version>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <folio-service-tools.version>3.1.0</folio-service-tools.version>
+    <folio-service-tools.version>3.1.1</folio-service-tools.version>
     <mapstruct.version>1.6.2</mapstruct.version>
     <lib-fqm-query-processor.version>4.1.0-SNAPSHOT</lib-fqm-query-processor.version>
     <jackson-dataformat-csv.version>2.14.2</jackson-dataformat-csv.version>
@@ -36,8 +36,8 @@
     <spring-retry.version>2.0.10</spring-retry.version>
 
     <!-- test dependencies -->
-    <testcontainers.version>1.17.6</testcontainers.version>
-    <wiremock.version>3.2.0</wiremock.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
+    <wiremock.version>3.13.1</wiremock.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
 
