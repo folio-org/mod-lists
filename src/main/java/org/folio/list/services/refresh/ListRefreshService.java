@@ -35,7 +35,7 @@ public class ListRefreshService {
   private static final int GET_QUERY_TIME_DELAY_SECONDS = 10;
   @Value("${mod-lists.general.refresh-query-timeout-minutes:90}")
   private int getQueryTimeoutMinutes;
-  private static final int DEFAULT_BATCH_SIZE = 10000;
+  private static final int DEFAULT_BATCH_SIZE = 50000;
 
   private final RefreshSuccessCallback refreshSuccessCallback;
   private final RefreshFailedCallback refreshFailedCallback;
