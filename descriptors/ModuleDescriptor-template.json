@@ -37,64 +37,71 @@
           "methods": ["GET"],
           "pathPattern": "/lists",
           "permissionsRequired": ["lists.collection.get"]
-        }, {
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}",
           "permissionsRequired": ["lists.item.get"]
-        }, {
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/lists/{id}/refresh",
           "permissionsRequired": ["lists.item.post"],
           "modulePermissions": ["users.item.get"]
-        }, {
+        },
+        {
           "methods": ["DELETE"],
           "pathPattern": "/lists/{id}/refresh",
           "permissionsRequired": ["lists.item.refresh.cancel"]
-        },{
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/contents",
           "permissionsRequired": ["lists.item.contents.get"]
-        },{
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/versions",
           "permissionsRequired": ["lists.item.versions.collection.get"]
-        },{
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/versions/{versionNumber}",
           "permissionsRequired": ["lists.item.versions.item.get"]
-        },{
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/exports/{exportId}/download",
           "permissionsRequired": ["lists.item.export.download.get"]
-        }, {
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/lists/{id}/exports/{exportId}/cancel",
           "permissionsRequired": ["lists.item.export.cancel"]
-        }, {
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/lists",
           "permissionsRequired": ["lists.collection.post"],
-          "modulePermissions": [
-            "users.item.get",
-            "configuration.entries.collection.get"
-          ]
-        }, {
+          "modulePermissions": ["users.item.get", "configuration.entries.collection.get"]
+        },
+        {
           "methods": ["PUT"],
           "pathPattern": "/lists/{id}",
           "permissionsRequired": ["lists.item.update"],
-          "modulePermissions": [
-            "users.item.get",
-            "configuration.entries.collection.get"
-          ]
-        }, {
+          "modulePermissions": ["users.item.get", "configuration.entries.collection.get"]
+        },
+        {
           "methods": ["DELETE"],
           "pathPattern": "/lists/{id}",
           "permissionsRequired": ["lists.item.delete"]
-        }, {
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/lists/{id}/exports",
           "permissionsRequired": ["lists.item.export.post"]
-        }, {
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/lists/{id}/exports/{exportId}",
           "permissionsRequired": ["lists.item.export.get"]
@@ -107,7 +114,7 @@
       ]
     }
   ],
-  "permissionSets" : [
+  "permissionSets": [
     {
       "permissionName": "lists.collection.get",
       "displayName": "Lists: Get collection of all lists",
@@ -130,7 +137,7 @@
     },
     {
       "permissionName": "lists.item.post",
-      "replaces":  ["lists.item.refresh"],
+      "replaces": ["lists.item.refresh"],
       "displayName": "Lists: Refresh a list",
       "description": "Refresh a list"
     },
@@ -191,7 +198,7 @@
       "version": "2.0"
     },
     {
-    "id": "entity-types",
+      "id": "entity-types",
       "version": "2.0"
     },
     {
@@ -222,11 +229,14 @@
         "circulation.loans.collection.get",
         "configuration.entries.collection.get",
         "departments.collection.get",
+        "finance.budgets.collection.get",
         "finance.exchange-rate.item.get",
         "finance.expense-classes.collection.get",
         "finance.fiscal-years.collection.get",
-        "finance.funds.collection.get",
         "finance.fund-types.collection.get",
+        "finance.funds.collection.get",
+        "finance.groups.collection.get",
+        "finance.ledgers.collection.get",
         "finance.transactions.collection.get",
         "fqm.entityTypes.collection.get",
         "fqm.entityTypes.item.columnValues.get",
@@ -258,22 +268,20 @@
         "inventory-storage.service-points.collection.get",
         "inventory-storage.statistical-code-types.collection.get",
         "inventory-storage.statistical-codes.collection.get",
-        "invoice.invoices.collection.get",
         "invoice.invoice-lines.collection.get",
+        "invoice.invoices.collection.get",
         "orders.item.get",
         "orders.po-lines.item.get",
         "organizations-storage.categories.collection.get",
         "organizations-storage.organization-types.collection.get",
         "organizations.organizations.collection.get",
+        "patron-blocks.user-summary.item.get",
+        "source-storage.records.collection.get",
         "usergroups.collection.get",
         "users.collection.get",
         "users.item.get",
-        "finance.ledgers.collection.get",
         "voucher.voucher-lines.collection.get",
-        "voucher.vouchers.collection.get",
-        "finance.budgets.collection.get",
-        "finance.groups.collection.get",
-        "source-storage.records.collection.get"
+        "voucher.vouchers.collection.get"
       ]
     }
   },
@@ -283,85 +291,38 @@
     "dockerArgs": {
       "HostConfig": {
         "Memory": 3221225472,
-        "PortBindings": { "8081/tcp": [ { "HostPort": "%p" } ] }
+        "PortBindings": { "8081/tcp": [{ "HostPort": "%p" }] }
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS",
+      {
+        "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0 -XX:MetaspaceSize=384m -XX:MaxMetaspaceSize=512m -Xmx2048m"
       },
-      { "name": "server.port",
-        "value": "8081"
-      },
-      { "name": "DB_HOST",
-        "value": "postgres"
-      },
-      { "name": "DB_PORT",
-        "value": "5432"
-      },
-      { "name": "DB_USERNAME",
-        "value": "folio_admin"
-      },
-      { "name": "DB_PASSWORD",
-        "value": "folio_admin"
-      },
-      { "name": "DB_DATABASE",
-        "value": "okapi_modules"
-      },
-      { "name": "DB_QUERYTIMEOUT",
-        "value": "60000"
-      },
-      { "name": "DB_CHARSET",
-        "value": "UTF-8"
-      },
-      { "name": "DB_MAXPOOLSIZE",
-        "value": "5"
-      },
-      { "name": "MAX_LIST_SIZE",
-        "value": "1250000"
-      },
-      { "name": "LIST_EXPORT_BATCH_SIZE",
-        "value": "1000"
-      },
-      { "name": "S3_BUCKET",
-        "value": ""
-      },
-      { "name": "S3_REGION",
-        "value": "us-west-2"
-      },
-      { "name": "S3_URL",
-        "value": "https://s3.amazonaws.com"
-      },
-      { "name": "S3_IS_AWS",
-        "value": "false"
-      },
-      { "name": "S3_ACCESS_KEY_ID",
-        "value": ""
-      },
-      { "name": "S3_SECRET_ACCESS_KEY",
-        "value": ""
-      },
-      { "name": "S3_SUB_PATH",
-        "value": "mod-lists"
-      },
-      { "name": "mod-lists.list-export.s3-startup-check.enabled",
-        "value": "true"
-      },
-      { "name": "spring.task.execution.pool.max-size",
-        "value": "10"
-      },
-      { "name": "OKAPI_URL",
-        "value": "http://okapi:9130"
-      },
-      { "name": "SYSTEM_USER_PASSWORD",
-        "value": ""
-      },
-      { "name": "SYSTEM_USER_RETRY_WAIT_MINUTES",
-        "value": "10"
-      },
-      { "name": "REFRESH_QUERY_TIMEOUT_MINUTES",
-        "value": "90"
-      }
+      { "name": "server.port", "value": "8081" },
+      { "name": "DB_HOST", "value": "postgres" },
+      { "name": "DB_PORT", "value": "5432" },
+      { "name": "DB_USERNAME", "value": "folio_admin" },
+      { "name": "DB_PASSWORD", "value": "folio_admin" },
+      { "name": "DB_DATABASE", "value": "okapi_modules" },
+      { "name": "DB_QUERYTIMEOUT", "value": "60000" },
+      { "name": "DB_CHARSET", "value": "UTF-8" },
+      { "name": "DB_MAXPOOLSIZE", "value": "5" },
+      { "name": "MAX_LIST_SIZE", "value": "1250000" },
+      { "name": "LIST_EXPORT_BATCH_SIZE", "value": "1000" },
+      { "name": "S3_BUCKET", "value": "" },
+      { "name": "S3_REGION", "value": "us-west-2" },
+      { "name": "S3_URL", "value": "https://s3.amazonaws.com" },
+      { "name": "S3_IS_AWS", "value": "false" },
+      { "name": "S3_ACCESS_KEY_ID", "value": "" },
+      { "name": "S3_SECRET_ACCESS_KEY", "value": "" },
+      { "name": "S3_SUB_PATH", "value": "mod-lists" },
+      { "name": "mod-lists.list-export.s3-startup-check.enabled", "value": "true" },
+      { "name": "spring.task.execution.pool.max-size", "value": "10" },
+      { "name": "OKAPI_URL", "value": "http://okapi:9130" },
+      { "name": "SYSTEM_USER_PASSWORD", "value": "" },
+      { "name": "SYSTEM_USER_RETRY_WAIT_MINUTES", "value": "10" },
+      { "name": "REFRESH_QUERY_TIMEOUT_MINUTES", "value": "90" }
     ]
   }
 }
