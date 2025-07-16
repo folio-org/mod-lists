@@ -75,6 +75,7 @@ public class MigrationService {
 
     return StreamSupport
       .stream(listRepository.findAll().spliterator(), true)
+      .peek(list -> log.info("YYZ Processing list: {}", list.getId()))
       .filter(list -> list.getFqlQuery() != null)
       .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
       .map(list ->
