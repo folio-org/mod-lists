@@ -294,7 +294,8 @@
         "users.item.get",
         "voucher.voucher-lines.collection.get",
         "voucher.vouchers.collection.get",
-        "waives.collection.get"
+        "waives.collection.get",
+        "inventory-storage.instance-note-types.collection.get"
       ]
     }
   },
