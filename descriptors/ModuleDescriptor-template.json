@@ -296,7 +296,9 @@
         "voucher.vouchers.collection.get",
         "waives.collection.get",
         "inventory-storage.instance-note-types.collection.get",
-        "inventory-storage.holdings-note-types.collection.get"
+        "inventory-storage.holdings-note-types.collection.get",
+        "inventory-storage.instance-relationships.collection.get",
+        "inventory-storage.preceding-succeeding-titles.collection.get"
       ]
     }
   },
