@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -14,6 +15,7 @@ import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
+import org.folio.list.exception.ListContentsFqmRequestException;
 import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.RefreshInProgressDuringShutdownException;
 import org.folio.list.exception.VersionNotFoundException;
@@ -25,16 +27,16 @@ import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.refresh.RefreshFailedCallback;
 import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
-import org.folio.querytool.domain.dto.ContentsRequest;
-import org.folio.querytool.domain.dto.EntityType;
-import org.folio.querytool.domain.dto.Field;
-import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.EntityTypeClient.EntityTypeSummaryResponse;
 import org.folio.list.rest.UsersClient;
+import org.folio.querytool.domain.dto.ContentsRequest;
+import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.Field;
+import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
@@ -292,9 +294,9 @@ public class ListService {
   }
 
   private ResultsetPage getListContents(ListEntity list, List<String> fields, Integer offset, Integer limit) {
+    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.READ);
     // If fields are not provided, retrieve all fields from the entity type definition
     if (isEmpty(fields)) {
-      EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.READ);
       fields = getFieldsFromEntityType(entityType, true);
     }
     List<Map<String, Object>> sortedContents = List.of();
@@ -303,10 +305,25 @@ public class ListService {
         .stream()
         .map(ListContent::getContentId)
         .toList();
+      long expectedIdCount = entityType.getColumns().stream()
+        .filter(entityTypeColumn -> Boolean.TRUE.equals(entityTypeColumn.getIsIdColumn()))
+        .count();
+      long contentIdSize = contentIds.stream()
+        .mapToLong(List::size)
+        .findAny()
+        .orElse(expectedIdCount); // No list contents? Then the number of IDs doesn't matter, so use the expected count
+      if (contentIdSize != expectedIdCount) {
+        throw new ListContentsFqmRequestException(list);
+      }
       ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
         .fields(fields)
         .ids(contentIds);
-      sortedContents = queryClient.getContents(contentsRequest);
+      try {
+        sortedContents = queryClient.getContents(contentsRequest);
+      } catch (FeignException.FeignServerException e) {
+        log.error("Encountered an error when attempting to retrieve list contents for list {}", list.getId(), e);
+        throw new ListContentsFqmRequestException(list);
+      }
     }
     return new ResultsetPage().content(sortedContents).totalRecords(list.getRecordsCount());
   }

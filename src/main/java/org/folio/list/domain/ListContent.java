@@ -12,12 +12,14 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 import org.springframework.data.domain.Persistable;
 
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
+@With
 @IdClass(ListContentId.class)
 @Table(name = "list_contents")
 // Implements Persistable so that we can explicitly mark each object as new in the DB
