@@ -3,7 +3,6 @@
   "name": "Missing Items",
   "description": "Missing Items List",
   "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
-  "userFriendlyQuery": "item_status = 'missing'",
   "fqlQuery": "item_status = 'missing'",
   "fields": [
     "id",

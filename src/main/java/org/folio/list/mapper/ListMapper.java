@@ -9,7 +9,6 @@ import org.mapstruct.*;
 public interface ListMapper {
   @Mapping(target = "name", source = "entity.name")
   @Mapping(target = "entityTypeId", source = "entity.entityTypeId")
-  @Mapping(target = "userFriendlyQuery", source = "entity.userFriendlyQuery")
   @Mapping(target = "fqlQuery", source = "entity.fqlQuery")
   @Mapping(target = "fields", source = "entity.fields")
   @Mapping(target = "createdBy", source = "entity.createdBy")

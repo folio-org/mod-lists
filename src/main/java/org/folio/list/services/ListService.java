@@ -76,7 +76,6 @@ public class ListService {
   private final MigrationService migrationService;
   private final QueryClient queryClient;
   private final RefreshFailedCallback refreshFailedCallback;
-  private final UserFriendlyQueryService userFriendlyQueryService;
   private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
@@ -141,10 +140,6 @@ public class ListService {
       listEntity.setFields(getFieldsFromEntityType(entityType, false));
     }
 
-    if (hasText(listRequest.getFqlQuery())) {
-      userFriendlyQueryService.updateListUserFriendlyQuery(listEntity, entityType);
-    }
-
     ListEntity savedEntity = listRepository.save(listEntity);
 
     ListVersion previousVersions = new ListVersion();
@@ -175,11 +170,7 @@ public class ListService {
       if (isEmpty(request.getFields())) {
         request.setFields(list.getFields());
       }
-      String userFriendlyQuery = "";
-      if (hasText(request.getFqlQuery())) {
-        userFriendlyQuery = userFriendlyQueryService.getUserFriendlyQuery(request.getFqlQuery(), entityType);
-      }
-      list.update(request, getCurrentUser(), userFriendlyQuery);
+      list.update(request, getCurrentUser());
 
       if (request.getQueryId() != null && request.getIsActive()) {
         TaskTimer timer = new TaskTimer();

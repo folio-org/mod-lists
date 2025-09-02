@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.UUID;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
@@ -30,9 +29,6 @@ class ListMigrationMapperTest {
 
   @Mock
   private TranslationService translationService;
-
-  @Mock
-  private UserFriendlyQueryService userFriendlyQueryService;
 
   @InjectMocks
   private ListMigrationMapper mapper = new ListMigrationMapperImpl();
@@ -51,14 +47,6 @@ class ListMigrationMapperTest {
   void testFromMigrationResponseNoWarnings() {
     ListEntity sourceEntity = TestDataFixture.getListEntityWithSuccessRefresh();
 
-    doAnswer(invocation -> {
-        ListEntity list = invocation.getArgument(0);
-        list.setUserFriendlyQuery(list.getFqlQuery());
-        return list;
-      })
-      .when(userFriendlyQueryService)
-      .updateListUserFriendlyQuery(any());
-
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
       .fields(List.of("a", "b", "c"))
@@ -70,7 +58,6 @@ class ListMigrationMapperTest {
     assertThat(updatedEntity.getFqlQuery(), is(response.getFqlQuery()));
     assertThat(updatedEntity.getFields(), is(response.getFields()));
     assertThat(updatedEntity.getDescription(), is(sourceEntity.getDescription()));
-    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 
   @Test
@@ -79,14 +66,6 @@ class ListMigrationMapperTest {
 
     when(translationService.format(any(String.class), any(Object[].class)))
       .thenAnswer(invocation -> invocation.getArgument(0));
-
-    doAnswer(invocation -> {
-        ListEntity list = invocation.getArgument(0);
-        list.setUserFriendlyQuery(list.getFqlQuery());
-        return list;
-      })
-      .when(userFriendlyQueryService)
-      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -102,7 +81,6 @@ class ListMigrationMapperTest {
       updatedEntity.getDescription(),
       stringContainsInOrder(sourceEntity.getDescription(), "mod-lists.migration.warning-header", "warning description")
     );
-    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 
   /** @see https://folio-org.atlassian.net/browse/MODLISTS-180 */
@@ -112,14 +90,6 @@ class ListMigrationMapperTest {
 
     when(translationService.format(any(String.class), any(Object[].class)))
       .thenAnswer(invocation -> invocation.getArgument(0));
-
-    doAnswer(invocation -> {
-        ListEntity list = invocation.getArgument(0);
-        list.setUserFriendlyQuery(list.getFqlQuery());
-        return list;
-      })
-      .when(userFriendlyQueryService)
-      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -139,7 +109,6 @@ class ListMigrationMapperTest {
         not(stringContainsInOrder("null"))
       )
     );
-    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 
   @Test
@@ -148,14 +117,6 @@ class ListMigrationMapperTest {
 
     when(translationService.format(any(String.class), any(Object[].class)))
       .thenAnswer(invocation -> invocation.getArgument(0));
-
-    doAnswer(invocation -> {
-        ListEntity list = invocation.getArgument(0);
-        list.setUserFriendlyQuery(list.getFqlQuery());
-        return list;
-      })
-      .when(userFriendlyQueryService)
-      .updateListUserFriendlyQuery(any());
 
     FqmMigrateResponse response = new FqmMigrateResponse()
       .entityTypeId(UUID.fromString("7c3f9133-bda0-5206-944a-a7a2c2bbff80"))
@@ -183,6 +144,5 @@ class ListMigrationMapperTest {
         "third warning description"
       )
     );
-    assertThat(updatedEntity.getUserFriendlyQuery(), is("new query"));
   }
 }
