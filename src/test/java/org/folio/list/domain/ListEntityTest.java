@@ -158,7 +158,7 @@ class ListEntityTest {
     UsersClient.User user = new UsersClient.User(UUID.randomUUID(), Optional.of(new UsersClient.Personal("Test", "User")));
     ListEntity list = TestDataFixture.getInactiveListEntity();
     ListUpdateRequestDTO listUpdateRequestDTO = TestDataFixture.getListUpdateRequestDTO();
-    list.update(listUpdateRequestDTO, user, "item_status = 'missing'");
+    list.update(listUpdateRequestDTO, user);
     assertEquals(list.getName(), listUpdateRequestDTO.getName());
     assertEquals(list.getDescription(), listUpdateRequestDTO.getDescription());
     assertEquals(list.getFqlQuery(), listUpdateRequestDTO.getFqlQuery());

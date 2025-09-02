@@ -25,10 +25,6 @@
       "description": "Name of the entity Type",
       "type": "string"
     },
-    "userFriendlyQuery" : {
-      "description": "User Friendly Query",
-      "type": "string"
-    },
     "fqlQuery" : {
       "description": "FQL Query",
       "type": "string"

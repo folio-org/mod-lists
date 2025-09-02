@@ -23,7 +23,6 @@ import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.User;
 import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.ListActions;
-import org.folio.list.services.UserFriendlyQueryService;
 import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.services.ListService;
 import org.folio.list.services.ListValidationService;
@@ -48,11 +47,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.util.StringUtils.hasText;
 
 @ExtendWith(MockitoExtension.class)
 class ListServiceTest {
@@ -100,9 +97,6 @@ class ListServiceTest {
 
   @Mock
   private MigrationService migrationService;
-
-  @Mock
-  private UserFriendlyQueryService userFriendlyQueryService;
 
   @Mock
   private UsersClient usersClient;
@@ -226,7 +220,6 @@ class ListServiceTest {
   void testCreateList() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     UUID userId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
@@ -237,10 +230,6 @@ class ListServiceTest {
     when(listRepository.save(entity)).thenReturn(entity);
 
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
-    doAnswer(invocation -> {
-      ((ListEntity) invocation.getArgument(0)).setUserFriendlyQuery(userFriendlyQuery);
-      return null;
-    }).when(userFriendlyQueryService).updateListUserFriendlyQuery(entity, entityType);
 
     var actual = listService.createList(listRequestDto);
     ListDTO expected = new ListDTO()
@@ -249,7 +238,6 @@ class ListServiceTest {
       .description(listRequestDto.getDescription())
       .entityTypeId(listRequestDto.getEntityTypeId())
       .entityTypeName(null)
-      .userFriendlyQuery(userFriendlyQuery)
       .fqlQuery(listRequestDto.getFqlQuery())
       .fields(listRequestDto.getFields())
       .createdBy(actual.getCreatedBy())
@@ -267,7 +255,6 @@ class ListServiceTest {
       .failedRefresh(actual.getFailedRefresh())
       .version(actual.getVersion());
 
-    assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -291,7 +278,6 @@ class ListServiceTest {
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
     ListEntity list = listEntityArgumentCaptor.getValue();
-    assertFalse(hasText(list.getUserFriendlyQuery()));
   }
 
   @Test
@@ -324,7 +310,6 @@ class ListServiceTest {
 
     UUID userId = UUID.randomUUID();
     UUID queryId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
 
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getInactiveListEntity();
@@ -340,13 +325,8 @@ class ListServiceTest {
     when(listRepository.save(entity)).thenReturn(entity);
 
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
-    doAnswer(invocation -> {
-      ((ListEntity) invocation.getArgument(0)).setUserFriendlyQuery(userFriendlyQuery);
-      return null;
-    }).when(userFriendlyQueryService).updateListUserFriendlyQuery(entity, entityType);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     listService.createList(listRequestDto);
-    assertEquals(entity.getUserFriendlyQuery(), userFriendlyQuery);
     assertNull(entity.getSuccessRefresh());
     assertNull(entity.getFailedRefresh());
     assertNull(entity.getInProgressRefresh());
@@ -378,7 +358,6 @@ class ListServiceTest {
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
     ListEntity list = listEntityArgumentCaptor.getValue();
-    assertFalse(hasText(list.getUserFriendlyQuery()));
     assertEquals(expectedFields, list.getFields());
   }
 
@@ -387,7 +366,6 @@ class ListServiceTest {
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO();
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
 
     User user = new User(userId, Optional.of(new UsersClient.Personal(FIRSTNAME, LASTNAME)));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
@@ -398,7 +376,6 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
-    when(userFriendlyQueryService.getUserFriendlyQuery(entity.getFqlQuery(), entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listVersionRepository.save(any(ListVersion.class))).thenReturn(previousVersions);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -417,7 +394,6 @@ class ListServiceTest {
     assertThat(entity.getUpdatedBy()).isEqualTo(userId);
     assertThat(user.getFullName()).contains(entity.getUpdatedByUsername());
     assertThat(entity.getVersion()).isEqualTo(previousVersion + 1);
-    assertThat(entity.getUserFriendlyQuery()).isEqualTo(userFriendlyQuery);
 
     // ensure we saved the previous version correctly
     ArgumentCaptor<ListVersion> oldVersion = ArgumentCaptor.forClass(ListVersion.class);
@@ -431,7 +407,6 @@ class ListServiceTest {
     listUpdateRequestDto.setFields(null);
     UUID userId = UUID.randomUUID();
     UUID listId = UUID.randomUUID();
-    String userFriendlyQuery = "some string";
     // fields from the original ListEntity and NOT from the entity type
     List<String> expectedFields = List.of("id", "item_status");
 
@@ -445,7 +420,6 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
-    when(userFriendlyQueryService.getUserFriendlyQuery(entity.getFqlQuery(), entityType)).thenReturn(userFriendlyQuery);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);

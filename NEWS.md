@@ -1,4 +1,7 @@
-# 3.1.x
+# 3.2.0
+- [MODLISTS-109] Remove precomputed userFriendlyQuery from list details (**major change of `lists` interface, v1.0 -> v2.0**)
+
+[MODLISTS-109]: https://folio-org.atlassian.net/browse/MODLISTS-109
 
 # 3.1.5
 - [MODFQMMGR-804] Add permission for simple SRS record ET

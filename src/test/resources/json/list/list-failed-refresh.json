@@ -3,7 +3,6 @@
   "name": "Missing Items",
   "description": "Missing Items List",
   "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
-  "userFriendlyQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
   "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
   "fields": [
     "id",
