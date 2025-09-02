@@ -3,17 +3,17 @@ package org.folio.list.rest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import feign.FeignException;
 import java.util.UUID;
+
+import org.folio.list.exception.EntityTypeNotFoundException;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
-import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
@@ -58,6 +58,6 @@ class EntityTypeClientTest {
     when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false))
       .thenThrow(new FeignException.NotFound("Entity type not found", mock(feign.Request.class), null, null));
 
-    assertThrows(NotFoundException.class, () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false));
+    assertThrows(EntityTypeNotFoundException.class, () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false));
   }
 }

@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.folio.list.domain.dto.ListAppError;
 import org.folio.list.domain.dto.Parameter;
 import org.folio.list.exception.AbstractListException;
-import org.folio.spring.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,17 +30,6 @@ public class ListExceptionHandler {
     String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
     log.error(REQUEST_FAILED_MESSAGE, url, sanitizeExceptionMessage(exception.getMessage()));
     return new ResponseEntity<>(exception.getError(), exception.getHttpStatus());
-  }
-
-  @ExceptionHandler({NotFoundException.class})
-  public ResponseEntity<ListAppError> handleEntityTypeNotFound(Exception exception,
-                                                              ServletWebRequest webRequest) {
-    String url = webRequest.getHttpMethod() + " " + webRequest.getRequest().getRequestURI();
-    log.error(REQUEST_FAILED_MESSAGE, url, exception.getMessage());
-    ListAppError listAppError = new ListAppError()
-      .message(exception.getMessage())
-      .code("not.found");
-    return new ResponseEntity<>(listAppError, HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

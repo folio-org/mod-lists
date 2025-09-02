@@ -17,7 +17,6 @@ import org.folio.list.services.refresh.ListRefreshService;
 import org.folio.list.util.TaskTimer;
 import org.folio.list.util.TestDataFixture;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import feign.FeignException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -119,7 +120,7 @@ class ListServicePostRefreshTest {
     when(listRepository.save(listEntityCaptor.capture())).thenReturn(fetchedEntity);
     when(refreshMapper.toListRefreshDTO(any(ListRefreshDetails.class))).thenReturn(mock(org.folio.list.domain.dto.ListRefreshDTO.class));
     when(executionContext.getUserId()).thenReturn(userId);
-    when(usersClient.getUser(userId)).thenThrow(NotFoundException.class);
+    when(usersClient.getUser(userId)).thenThrow(FeignException.NotFound.class);
 
     listService.performRefresh(listId);
     ListEntity savedEntity = listEntityCaptor.getValue();
