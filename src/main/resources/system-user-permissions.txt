@@ -5,7 +5,6 @@ batch-groups.collection.get
 circulation-storage.loan-policies.collection.get
 circulation.loans.collection.get
 comments.collection.get
-configuration.entries.collection.get
 departments.collection.get
 feefineactions.collection.get
 feefines.collection.get
