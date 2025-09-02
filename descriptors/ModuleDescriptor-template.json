@@ -83,13 +83,13 @@
           "methods": ["POST"],
           "pathPattern": "/lists",
           "permissionsRequired": ["lists.collection.post"],
-          "modulePermissions": ["users.item.get", "configuration.entries.collection.get"]
+          "modulePermissions": ["users.item.get"]
         },
         {
           "methods": ["PUT"],
           "pathPattern": "/lists/{id}",
           "permissionsRequired": ["lists.item.update"],
-          "modulePermissions": ["users.item.get", "configuration.entries.collection.get"]
+          "modulePermissions": ["users.item.get"]
         },
         {
           "methods": ["DELETE"],
@@ -194,10 +194,6 @@
   ],
   "requires": [
     {
-      "id": "configuration",
-      "version": "2.0"
-    },
-    {
       "id": "entity-types",
       "version": "2.0"
     },
@@ -229,7 +225,6 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation.loans.collection.get",
         "comments.collection.get",
-        "configuration.entries.collection.get",
         "departments.collection.get",
         "feefineactions.collection.get",
         "feefines.collection.get",
