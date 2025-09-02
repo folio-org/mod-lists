@@ -5,11 +5,11 @@ import feign.FeignException;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.list.exception.EntityTypeNotFoundException;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
-import org.folio.spring.exception.NotFoundException;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -37,7 +37,7 @@ public interface EntityTypeClient {
       String message = e.getMessage();
       throw new InsufficientEntityTypePermissionsException(entityTypeId, attemptedAction, message);
     } catch (FeignException.NotFound e) {
-      throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
+      throw new EntityTypeNotFoundException(entityTypeId, attemptedAction);
     }
   }
 

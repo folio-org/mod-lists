@@ -3,13 +3,13 @@ package org.folio.list.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
+import org.folio.list.exception.EntityTypeNotFoundException;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.exception.InvalidFqlException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
 import org.folio.list.util.DateMatcher;
 import org.folio.list.util.TestDataFixture;
-import org.folio.spring.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -101,9 +101,9 @@ class ListControllerCreateTest {
   @Test
   void shouldReturnHttp404WhenEntityTypeNotFound() throws Exception {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
-    String expectedErrorMessage = "Entity type with id " + listRequestDto.getEntityTypeId() + " was not found.";
+    String expectedErrorMessage = "Entity type with ID " + listRequestDto.getEntityTypeId() + " does not exist.";
     when(listService.createList(listRequestDto))
-      .thenThrow(new NotFoundException("Entity type with id " + listRequestDto.getEntityTypeId() + " was not found."));
+      .thenThrow(new EntityTypeNotFoundException(listRequestDto.getEntityTypeId(), ListActions.CREATE));
 
     var requestBuilder = post("/lists")
       .content(new ObjectMapper().writeValueAsString(listRequestDto))
@@ -111,7 +111,7 @@ class ListControllerCreateTest {
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isNotFound())
-      .andExpect(jsonPath("$.code", is("not.found")))
+      .andExpect(jsonPath("$.code", is("create-entity.not.found")))
       .andExpect(jsonPath("$.message", is(expectedErrorMessage)));
   }
 
