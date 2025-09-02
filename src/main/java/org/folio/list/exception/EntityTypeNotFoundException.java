@@ -31,7 +31,7 @@ public class EntityTypeNotFoundException extends AbstractListException {
 
   @Override
   public String getMessage() {
-    return "Entity type ID %s does not exist".formatted(entityId);
+    return "Entity type with ID %s does not exist.".formatted(entityId);
   }
 
   @Override

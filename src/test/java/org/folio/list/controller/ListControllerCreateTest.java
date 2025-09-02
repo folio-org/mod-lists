@@ -102,7 +102,7 @@ class ListControllerCreateTest {
   @Test
   void shouldReturnHttp404WhenEntityTypeNotFound() throws Exception {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
-    String expectedErrorMessage = "Entity type with ID " + listRequestDto.getEntityTypeId() + " was not found.";
+    String expectedErrorMessage = "Entity type with ID " + listRequestDto.getEntityTypeId() + " does not exist.";
     when(listService.createList(listRequestDto))
       .thenThrow(new EntityTypeNotFoundException(listRequestDto.getEntityTypeId(), ListActions.CREATE));
 
@@ -112,7 +112,7 @@ class ListControllerCreateTest {
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isNotFound())
-      .andExpect(jsonPath("$.code", is("entity.not.found")))
+      .andExpect(jsonPath("$.code", is("create-entity.not.found")))
       .andExpect(jsonPath("$.message", is(expectedErrorMessage)));
   }
 
