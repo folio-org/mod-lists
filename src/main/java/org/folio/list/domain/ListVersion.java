@@ -68,15 +68,11 @@ public class ListVersion {
   @NotNull
   private int version;
 
-  @Column(name = "user_friendly_query")
-  private String userFriendlyQuery;
-
   public void setDataFromListEntity(ListEntity listEntity) {
     listId = listEntity.getId();
     name = listEntity.getName();
     fqlQuery = listEntity.getFqlQuery();
     description = listEntity.getDescription();
-    userFriendlyQuery = listEntity.getUserFriendlyQuery();
     fields = listEntity.getFields();
     updatedBy = listEntity.getUpdatedBy();
     updatedByUsername = listEntity.getUpdatedByUsername();

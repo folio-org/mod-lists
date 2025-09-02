@@ -2,16 +2,23 @@ package org.folio.list.mapper;
 
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListVersionDTO;
-import org.mapstruct.*;
+import org.mapstruct.Builder;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = {MappingMethods.class, ListRefreshMapper.class}, builder = @Builder(disableBuilder = true))
+@Mapper(
+  componentModel = MappingConstants.ComponentModel.SPRING,
+  injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+  uses = { MappingMethods.class, ListRefreshMapper.class },
+  builder = @Builder(disableBuilder = true)
+)
 public interface ListVersionMapper {
   @Mapping(target = "id", source = "listVersion.id")
   @Mapping(target = "listId", source = "listVersion.listId")
   @Mapping(target = "name", source = "listVersion.name")
   @Mapping(target = "description", source = "listVersion.description")
-  @Mapping(target = "userFriendlyQuery", source = "listVersion.userFriendlyQuery")
   @Mapping(target = "fqlQuery", source = "listVersion.fqlQuery")
   @Mapping(target = "fields", source = "listVersion.fields")
   @Mapping(target = "isActive", source = "listVersion.isActive")

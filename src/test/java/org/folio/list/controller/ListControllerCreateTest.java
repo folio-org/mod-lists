@@ -56,7 +56,6 @@ class ListControllerCreateTest {
       .andExpect(jsonPath("$.name", is(listDto.getName())))
       .andExpect(jsonPath("$.description", is(listDto.getDescription())))
       .andExpect(jsonPath("$.name", is(listDto.getName())))
-      .andExpect(jsonPath("$.userFriendlyQuery", is(listDto.getUserFriendlyQuery())))
       .andExpect(jsonPath("$.fqlQuery", is(listDto.getFqlQuery())))
       .andExpect(jsonPath("$.createdByUsername", is(listDto.getCreatedByUsername())))
       .andExpect(jsonPath("$.createdDate", new DateMatcher(listDto.getCreatedDate())))

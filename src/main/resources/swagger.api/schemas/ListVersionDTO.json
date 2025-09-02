@@ -16,10 +16,6 @@
       "description": "List description",
       "type": "string"
     },
-    "userFriendlyQuery" : {
-      "description": "User Friendly Query",
-      "type": "string"
-    },
     "fqlQuery" : {
       "description": "FQL Query",
       "type": "string"

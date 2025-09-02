@@ -106,9 +106,6 @@ public class ListEntity implements Serializable {
   @Column(name = "version")
   private int version;
 
-  @Column(name = "user_friendly_query")
-  private String userFriendlyQuery;
-
   @Column(name = "is_deleted")
   @NotNull
   private Boolean isDeleted;
@@ -189,13 +186,11 @@ public class ListEntity implements Serializable {
 
   public void update(
     ListUpdateRequestDTO request,
-    User newUpdatedBy,
-    String newUserFriendlyQuery
+    User newUpdatedBy
   ) {
     name = request.getName();
     description = request.getDescription();
     fqlQuery = request.getFqlQuery();
-    userFriendlyQuery = newUserFriendlyQuery;
     fields = request.getFields();
     isActive = request.getIsActive();
     isPrivate = request.getIsPrivate();

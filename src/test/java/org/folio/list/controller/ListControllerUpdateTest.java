@@ -59,7 +59,6 @@ class ListControllerUpdateTest {
       .andExpect(jsonPath("$.name", is(listDto.getName())))
       .andExpect(jsonPath("$.description", is(listDto.getDescription())))
       .andExpect(jsonPath("$.name", is(listDto.getName())))
-      .andExpect(jsonPath("$.userFriendlyQuery", is(listDto.getUserFriendlyQuery())))
       .andExpect(jsonPath("$.entityTypeId", is(listDto.getEntityTypeId().toString())))
       .andExpect(jsonPath("$.fqlQuery", is(listDto.getFqlQuery())))
       .andExpect(jsonPath("$.fields", is(listDto.getFields())))
