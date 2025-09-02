@@ -299,19 +299,23 @@ public class ListService {
       long expectedIdCount = entityType.getColumns().stream()
         .filter(entityTypeColumn -> Boolean.TRUE.equals(entityTypeColumn.getIsIdColumn()))
         .count();
+      if (expectedIdCount == 0) {
+        log.error("Entity type {} has no ID columns", entityType.getId());
+        throw new ListContentsFqmRequestException(list, "The upstream data schema is invalid.");
+      }
       long contentIdSize = contentIds.stream()
         .mapToLong(List::size)
         .findAny()
         .orElse(expectedIdCount); // No list contents? Then the number of IDs doesn't matter, so use the expected count
       if (contentIdSize != expectedIdCount) {
-        throw new ListContentsFqmRequestException(list);
+        throw new ListContentsFqmRequestException(list, "The upstream data schema changed. This can usually be fixed by refreshing the list.");
       }
       ContentsRequest contentsRequest = new ContentsRequest().entityTypeId(list.getEntityTypeId())
         .fields(fields)
         .ids(contentIds);
       try {
         sortedContents = queryClient.getContents(contentsRequest);
-      } catch (FeignException.FeignServerException e) {
+      } catch (FeignException.FeignServerException | FeignException.BadRequest e) {
         log.error("Encountered an error when attempting to retrieve list contents for list {}", list.getId(), e);
         throw new ListContentsFqmRequestException(list);
       }

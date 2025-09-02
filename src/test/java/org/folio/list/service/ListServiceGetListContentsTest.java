@@ -226,7 +226,7 @@ class ListServiceGetListContentsTest {
       () -> listService.getListContents(listId, fields, offset, size)
     );
 
-    assertThat(exception.getMessage()).contains("Please refresh the list");
+    assertThat(exception.getMessage()).startsWith("Failed to retrieve list contents");
   }
 
   @Test
