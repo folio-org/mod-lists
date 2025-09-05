@@ -75,3 +75,4 @@ inventory-storage.instance-note-types.collection.get
 inventory-storage.holdings-note-types.collection.get
 inventory-storage.electronic-access-relationships.collection.get
 mod-settings.entries.collection.get
+mod-settings_global_read_stripes-core_prefs.manage

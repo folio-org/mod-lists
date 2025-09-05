@@ -274,6 +274,7 @@
         "manual-block-templates.collection.get",
         "manualblocks.collection.get",
         "mod-settings.entries.collection.get",
+        "mod-settings_global_read_stripes-core_prefs.manage",
         "orders.item.get",
         "orders.po-lines.item.get",
         "organizations-storage.categories.collection.get",
