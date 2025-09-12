@@ -248,6 +248,7 @@
         "fqm.query.async.results.sortedids.get",
         "fqm.query.privileged.async.results.post",
         "fqm.version.get",
+        "inventory-storage.alternative-title-types.collection.get",
         "inventory-storage.call-number-types.collection.get",
         "inventory-storage.classification-types.collection.get",
         "inventory-storage.contributor-name-types.collection.get",
