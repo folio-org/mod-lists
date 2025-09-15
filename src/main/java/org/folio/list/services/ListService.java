@@ -83,7 +83,7 @@ public class ListService {
 
     log.info("Attempting to get all lists");
 
-    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null);
+    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null, false);
 
     migrationService.verifyListsAreUpToDate(entityTypeSummaryResponse._version());
 

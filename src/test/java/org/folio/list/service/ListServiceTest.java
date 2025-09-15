@@ -131,7 +131,7 @@ class ListServiceTest {
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
-    when(entityTypeClient.getEntityTypeSummary(null))
+    when(entityTypeClient.getEntityTypeSummary(null, false))
       .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2, expectedSummary3), "newest and bestest"));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
@@ -179,7 +179,7 @@ class ListServiceTest {
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
     when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
-    when(entityTypeClient.getEntityTypeSummary(null))
+    when(entityTypeClient.getEntityTypeSummary(null, false))
       .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
 
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of(listSummaryDto1, listSummaryDto2));
@@ -200,7 +200,7 @@ class ListServiceTest {
 
   @Test
   void getAllListsShouldReturnEmptyPageForEmptySearchEntityTypeIds() {
-    when(entityTypeClient.getEntityTypeSummary(null)).thenReturn(new EntityTypeSummaryResponse(List.of(), "newest and bestest"));
+    when(entityTypeClient.getEntityTypeSummary(null, false)).thenReturn(new EntityTypeSummaryResponse(List.of(), "newest and bestest"));
     Page<ListSummaryDTO> expected = new PageImpl<>(List.of());
     var actual = listService.getAllLists(
       Pageable.ofSize(100),

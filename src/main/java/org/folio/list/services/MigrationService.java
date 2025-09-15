@@ -150,7 +150,7 @@ public class MigrationService {
     log.info("Migrating cross-tenant lists to private, to cover cases in MODLISTS-152");
 
     List<EntityTypeSummary> crossTenantEntityTypes = systemUserScopedExecutionService
-      .executeSystemUserScoped(() -> entityTypeClient.getEntityTypeSummary(null))
+      .executeSystemUserScoped(() -> entityTypeClient.getEntityTypeSummary(null, false))
       .entityTypes()
       .stream()
       .filter(EntityTypeSummary::crossTenantQueriesEnabled)

@@ -241,7 +241,7 @@ class MigrationServiceTest {
     ListEntity listToNotUpdate = spy(new ListEntity().withEntityTypeId(nonCrossTenantEntityType));
 
     when(migrationRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred()).thenReturn(false);
-    when(entityTypeClient.getEntityTypeSummary(null))
+    when(entityTypeClient.getEntityTypeSummary(null, false))
       .thenReturn(
         new EntityTypeClient.EntityTypeSummaryResponse(
           List.of(
