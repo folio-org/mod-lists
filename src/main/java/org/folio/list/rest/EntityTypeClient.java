@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "entity-types")
 public interface EntityTypeClient {
   @GetMapping("")
-  EntityTypeSummaryResponse getEntityTypeSummary(@RequestParam List<UUID> ids, boolean includeAll);
+  EntityTypeSummaryResponse getEntityTypeSummary(@RequestParam List<UUID> ids, @RequestParam boolean includeAll);
 
   @GetMapping("/{entityTypeId}")
   EntityType getEntityType(@RequestHeader UUID entityTypeId);
