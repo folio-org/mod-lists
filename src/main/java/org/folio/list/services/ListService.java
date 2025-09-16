@@ -78,8 +78,10 @@ public class ListService {
   private final RefreshFailedCallback refreshFailedCallback;
   private final UsersClient usersClient;
 
+  @SuppressWarnings("java:S107")
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
-                                           Boolean isPrivate, boolean includeDeleted, boolean includePrivateEntityTypes, OffsetDateTime updatedAsOf) {
+                                           Boolean isPrivate, boolean includeDeleted, boolean includePrivateEntityTypes,
+                                           OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
 
