@@ -37,6 +37,7 @@ public class ListController implements ListApi {
                                                            Boolean active,
                                                            Boolean isPrivate, // Note: query param name is "private"
                                                            Boolean includeDeleted,
+                                                           Boolean includePrivateEntityTypes,
                                                            String updatedAsOf
   ) {
     OffsetDateTime providedTimestamp;
@@ -52,6 +53,7 @@ public class ListController implements ListApi {
         active,
         isPrivate,
         Boolean.TRUE.equals(includeDeleted),
+        Boolean.TRUE.equals(includePrivateEntityTypes),
         providedTimestamp
       )
     );

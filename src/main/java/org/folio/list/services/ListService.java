@@ -79,11 +79,11 @@ public class ListService {
   private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
-                                           Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf) {
+                                           Boolean isPrivate, boolean includeDeleted, boolean includePrivateEntityTypes, OffsetDateTime updatedAsOf) {
 
     log.info("Attempting to get all lists");
 
-    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null, false);
+    EntityTypeSummaryResponse entityTypeSummaryResponse = entityTypeClient.getEntityTypeSummary(null, includePrivateEntityTypes);
 
     migrationService.verifyListsAreUpToDate(entityTypeSummaryResponse._version());
 

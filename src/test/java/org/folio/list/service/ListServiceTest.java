@@ -143,6 +143,7 @@ class ListServiceTest {
       true,
       false,
       false,
+      false,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
@@ -191,6 +192,7 @@ class ListServiceTest {
       true,
       false,
       false,
+      false,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
@@ -207,6 +209,7 @@ class ListServiceTest {
       List.of(UUID.randomUUID(), UUID.randomUUID()),
       null,
       true,
+      false,
       false,
       false,
       null

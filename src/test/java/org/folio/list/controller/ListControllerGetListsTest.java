@@ -57,7 +57,7 @@ class ListControllerGetListsTest {
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-     isNull(), isNull(), eq(false), isNull())).thenReturn(listSummaryResultsDto);
+     isNull(), isNull(), eq(false), eq(false), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -94,7 +94,7 @@ class ListControllerGetListsTest {
 
 
     when(listService.getAllLists(any(Pageable.class), Mockito.eq(listIds),
-      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(false), Mockito.eq(providedTimestamp)))
+      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(false), eq(false), Mockito.eq(providedTimestamp)))
       .thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
@@ -130,7 +130,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, false, null)).thenReturn(listSummaryResultsDto);
+      null, false, false, false, false, null)).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())

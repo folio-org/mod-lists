@@ -63,6 +63,12 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: includePrivateEntityTypes
+          in: query
+          description: Indicates if lists for private entity types should be included in the results (default false)
+          required: false
+          schema:
+            type: boolean
         - name: updatedAsOf
           in: query
           description: Indicates the minimum create/update timestamp to filter lists by
