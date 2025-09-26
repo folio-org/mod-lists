@@ -55,6 +55,7 @@ manual-block-templates.collection.get
 manualblocks.collection.get
 orders.item.get
 orders.po-lines.item.get
+orders-storage.acquisition-methods.collection.get
 organizations-storage.categories.collection.get
 organizations-storage.organization-types.collection.get
 organizations.organizations.collection.get
