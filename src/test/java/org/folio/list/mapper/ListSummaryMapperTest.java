@@ -21,10 +21,9 @@ class ListSummaryMapperTest {
   @Test
   void shouldMapEntityToDto() {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
-    ListSummaryDTO dto = listSummaryMapper.toListSummaryDTO(entity, "Item");
+    ListSummaryDTO dto = listSummaryMapper.toListSummaryDTO(entity);
     assertEquals(dto.getName(), entity.getName());
     assertEquals(dto.getEntityTypeId(), entity.getEntityTypeId());
-    assertEquals("Item", dto.getEntityTypeName());
     assertEquals(dto.getCreatedByUsername(), entity.getCreatedByUsername());
     assertEquals(dto.getIsPrivate(), entity.getIsPrivate());
     assertEquals(dto.getLatestRefreshFailed(), entity.refreshFailed());

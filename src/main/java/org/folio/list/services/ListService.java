@@ -47,12 +47,13 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
-import static java.util.stream.Collectors.toMap;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.springframework.util.StringUtils.hasText;
 
 @Log4j2
 @Service
@@ -116,10 +117,8 @@ public class ListService {
       updatedAsOf
     );
 
-    // List database do not store entity type labels. Only entity type ID is available in List database.
-    Map<UUID, String> entityTypeIdLabelPair = getEntityTypeLabelMap(entityTypeSummaryResponse.entityTypes());
     List<ListSummaryDTO> content = lists
-      .map(l -> summaryMapper.toListSummaryDTO(l, entityTypeIdLabelPair.get(l.getEntityTypeId())))
+      .map(summaryMapper::toListSummaryDTO)
       .getContent();
     return new ListSummaryResultsDTO()
       .content(content)
@@ -321,12 +320,6 @@ public class ListService {
       }
     }
     return new ResultsetPage().content(sortedContents).totalRecords(list.getRecordsCount());
-  }
-
-  private Map<UUID, String> getEntityTypeLabelMap(List<EntityTypeSummary> entityTypes) {
-    return entityTypes
-      .stream()
-      .collect(toMap(EntityTypeSummary::id, EntityTypeSummary::label));
   }
 
   private UsersClient.User getCurrentUser() {

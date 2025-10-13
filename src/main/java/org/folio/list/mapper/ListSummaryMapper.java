@@ -9,7 +9,6 @@ import org.mapstruct.*;
 public interface ListSummaryMapper {
   @Mapping(target = "name", source = "list.name")
   @Mapping(target = "entityTypeId", source = "list.entityTypeId")
-  @Mapping(target = "entityTypeName", source = "entityTypeName")
   @Mapping(target = "createdByUsername", source = "list.createdByUsername")
   @Mapping(target = "createdDate", source = "list.createdDate")
   @Mapping(target = "isActive", source = "list.isActive")
@@ -23,5 +22,5 @@ public interface ListSummaryMapper {
   @Mapping(target = "refreshedByUsername", source = "list.successRefresh.refreshedByUsername")
   @Mapping(target = "isRefreshing", expression = "java(list.isRefreshing())")
   @Mapping(target = "latestRefreshFailed", expression = "java(list.refreshFailed())")
-  ListSummaryDTO toListSummaryDTO(ListEntity list, String entityTypeName);
+  ListSummaryDTO toListSummaryDTO(ListEntity list);
 }

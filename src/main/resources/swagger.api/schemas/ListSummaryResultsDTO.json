@@ -44,10 +44,6 @@
         "type": "string",
         "format": "UUID"
       },
-      "entityTypeName" : {
-        "description": "Name of the entity Type",
-        "type": "string"
-      },
       "createdByUsername" : {
         "description": "Created By Username",
         "type": "string"
@@ -113,8 +109,7 @@
     "required": [
       "id",
       "name",
-      "entityTypeId",
-      "entityTypeName"
+      "entityTypeId"
     ]
   }
 }
