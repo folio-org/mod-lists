@@ -118,7 +118,7 @@ public class ListService {
     );
 
     List<ListSummaryDTO> content = lists
-      .map(l -> summaryMapper.toListSummaryDTO(l))
+      .map(summaryMapper::toListSummaryDTO)
       .getContent();
     return new ListSummaryResultsDTO()
       .content(content)
