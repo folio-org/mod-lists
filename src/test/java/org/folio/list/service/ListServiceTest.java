@@ -129,8 +129,8 @@ class ListServiceTest {
       Mockito.eq(false),
       any()
     )).thenReturn(listEntities);
-    when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
-    when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
+    when(listSummaryMapper.toListSummaryDTO(entity1)).thenReturn(listSummaryDto1);
+    when(listSummaryMapper.toListSummaryDTO(entity2)).thenReturn(listSummaryDto2);
     when(entityTypeClient.getEntityTypeSummary(null))
       .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2, expectedSummary3), "newest and bestest"));
 
@@ -177,8 +177,8 @@ class ListServiceTest {
       Mockito.eq(false),
       any()
     )).thenReturn(listEntities);
-    when(listSummaryMapper.toListSummaryDTO(entity1, "Item")).thenReturn(listSummaryDto1.entityTypeName("Item"));
-    when(listSummaryMapper.toListSummaryDTO(entity2, "Loan")).thenReturn(listSummaryDto2.entityTypeName("Loan"));
+    when(listSummaryMapper.toListSummaryDTO(entity1)).thenReturn(listSummaryDto1);
+    when(listSummaryMapper.toListSummaryDTO(entity2)).thenReturn(listSummaryDto2);
     when(entityTypeClient.getEntityTypeSummary(null))
       .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
 
@@ -237,7 +237,6 @@ class ListServiceTest {
       .name(listRequestDto.getName())
       .description(listRequestDto.getDescription())
       .entityTypeId(listRequestDto.getEntityTypeId())
-      .entityTypeName(null)
       .fqlQuery(listRequestDto.getFqlQuery())
       .fields(listRequestDto.getFields())
       .createdBy(actual.getCreatedBy())
