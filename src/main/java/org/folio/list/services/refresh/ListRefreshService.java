@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.awaitility.Awaitility;
-import org.folio.list.configuration.ListAppConfiguration;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.dto.ListConfiguration;
 import org.folio.list.exception.MaxListSizeExceededException;
@@ -35,7 +34,8 @@ public class ListRefreshService {
   private static final int GET_QUERY_TIME_DELAY_SECONDS = 10;
   @Value("${mod-lists.general.refresh-query-timeout-minutes:90}")
   private int getQueryTimeoutMinutes;
-  private static final int DEFAULT_BATCH_SIZE = 1000;
+  @Value("${mod-lists.general.refresh-batch-size:10000}")
+  private int refreshBatchSize;
 
   private final RefreshSuccessCallback refreshSuccessCallback;
   private final RefreshFailedCallback refreshFailedCallback;
@@ -115,11 +115,11 @@ public class ListRefreshService {
       list.getInProgressRefreshId().map(UUID::toString).orElse("NONE"));
     DataBatchCallback dataBatchCallback = dataBatchCallbackSupplier.get();
     int offset = 0;
-    List<List<String>> ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
+    List<List<String>> ids = queryClient.getSortedIds(queryId, offset, refreshBatchSize);
     while (!CollectionUtils.isEmpty(ids)) {
       offset += ids.size();
       dataBatchCallback.accept(list, ids);
-      ids = queryClient.getSortedIds(queryId, offset, DEFAULT_BATCH_SIZE);
+      ids = queryClient.getSortedIds(queryId, offset, refreshBatchSize);
     }
     return offset;
   }
