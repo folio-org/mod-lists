@@ -67,6 +67,7 @@ mvn clean install
 | mod-lists.list-export.s3-startup-check.enabled | true                     | Verify that S3/MinIO is accessible on startup                                                               |
 | spring.task.execution.pool.max-size            | 10                       | refresh/export/migrate thread pool's max size                                                               |
 | REFRESH_QUERY_TIMEOUT_MINUTES                  | 90                       | Max time to wait for an FQL query to run during a list refresh                                              |
+| REFRESH_BATCH_SIZE                             | 10000                    | Number of results to retrieve at a time from FQM when refreshing lists                                      |
 
 > **Note on CSV storage**: MinIO remote storage or Amazon S3 can be used as storage for generated CSV files.
 The storage is selected by specifying the url of S3-compatible storage by using ENV variable `S3_URL`.
