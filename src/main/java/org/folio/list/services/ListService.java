@@ -37,6 +37,7 @@ import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ResultsetPage;
+import org.folio.querytool.domain.dto.UpdateUsedByRequest;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
@@ -139,6 +140,8 @@ public class ListService {
       listEntity.setFields(getFieldsFromEntityType(entityType, false));
     }
 
+    updateEntityTypeUsedBy(UUID.fromString(entityType.getId()), UpdateUsedByRequest.OperationEnum.ADD);
+
     ListEntity savedEntity = listRepository.save(listEntity);
 
     ListVersion previousVersions = new ListVersion();
@@ -235,6 +238,10 @@ public class ListService {
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.DELETE));
     validationService.validateDelete(list);
     deleteListAndContents(list);
+    boolean shouldSendRemoveRequest = shouldSendRemoveRequest(list.getEntityTypeId());
+    if (shouldSendRemoveRequest) {
+      updateEntityTypeUsedBy(list.getEntityTypeId(), UpdateUsedByRequest.OperationEnum.REMOVE);
+    }
   }
 
   public void cancelRefresh(UUID listId) {
@@ -358,5 +365,19 @@ public class ListService {
       .filter(f -> showHidden || Boolean.TRUE.equals(f.getVisibleByDefault()))
       .map(Field::getName)
       .toList();
+  }
+
+  private void updateEntityTypeUsedBy(UUID entityTypeId, UpdateUsedByRequest.OperationEnum operation) {
+    UpdateUsedByRequest request = new UpdateUsedByRequest().name("mod-lists").operation(operation);
+    try {
+      entityTypeClient.updateEntityTypeUsedBy(entityTypeId, request);
+    } catch (Exception e) {
+      log.error("Error updating entity type {} usedBy information with operation {}", entityTypeId, operation, e);
+    }
+  }
+
+  private boolean shouldSendRemoveRequest(UUID entityTypeId) {
+    var listsUsingEntityType = listRepository.findByIdAndIsDeletedFalse(entityTypeId);
+    return listsUsingEntityType.isEmpty();
   }
 }
