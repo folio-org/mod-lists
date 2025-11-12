@@ -83,7 +83,7 @@
           "methods": ["POST"],
           "pathPattern": "/lists",
           "permissionsRequired": ["lists.collection.post"],
-          "modulePermissions": ["users.item.get"]
+          "modulePermissions": ["users.item.get", "fqm.entityTypes.used-by.item.patch"]
         },
         {
           "methods": ["PUT"],
@@ -94,7 +94,7 @@
         {
           "methods": ["DELETE"],
           "pathPattern": "/lists/{id}",
-          "permissionsRequired": ["lists.item.delete"]
+          "permissionsRequired": ["lists.item.delete", "fqm.entityTypes.used-by.item.patch"]
         },
         {
           "methods": ["POST"],
@@ -241,6 +241,7 @@
         "fqm.entityTypes.collection.get",
         "fqm.entityTypes.item.columnValues.get",
         "fqm.entityTypes.item.get",
+        "fqm.entityTypes.used-by.item.patch",
         "fqm.migrate.post",
         "fqm.query.async.results.get",
         "fqm.query.async.results.post",

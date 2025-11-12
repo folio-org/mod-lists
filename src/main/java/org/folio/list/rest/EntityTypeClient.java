@@ -10,8 +10,11 @@ import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.UpdateUsedByRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -28,6 +31,9 @@ public interface EntityTypeClient {
 
   @GetMapping("/{entityTypeId}/columns/{columnName}/values" )
   ColumnValues getColumnValues(@RequestHeader UUID entityTypeId, @RequestHeader String columnName);
+
+  @PatchMapping("/{entityTypeId}/used-by")
+  EntityType updateEntityTypeUsedBy(@RequestHeader UUID entityTypeId, @RequestBody UpdateUsedByRequest updateUsedByRequest);
 
   /** Gets an entity type; includes wrappers for feign exceptions */
   default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction, boolean includeHidden) {

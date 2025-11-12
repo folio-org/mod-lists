@@ -21,6 +21,7 @@ finance.transactions.collection.get
 fqm.entityTypes.collection.get
 fqm.entityTypes.item.columnValues.get
 fqm.entityTypes.item.get
+fqm.entityTypes.used-by.item.patch
 fqm.migrate.post
 fqm.query.async.results.get
 fqm.query.async.results.post

@@ -1,5 +1,6 @@
 package org.folio.list.service;
 
+import feign.FeignException;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
@@ -31,6 +32,7 @@ import org.folio.list.util.TaskTimer;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.UpdateUsedByRequest;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +48,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -223,6 +226,9 @@ class ListServiceTest {
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
+    UpdateUsedByRequest updateUsedByRequest = new UpdateUsedByRequest()
+      .name("mod-lists")
+      .operation(UpdateUsedByRequest.OperationEnum.ADD);
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -255,13 +261,14 @@ class ListServiceTest {
       .version(actual.getVersion());
 
     assertThat(actual).isEqualTo(expected);
+    verify(entityTypeClient, times(1)).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
   }
 
   @Test
   void testCreateListWithoutFqlQuery() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
-    EntityType entityType = new EntityType().name("test-entity").columns(List.of());
+    EntityType entityType = new EntityType().id(UUID.randomUUID().toString()).name("test-entity").columns(List.of());
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
@@ -276,7 +283,6 @@ class ListServiceTest {
     listService.createList(listRequestDto);
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
-    ListEntity list = listEntityArgumentCaptor.getValue();
   }
 
   @Test
@@ -338,11 +344,14 @@ class ListServiceTest {
     listRequestDto.setFqlQuery("");
     listRequestDto.setFields(null);
     List<String> expectedFields = List.of("column_01");
-    EntityType entityType = new EntityType().name("test-entity").columns(List.of(
-      new EntityTypeColumn().name("column_01").visibleByDefault(true),
-      new EntityTypeColumn().name("column_02").visibleByDefault(false),
-      new EntityTypeColumn().name("column_03").visibleByDefault(null) // should be treated as false
-    ));
+    EntityType entityType = new EntityType()
+      .id(UUID.randomUUID().toString())
+      .name("test-entity")
+      .columns(List.of(
+        new EntityTypeColumn().name("column_01").visibleByDefault(true),
+        new EntityTypeColumn().name("column_02").visibleByDefault(false),
+        new EntityTypeColumn().name("column_03").visibleByDefault(null) // should be treated as false
+      ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = new ListEntity();
@@ -397,7 +406,7 @@ class ListServiceTest {
     // ensure we saved the previous version correctly
     ArgumentCaptor<ListVersion> oldVersion = ArgumentCaptor.forClass(ListVersion.class);
     verify(listVersionRepository, times(1)).save(oldVersion.capture());
-    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion+1);
+    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion + 1);
   }
 
   @Test
@@ -658,5 +667,26 @@ class ListServiceTest {
     verify(validationService, times(1)).validateRead(listEntity);
     verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);
     verifyNoInteractions(listVersionMapper);
+  }
+
+  @Test
+  void shouldCatchExceptionWhenUpdatingUsedByFails() {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    UUID userId = UUID.randomUUID();
+    User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
+    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
+    UpdateUsedByRequest updateUsedByRequest = new UpdateUsedByRequest()
+      .name("mod-lists")
+      .operation(UpdateUsedByRequest.OperationEnum.ADD);
+
+    when(usersClient.getUser(userId)).thenReturn(user);
+    when(executionContext.getUserId()).thenReturn(userId);
+    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
+    when(listRepository.save(entity)).thenReturn(entity);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    doThrow(FeignException.class).when(entityTypeClient).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
+
+    assertDoesNotThrow(() -> listService.createList(listRequestDto));
   }
 }
