@@ -1,5 +1,6 @@
 package org.folio.list.service;
 
+import feign.FeignException;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
@@ -47,6 +48,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -665,5 +667,26 @@ class ListServiceTest {
     verify(validationService, times(1)).validateRead(listEntity);
     verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);
     verifyNoInteractions(listVersionMapper);
+  }
+
+  @Test
+  void shouldCatchExceptionWhenUpdatingUsedByFails() {
+    ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
+    UUID userId = UUID.randomUUID();
+    User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
+    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
+    UpdateUsedByRequest updateUsedByRequest = new UpdateUsedByRequest()
+      .name("mod-lists")
+      .operation(UpdateUsedByRequest.OperationEnum.ADD);
+
+    when(usersClient.getUser(userId)).thenReturn(user);
+    when(executionContext.getUserId()).thenReturn(userId);
+    when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
+    when(listRepository.save(entity)).thenReturn(entity);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    doThrow(FeignException.class).when(entityTypeClient).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
+
+    assertDoesNotThrow(() -> listService.createList(listRequestDto));
   }
 }
