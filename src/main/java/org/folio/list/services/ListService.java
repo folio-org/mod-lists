@@ -372,12 +372,12 @@ public class ListService {
     try {
       entityTypeClient.updateEntityTypeUsedBy(entityTypeId, request);
     } catch (Exception e) {
-      log.error("Error updating entity type {} usedBy information with operation {}", entityTypeId, operation, e);
+      log.warn("Error updating entity type {} usedBy information with operation {}: {}", entityTypeId, operation, e.getMessage());
     }
   }
 
   private boolean shouldSendRemoveRequest(UUID entityTypeId) {
-    var listsUsingEntityType = listRepository.findByIdAndIsDeletedFalse(entityTypeId);
+    Page<ListEntity> listsUsingEntityType = listRepository.searchList(null, null, List.of(entityTypeId), null, null, null, false, null);
     return listsUsingEntityType.isEmpty();
   }
 }

@@ -31,6 +31,7 @@ import org.folio.list.util.TaskTimer;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.UpdateUsedByRequest;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -223,6 +224,9 @@ class ListServiceTest {
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     EntityType entityType = new EntityType().id(entity.getEntityTypeId().toString());
+    UpdateUsedByRequest updateUsedByRequest = new UpdateUsedByRequest()
+      .name("mod-lists")
+      .operation(UpdateUsedByRequest.OperationEnum.ADD);
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
@@ -255,6 +259,7 @@ class ListServiceTest {
       .version(actual.getVersion());
 
     assertThat(actual).isEqualTo(expected);
+    verify(entityTypeClient, times(1)).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
   }
 
   @Test
