@@ -261,7 +261,7 @@ class ListServiceTest {
   void testCreateListWithoutFqlQuery() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
     listRequestDto.setFqlQuery("");
-    EntityType entityType = new EntityType().name("test-entity").columns(List.of());
+    EntityType entityType = new EntityType().id(UUID.randomUUID().toString()).name("test-entity").columns(List.of());
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ArgumentCaptor<ListEntity> listEntityArgumentCaptor = ArgumentCaptor.forClass(ListEntity.class);
@@ -276,7 +276,6 @@ class ListServiceTest {
     listService.createList(listRequestDto);
 
     verify(listRepository, times(1)).save(listEntityArgumentCaptor.capture());
-    ListEntity list = listEntityArgumentCaptor.getValue();
   }
 
   @Test
@@ -338,11 +337,14 @@ class ListServiceTest {
     listRequestDto.setFqlQuery("");
     listRequestDto.setFields(null);
     List<String> expectedFields = List.of("column_01");
-    EntityType entityType = new EntityType().name("test-entity").columns(List.of(
-      new EntityTypeColumn().name("column_01").visibleByDefault(true),
-      new EntityTypeColumn().name("column_02").visibleByDefault(false),
-      new EntityTypeColumn().name("column_03").visibleByDefault(null) // should be treated as false
-    ));
+    EntityType entityType = new EntityType()
+      .id(UUID.randomUUID().toString())
+      .name("test-entity")
+      .columns(List.of(
+        new EntityTypeColumn().name("column_01").visibleByDefault(true),
+        new EntityTypeColumn().name("column_02").visibleByDefault(false),
+        new EntityTypeColumn().name("column_03").visibleByDefault(null) // should be treated as false
+      ));
     UUID userId = UUID.randomUUID();
     User user = new User(userId, Optional.of(new UsersClient.Personal("firstname", "lastname")));
     ListEntity entity = new ListEntity();
@@ -397,7 +399,7 @@ class ListServiceTest {
     // ensure we saved the previous version correctly
     ArgumentCaptor<ListVersion> oldVersion = ArgumentCaptor.forClass(ListVersion.class);
     verify(listVersionRepository, times(1)).save(oldVersion.capture());
-    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion+1);
+    assertThat(oldVersion.getValue().getVersion()).isEqualTo(previousVersion + 1);
   }
 
   @Test
