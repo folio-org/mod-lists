@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 
 import java.util.List;
@@ -69,6 +70,22 @@ class ListServiceDeleteListTest {
     ArgumentCaptor<ListEntity> captor = ArgumentCaptor.forClass(ListEntity.class);
     verify(listRepository, times(1)).save(captor.capture());
     assertThat(captor.getValue().getIsDeleted()).isTrue();
+  }
+
+  @Test
+  void shouldNotSendUpdateUsedByRequestIfListsStillUseEntityType() {
+    ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
+
+    when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
+    when(listRepository.searchList(null, null, List.of(entity.getEntityTypeId()), null, null, null, false, null))
+      .thenReturn(new PageImpl<>(List.of(entity)));
+
+    listService.deleteList(entity.getId());
+
+    verify(entityTypeClient, times(0)).updateEntityTypeUsedBy(
+      any(),
+      any()
+    );
   }
 
   @Test
