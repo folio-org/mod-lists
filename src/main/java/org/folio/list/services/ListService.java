@@ -238,8 +238,7 @@ public class ListService {
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.DELETE));
     validationService.validateDelete(list);
     deleteListAndContents(list);
-    boolean shouldSendRemoveRequest = shouldSendRemoveRequest(list.getEntityTypeId());
-    if (shouldSendRemoveRequest) {
+    if (hasNoAssociatedLists(list.getEntityTypeId())) {
       updateEntityTypeUsedBy(list.getEntityTypeId(), UpdateUsedByRequest.OperationEnum.REMOVE);
     }
   }
@@ -376,7 +375,7 @@ public class ListService {
     }
   }
 
-  private boolean shouldSendRemoveRequest(UUID entityTypeId) {
+  private boolean hasNoAssociatedLists(UUID entityTypeId) {
     Page<ListEntity> listsUsingEntityType = listRepository.searchList(null, null, List.of(entityTypeId), null, null, null, false, null);
     return listsUsingEntityType.isEmpty();
   }
