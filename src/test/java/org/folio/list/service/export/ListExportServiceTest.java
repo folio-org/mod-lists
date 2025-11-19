@@ -90,7 +90,7 @@ class ListExportServiceTest {
     List<String> fields = new ArrayList<>(
       List.of("field1", "field2")
     );
-    List<String> expectedExportFields = List.of("field1", "field2", "field3");
+    List<String> expectedExportFields = List.of("field1", "field2");
     List<EntityTypeColumn> entityTypeColumns =
       new ArrayList<>(
         List.of(

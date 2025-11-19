@@ -74,7 +74,13 @@ class CsvCreatorTest {
     int numberOfBatch = 11;
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
-    EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
+    EntityType entityType = createEntityType(
+      List.of(
+        createColumn("id"),
+        createColumn("item_status"),
+        createColumn("id2").isIdColumn(true)
+      )
+    );
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
     List<List<String>> contentIds = new ArrayList<>();
 
@@ -87,6 +93,7 @@ class CsvCreatorTest {
       LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
       linkedHashMap.put("id", "value1");
       linkedHashMap.put("item_status", "value2");
+      linkedHashMap.put("id2", "value3");
       contentsWithData.add(linkedHashMap);
     });
 
@@ -128,7 +135,19 @@ class CsvCreatorTest {
 
     try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
       String actual = data.toString();
-      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8) + "[id-label],[item_status-label]\n" + toCSV(contentsWithData).repeat(numberOfBatch);
+
+      // The "id2" column should be excluded from the export, even if FQM provided it, as it wasn't included in the list's fields
+      String expectedCsv = toCSV(
+        contentsWithData.stream()
+          .map(m -> {
+            Map<String, Object> newMap = new LinkedHashMap<>(m);
+            newMap.remove("id2");
+            return newMap;
+          }).toList()
+      ).repeat(numberOfBatch);
+      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8)
+                        + "[id-label],[item_status-label]\n"
+                        + expectedCsv;
 
       assertEquals(expected, actual);
       assertEquals(2, partETags.size());

@@ -64,14 +64,6 @@ public class ListExportService {
       .getEntityType(list.getEntityTypeId(), ListActions.EXPORT)
       .getColumns();
 
-    // Ensure id columns are included in export
-    Set<String> idColumnNames = columns
-      .stream()
-      .filter(column -> Boolean.TRUE.equals(column.getIsIdColumn()))
-      .map(Field::getName)
-      .collect(Collectors.toSet());
-    exportFields.addAll(idColumnNames);
-
     // Remove any fields that are not present in the entity type definition
     Set<String> columnNames = columns
       .stream()
