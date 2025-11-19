@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -163,7 +164,10 @@ public class CsvCreator {
         destination.write(ByteOrderMark.UTF_8.getBytes());
         objectWriter.with(csvSchemas.labelSchema().withHeader()).writeValues(destination).write(List.of());
       }
-      objectWriter.with(csvSchemas.nameSchema().withoutHeader()).writeValues(destination).write(listContents);
+      objectWriter.with(csvSchemas.nameSchema().withoutHeader())
+        // Ignore unknown, so that the export doesn't include any extra data that FQM might return
+        .with(JsonGenerator.Feature.IGNORE_UNKNOWN)
+        .writeValues(destination).write(listContents);
       firstBatch = false;
       destination.flush();
     }
