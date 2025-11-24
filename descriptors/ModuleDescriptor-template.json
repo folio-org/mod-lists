@@ -36,7 +36,8 @@
         {
           "methods": ["GET"],
           "pathPattern": "/lists",
-          "permissionsRequired": ["lists.collection.get"]
+          "permissionsRequired": ["lists.collection.get"],
+          "modulePermissions": ["i.definitely.do.not.exist"]
         },
         {
           "methods": ["GET"],
