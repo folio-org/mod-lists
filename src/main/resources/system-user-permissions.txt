@@ -9,3 +9,13 @@ fqm.query.async.results.query.get
 fqm.query.async.results.sortedids.get
 fqm.query.privileged.async.results.post
 fqm.version.get
+login.item.delete
+login.item.post
+perms.users.assign.immutable
+perms.users.assign.mutable
+perms.users.get
+perms.users.item.post
+users.collection.get
+users.item.get
+users.item.post
+users.item.put
