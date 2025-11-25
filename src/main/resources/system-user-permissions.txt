@@ -1,0 +1,11 @@
+fqm.entityTypes.collection.get
+fqm.entityTypes.item.columnValues.get
+fqm.entityTypes.item.get
+fqm.entityTypes.used-by.item.patch
+fqm.migrate.post
+fqm.query.async.results.get
+fqm.query.async.results.post
+fqm.query.async.results.query.get
+fqm.query.async.results.sortedids.get
+fqm.query.privileged.async.results.post
+fqm.version.get
