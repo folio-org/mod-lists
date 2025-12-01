@@ -256,6 +256,7 @@
         "inventory-storage.contributor-types.collection.get",
         "inventory-storage.electronic-access-relationships.collection.get",
         "inventory-storage.holdings-note-types.collection.get",
+        "inventory-storage.holdings-types.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.identifier-types.collection.get",
         "inventory-storage.instance-date-types.collection.get",
