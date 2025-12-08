@@ -37,7 +37,7 @@
 
     <!-- test dependencies -->
     <testcontainers.version>1.21.3</testcontainers.version>
-    <wiremock.version>3.13.1</wiremock.version>
+    <wiremock.version>3.13.2</wiremock.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
 
