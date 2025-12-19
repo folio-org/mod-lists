@@ -6,6 +6,7 @@ import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
 import org.folio.list.services.export.ListExportWorkerService;
 import org.folio.list.util.TestDataFixture;
+import org.folio.querytool.domain.dto.EntityType;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
@@ -44,9 +45,9 @@ class ListExportWorkerServiceTest {
     ArrayList<String> partETags = new ArrayList<>();
 
     when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags, userId)).thenReturn(localStorage);
+    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags, userId, null)).thenReturn(localStorage);
     when(folioS3Client.initiateMultipartUpload(expectedDestinationFile)).thenReturn(uploadId);
-    boolean exportSucceeded = listExportWorkerService.doAsyncExport(exportDetails, userId).join();
+    boolean exportSucceeded = listExportWorkerService.doAsyncExport(exportDetails, userId, null).join();
     verify(folioS3Client, times(1)).completeMultipartUpload(expectedDestinationFile, uploadId, partETags);;
     assertTrue(exportSucceeded);
   }
@@ -65,10 +66,10 @@ class ListExportWorkerServiceTest {
     when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(folioS3Client.initiateMultipartUpload(expectedDestinationFile)).thenReturn(uploadId);
-    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags, UUID.randomUUID())).thenReturn(localStorage);
+    when(csvCreator.createAndUploadCSV(exportDetails, expectedDestinationFile, uploadId, partETags, UUID.randomUUID(), null)).thenReturn(localStorage);
     doThrow(new RuntimeException("something went wrong")).when(folioS3Client).completeMultipartUpload(any(), any(), any());
 
-    boolean exportFailed = listExportWorkerService.doAsyncExport(exportDetails, userId).isCompletedExceptionally();
+    boolean exportFailed = listExportWorkerService.doAsyncExport(exportDetails, userId, null).isCompletedExceptionally();
     assertTrue(exportFailed);
   }
 

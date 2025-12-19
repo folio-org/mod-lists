@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.exception.ExportCancelledException;
+import org.folio.querytool.domain.dto.EntityType;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
@@ -30,7 +31,7 @@ public class ListExportWorkerService {
 
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
+  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId, EntityType entityType) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
     String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
     String uploadId = null;
@@ -39,7 +40,7 @@ public class ListExportWorkerService {
       uploadId = folioS3Client.initiateMultipartUpload(destinationFileName);
       log.info("S3 multipart upload initialized for exportId {}", exportDetails.getExportId());
 
-      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId);
+      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType);
       andUploadCSV.close();
 
       folioS3Client.completeMultipartUpload(destinationFileName, uploadId, partETags);
