@@ -26,7 +26,6 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
-import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.SystemUserQueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
@@ -47,7 +46,6 @@ public class CsvCreator {
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
-  private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
   private final SystemUserQueryClient systemUserQueryClient;
 
@@ -59,11 +57,10 @@ public class CsvCreator {
   private static final long MAX_BACKOFF = 16000;
 
   @SneakyThrows
-  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
+  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId, EntityType entityType) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
-    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
 
     OutputStream localStorageOutputStream = localStorage.outputStream();
     var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());
