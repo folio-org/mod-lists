@@ -123,7 +123,6 @@ class CsvCreatorTest {
     );
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
 
     StringWriter data = new StringWriter();
 
@@ -133,7 +132,7 @@ class CsvCreatorTest {
       return partETag;
     });
 
-    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId)) {
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType)) {
       String actual = data.toString();
 
       // The "id2" column should be excluded from the export, even if FQM provided it, as it wasn't included in the list's fields
@@ -170,10 +169,9 @@ class CsvCreatorTest {
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
     when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any())).thenThrow(S3ClientException.class);
 
-    assertThrows(S3ClientException.class, () -> csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId));
+    assertThrows(S3ClientException.class, () -> csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType));
     verify(folioS3Client, times(5)).uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any());
   }
 

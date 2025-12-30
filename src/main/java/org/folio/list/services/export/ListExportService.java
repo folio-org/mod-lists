@@ -28,6 +28,7 @@ import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.Field;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
@@ -60,9 +61,8 @@ public class ListExportService {
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     List<String> exportFields = isEmpty(fields) ? list.getFields() : fields;
-    List<EntityTypeColumn> columns = entityTypeClient
-      .getEntityType(list.getEntityTypeId(), ListActions.EXPORT)
-      .getColumns();
+    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
+    List<EntityTypeColumn> columns = entityType.getColumns();
 
     // Remove any fields that are not present in the entity type definition
     Set<String> columnNames = columns
@@ -77,7 +77,7 @@ public class ListExportService {
 
     ExportDetails exportDetails = createExportDetails(list, validExportFields);
     ExportDetails savedExport = listExportRepository.save(exportDetails);
-    doAsyncExport(savedExport);
+    doAsyncExport(savedExport, entityType);
     return listExportMapper.toListExportDTO(savedExport);
   }
 
@@ -134,7 +134,7 @@ public class ListExportService {
     );
   }
 
-  private void doAsyncExport(ExportDetails exportDetails) {
+  private void doAsyncExport(ExportDetails exportDetails, EntityType entityType) {
     Runnable cancelExport = () -> cancelExport(exportDetails.getList().getId(), exportDetails.getExportId());
     ShutdownTask shutdownTask = appShutdownService.registerShutdownTask(
       executionContext,
@@ -147,7 +147,7 @@ public class ListExportService {
       executionContext.getTenantId(),
       () ->
         listExportWorkerService
-          .doAsyncExport(exportDetails, userId)
+          .doAsyncExport(exportDetails, userId, entityType)
           .whenComplete((success, throwable) -> {
             // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
             try (ShutdownTask autoClose = shutdownTask) {
