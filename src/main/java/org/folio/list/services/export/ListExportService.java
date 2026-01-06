@@ -6,7 +6,9 @@ import static org.folio.list.services.export.ExportUtils.getFileName;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,9 +29,10 @@ import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
-import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.EntityType;
+import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.Field;
+import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -135,6 +138,24 @@ public class ListExportService {
   }
 
   private void doAsyncExport(ExportDetails exportDetails, EntityType entityType) {
+    // Fetch localized values for columns that require localization. Do it here to avoid doing it with the system user,
+    // where permission issues may arise.
+    Map<String, Map<String, String>> localizedValues = new HashMap<>();
+    for (EntityTypeColumn column : entityType.getColumns()) {
+      if (Boolean.TRUE.equals(column.getLocalizeForExports())) {
+        log.info("Fetching localized values for column {} in entity type {}", column.getName(), entityType.getId());
+        try {
+          var columnValues = entityTypeClient.getColumnValues(UUID.fromString(entityType.getId()), column.getName());
+          Map<String, String> valueMap = columnValues.getContent()
+            .stream()
+            .collect(Collectors.toMap(ValueWithLabel::getValue, v -> v.getLabel() == null ? v.getValue() : v.getLabel(), (v1, v2) -> v1));
+          localizedValues.put(column.getName(), valueMap);
+        } catch (Exception e) {
+          log.warn("Failed to fetch localized values for column {} in entity type {}. Proceeding without localization for this column.", column.getName(), entityType.getId(), e);
+        }
+      }
+    }
+
     Runnable cancelExport = () -> cancelExport(exportDetails.getList().getId(), exportDetails.getExportId());
     ShutdownTask shutdownTask = appShutdownService.registerShutdownTask(
       executionContext,
@@ -147,7 +168,7 @@ public class ListExportService {
       executionContext.getTenantId(),
       () ->
         listExportWorkerService
-          .doAsyncExport(exportDetails, userId, entityType)
+          .doAsyncExport(exportDetails, userId, entityType, localizedValues)
           .whenComplete((success, throwable) -> {
             // Reassign the task (an AutoCloseable) here, to auto-close it when the export is done
             try (ShutdownTask autoClose = shutdownTask) {
