@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.3</version>
+    <version>4.0.1</version>
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
   <groupId>org.folio</groupId>
@@ -23,17 +23,17 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>9.0.0</folio-spring-base.version>
+    <folio-spring-base.version>9.1.0</folio-spring-base.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <folio-service-tools.version>3.1.1</folio-service-tools.version>
-    <mapstruct.version>1.6.2</mapstruct.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
     <lib-fqm-query-processor.version>4.1.0-SNAPSHOT</lib-fqm-query-processor.version>
-    <jackson-dataformat-csv.version>2.14.2</jackson-dataformat-csv.version>
-    <aws-sdk-java.version>2.29.47</aws-sdk-java.version>
-    <folio-s3-client.version>2.2.1</folio-s3-client.version>
-    <awaitility.version>4.2.0</awaitility.version>
-    <snakeyaml.version>2.0</snakeyaml.version>
-    <spring-retry.version>2.0.10</spring-retry.version>
+    <jackson-dataformat-csv.version>2.20.1</jackson-dataformat-csv.version>
+    <aws-sdk-java.version>2.41.5</aws-sdk-java.version>
+    <folio-s3-client.version>2.3.0</folio-s3-client.version>
+    <awaitility.version>4.3.0</awaitility.version>
+    <snakeyaml.version>2.5</snakeyaml.version>
+    <spring-retry.version>2.0.12</spring-retry.version>
 
     <!-- test dependencies -->
     <testcontainers.version>1.21.4</testcontainers.version>
@@ -42,12 +42,12 @@
     <easy-random.version>5.0.0</easy-random.version>
 
     <!-- plugins -->
-    <openapi-generator.version>6.2.1</openapi-generator.version>
+    <openapi-generator.version>7.18.0</openapi-generator.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
-    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
-    <maven-release-plugin.version>3.0.0-M7</maven-release-plugin.version>
-    <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
+    <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
 
     <!-- other properties -->
     <java.version>21</java.version>
@@ -117,7 +117,7 @@
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
-      <version>3.1.8</version>
+      <version>3.2.3</version>
     </dependency>
 
     <dependency>
@@ -177,7 +177,7 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-messaging</artifactId>
-      <version>6.1.6</version>
+      <version>7.0.2</version>
     </dependency>
 
     <dependency>
