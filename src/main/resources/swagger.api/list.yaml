@@ -1,8 +1,12 @@
 openapi: 3.0.3
 info:
-  title: ListEntity API
-  description: ListEntity API description
+  title: Lists API
+  description: Lists API description
   version: 1.0.0
+
+servers:
+  - url: https://folio-etesting-snapshot-kong.ci.folio.org/
+
 paths:
   /lists:
     get:
@@ -81,11 +85,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListSummaryResultsDTO"
+                $ref: '#/components/schemas/ListSummaryResultsDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
     post:
       summary: Create a List
       operationId: createList
@@ -107,8 +110,7 @@ paths:
                 $ref: '#/components/schemas/ListDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}:
     delete:
       summary: Delete List with the provided id
@@ -123,8 +125,7 @@ paths:
           description: List has been deleted
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
     get:
       operationId: getListById
       tags:
@@ -141,8 +142,7 @@ paths:
                 $ref: '#/components/schemas/ListDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
     put:
       summary: Update a List
       operationId: updateList
@@ -166,8 +166,7 @@ paths:
                 $ref: '#/components/schemas/ListDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/refresh:
     post:
       operationId: performRefresh
@@ -185,8 +184,7 @@ paths:
                 $ref: '#/components/schemas/ListRefreshDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
     delete:
       operationId: cancelRefresh
       tags:
@@ -199,8 +197,7 @@ paths:
           description: 'Refresh cancelled'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/contents:
     get:
       operationId: getListContents
@@ -216,8 +213,7 @@ paths:
           schema:
             type: array
             items:
-              type:
-                string
+              type: string
         - name: offset
           in: query
           description: Offset to start retrieving items from
@@ -248,8 +244,7 @@ paths:
                 $ref: '#/components/schemas/ResultsetPage'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/exports:
     post:
       operationId: exportList
@@ -276,8 +271,7 @@ paths:
                 $ref: '#/components/schemas/ListExportDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/exports/{exportId}:
     get:
       operationId: getExportDetails
@@ -289,15 +283,14 @@ paths:
         - $ref: '#/components/parameters/exportId'
       responses:
         '200':
-          description: "Returns details of requested exportId"
+          description: 'Returns details of requested exportId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListExportDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/exports/{exportId}/cancel:
     post:
       operationId: cancelExport
@@ -312,8 +305,7 @@ paths:
           description: Export cancelled
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/exports/{exportId}/download:
     get:
       operationId: downloadList
@@ -333,8 +325,7 @@ paths:
                 format: binary
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/configuration:
     get:
       operationId: getListConfiguration
@@ -350,8 +341,7 @@ paths:
                 $ref: '#/components/schemas/ListConfiguration'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/versions:
     get:
       operationId: getListVersions
@@ -369,11 +359,10 @@ paths:
                 type: array
                 items:
                   type:
-                  $ref: "#/components/schemas/ListVersionDTO"
+                  $ref: '#/components/schemas/ListVersionDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
+
   /lists/{id}/versions/{versionNumber}:
     get:
       operationId: getListVersion
@@ -389,11 +378,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListVersionDTO"
+                $ref: '#/components/schemas/ListVersionDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
 
 components:
   parameters:
@@ -455,14 +442,5 @@ components:
           example:
             message: List with ID 6c611396-b6bc-56a7-aada-3a90683d559c was not found
             code: read-list.not.found
-          schema:
-            $ref: '#/components/schemas/ListAppError'
-    internalServerErrorResponse:
-      description: When unhandled exception occurred during code execution, e.g. NullPointerException
-      content:
-        application/json:
-          example:
-            message: Unexpected error
-            code: unhandled.error
           schema:
             $ref: '#/components/schemas/ListAppError'
