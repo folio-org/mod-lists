@@ -1,4 +1,7 @@
 # 3.0.x
+- Bump to Spring Boot 3.3.13 and folio-s3-client 2.2.2 ([MODLISTS-236])
+
+[MODLISTS-236]: https://folio-org.atlassian.net/browse/MODLISTS-236
 
 ## 3.0.10
 - Add permission for simple SRS record ET ([MODFQMMGR-804](https://folio-org.atlassian.net/browse/MODFQMMGR-804))
