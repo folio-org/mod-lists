@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import feign.FeignException;
 import java.util.List;
 import java.util.UUID;
+
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
+import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.spring.exception.NotFoundException;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -24,6 +26,9 @@ public interface EntityTypeClient {
   @GetMapping("/{entityTypeId}")
   EntityType getEntityType(@RequestHeader UUID entityTypeId, @RequestParam boolean includeHidden);
 
+  @GetMapping("/{entityTypeId}/columns/{columnName}/values" )
+  ColumnValues getColumnValues(@RequestHeader UUID entityTypeId, @RequestHeader String columnName);
+
   /** Gets an entity type; includes wrappers for feign exceptions */
   default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction, boolean includeHidden) {
     try {
@@ -35,7 +40,7 @@ public interface EntityTypeClient {
       throw new NotFoundException("Entity type with id " + entityTypeId + " was not found.");
     }
   }
-  
+
   /** Gets an entity type; includes wrappers for feign exceptions */
   default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction) {
     return getEntityType(entityTypeId, attemptedAction, false);

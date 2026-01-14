@@ -1,6 +1,8 @@
 package org.folio.list.service;
 
 import org.folio.list.domain.ListEntity;
+import org.folio.list.domain.dto.ListConfiguration;
+import org.folio.list.exception.MaxListSizeExceededException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.QueryClient;
@@ -10,12 +12,11 @@ import org.folio.list.services.refresh.RefreshFailedCallback;
 import org.folio.list.services.refresh.RefreshSuccessCallback;
 import org.folio.list.services.refresh.TimedStage;
 import org.folio.list.util.TaskTimer;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.QueryDetails;
 import org.folio.querytool.domain.dto.QueryIdentifier;
 import org.folio.querytool.domain.dto.SubmitQuery;
 import org.folio.spring.FolioExecutionContext;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,8 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -58,6 +57,8 @@ class ListRefreshServiceTest {
   private ListRefreshService listRefreshService;
   @Mock
   private EntityManagerFlushService entityManagerFlushService;
+  @Mock
+  private ListConfiguration listConfiguration;
 
   @BeforeEach
   void setup() {
@@ -123,6 +124,23 @@ class ListRefreshServiceTest {
     listRefreshService.doAsyncRefresh(list, null, timer);
     verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
     verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any());
+  }
+
+  @Test
+  void shouldHandleMaxQuerySizeExceededDuringRefresh() {
+    ListEntity list = TestDataFixture.getListEntityWithSuccessRefresh();
+    int totalRecords = 0;
+    ArgumentCaptor<SubmitQuery> submitQueryArgumentCaptor = ArgumentCaptor.forClass(SubmitQuery.class);
+    QueryDetails queryDetails = new QueryDetails().status(QueryDetails.StatusEnum.MAX_SIZE_EXCEEDED).totalRecords(totalRecords);
+    QueryIdentifier expectedIdentifier = new QueryIdentifier().queryId(UUID.randomUUID());
+    when(queryClient.executeQuery(any())).thenReturn(expectedIdentifier);
+    when(queryClient.getQuery(expectedIdentifier.getQueryId())).thenReturn(queryDetails);
+    when(listConfiguration.getMaxListSize()).thenReturn(10);
+    var timer =  new TaskTimer();
+    timer.start(TimedStage.TOTAL);
+    listRefreshService.doAsyncRefresh(list, null, timer);
+    verify(queryClient, times(1)).executeQuery(submitQueryArgumentCaptor.capture());
+    verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any(MaxListSizeExceededException.class));
   }
 }
 

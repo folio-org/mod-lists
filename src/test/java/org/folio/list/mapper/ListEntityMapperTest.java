@@ -3,7 +3,7 @@ package org.folio.list.mapper;
 import lombok.SneakyThrows;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.rest.UsersClient;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;

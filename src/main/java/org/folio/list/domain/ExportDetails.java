@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -17,6 +15,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.folio.list.repository.EntityId;
 
 @Data
 @Entity
@@ -26,7 +25,7 @@ import lombok.NoArgsConstructor;
 public class ExportDetails {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @EntityId
   @Column(name = "export_id", updatable = false)
   @NotNull
   private UUID exportId;

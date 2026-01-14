@@ -15,12 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-@RequiredArgsConstructor
-@RestController
 @Lazy // Do not connect to S3 when the application starts
+@RestController
+@RequiredArgsConstructor
 public class ListExportController implements ListExportApi {
-
-  private static final String TEXT_CSV = "text/csv";
 
   private final ListExportService listExportService;
 
@@ -45,8 +43,7 @@ public class ListExportController implements ListExportApi {
     headers.setContentDisposition(ContentDisposition.builder("attachment").filename(fileName, StandardCharsets.UTF_8).build());
     return ResponseEntity.ok()
       .headers(headers)
-      .contentType(MediaType.valueOf(TEXT_CSV))
-      .contentLength(download.length())
+      .contentType(MediaType.APPLICATION_OCTET_STREAM)
       .body(new InputStreamResource(download.stream()));
   }
 

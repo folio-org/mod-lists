@@ -3,6 +3,7 @@ package org.folio.list.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.mapper.ListMigrationMapper;
 import org.folio.list.repository.ListRepository;
@@ -24,7 +26,7 @@ import org.folio.list.repository.MigrationRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.MigrationClient;
 import org.folio.list.services.MigrationService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -143,6 +145,49 @@ class MigrationServiceTest {
     verify(listRepository, times(2)).save(any());
     verifyNoMoreInteractions(migrationClient, listRepository);
     verifyNoInteractions(migrationRepository);
+  }
+
+  @Test
+  void testMigrationContinuesWhenSomeFail() {
+    List<ListEntity> sourceLists = List.of(
+      TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("aaaaaaaa-7d95-54f5-bba7-6ca661dcc01d")),
+      TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("ffffffff-ac98-575b-be95-619fbf387c8f"))
+    );
+
+    when(migrationRepository.getLatestMigratedVersion()).thenReturn("old");
+    when(executionContext.getTenantId()).thenReturn("tenant");
+    when(listRepository.findAll()).thenReturn(sourceLists);
+
+    // the world's best async implementation™
+    when(executor.submitCompletable((Callable<?>) any(Callable.class)))
+      .thenReturn(CompletableFuture.completedFuture(null))
+      .thenReturn(CompletableFuture.failedFuture(new RuntimeException("oh no!")));
+
+    assertDoesNotThrow(() -> migrationService.verifyListsAreUpToDate("new"));
+
+    verify(migrationRepository, times(1)).getLatestMigratedVersion();
+    verify(migrationRepository, times(1)).setLatestMigratedVersion("new");
+  }
+
+  @Test
+  void testMigrationFailsWhenAllFail() {
+    List<ListEntity> sourceLists = List.of(
+      TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("aaaaaaaa-7d95-54f5-bba7-6ca661dcc01d")),
+      TestDataFixture.getListEntityWithSuccessRefresh(UUID.fromString("ffffffff-ac98-575b-be95-619fbf387c8f"))
+    );
+
+    when(migrationRepository.getLatestMigratedVersion()).thenReturn("old");
+    when(executionContext.getTenantId()).thenReturn("tenant");
+    when(listRepository.findAll()).thenReturn(sourceLists);
+
+    // the world's best async implementation™
+    when(executor.submitCompletable((Callable<?>) any(Callable.class)))
+      .thenReturn(CompletableFuture.failedFuture(new RuntimeException("oh no!")));
+
+    assertThrows(CompletionException.class, () -> migrationService.verifyListsAreUpToDate("new"));
+
+    verify(migrationRepository, times(1)).getLatestMigratedVersion();
+    verifyNoMoreInteractions(migrationRepository);
   }
 
   @Test

@@ -2,7 +2,7 @@ package org.folio.list.mapper;
 
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListVersionDTO;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

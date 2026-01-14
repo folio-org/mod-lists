@@ -3,15 +3,15 @@ package org.folio.list.controller;
 import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.dto.ListSummaryResultsDTO;
 import org.folio.list.services.ListService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.spring.data.OffsetRequest;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 
@@ -39,7 +39,7 @@ class ListControllerGetListsTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @MockBean
+  @MockitoBean
   private ListService listService;
 
   @Test

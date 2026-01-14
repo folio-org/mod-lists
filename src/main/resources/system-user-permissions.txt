@@ -1,10 +1,16 @@
 acquisitions-units.units.collection.get
 addresstypes.collection.get
+batch-groups.collection.get
 circulation-storage.loan-policies.collection.get
 circulation.loans.collection.get
 configuration.entries.collection.get
 departments.collection.get
 finance.exchange-rate.item.get
+finance.expense-classes.collection.get
+finance.fiscal-years.collection.get
+finance.funds.collection.get
+finance.fund-types.collection.get
+finance.transactions.collection.get
 fqm.entityTypes.collection.get
 fqm.entityTypes.item.columnValues.get
 fqm.entityTypes.item.get
@@ -27,6 +33,7 @@ inventory-storage.instance-types.collection.get
 inventory-storage.instance-types.item.get
 inventory-storage.instances.item.get
 inventory-storage.items.item.get
+inventory-storage.loan-types.collection.get
 inventory-storage.location-units.libraries.collection.get
 inventory-storage.locations.collection.get
 inventory-storage.material-types.collection.get
@@ -34,6 +41,8 @@ inventory-storage.modes-of-issuance.collection.get
 inventory-storage.service-points.collection.get
 inventory-storage.statistical-code-types.collection.get
 inventory-storage.statistical-codes.collection.get
+invoice.invoices.collection.get
+invoice.invoice-lines.collection.get
 orders.item.get
 orders.po-lines.item.get
 organizations-storage.categories.collection.get
@@ -42,3 +51,9 @@ organizations.organizations.collection.get
 usergroups.collection.get
 users.collection.get
 users.item.get
+finance.ledgers.collection.get
+voucher.voucher-lines.collection.get
+voucher.vouchers.collection.get
+finance.budgets.collection.get
+finance.groups.collection.get
+source-storage.records.collection.get

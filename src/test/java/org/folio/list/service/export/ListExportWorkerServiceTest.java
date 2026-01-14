@@ -5,7 +5,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
 import org.folio.list.services.export.ListExportWorkerService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;

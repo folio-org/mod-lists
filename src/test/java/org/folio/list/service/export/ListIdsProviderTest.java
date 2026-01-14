@@ -4,7 +4,7 @@ import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.services.export.ListIdsProvider;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 

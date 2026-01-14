@@ -1,4 +1,62 @@
+# 3.1.x
+
+# 3.1.5
+- [MODFQMMGR-804] Add permission for simple SRS record ET
+
+[MODFQMMGR-804]: https://folio-org.atlassian.net/browse/MODFQMMGR-804
+
+# 3.1.4
+- Bump lib-fqm-query-processor version to 4.0.2
+
+# 3.1.3
+- Update translation strings
+- [MODLISTS-213] Add REFRESH_QUERY_TIMEOUT_MINUTES to module descriptor
+
+[MODLISTS-213]: https://folio-org.atlassian.net/browse/MODLISTS-213
+
+# 3.1.2
+- [MODLISTS-203] Fixing export with Arabic Instance title
+- [MODLISTS-211] Remove non-essential fields from canned lists
+
+[MODLISTS-203]: https://folio-org.atlassian.net/browse/MODLISTS-203
+[MODLISTS-211]: https://folio-org.atlassian.net/browse/MODLISTS-211
+
+# 3.1.1
+- Update translation strings
+- [MODLISTS-202] Use the column values FQM endpoint when building user-friendly queries
+- [MODFQMMGR-723] Mark list refresh as failed if maximum query size is exceeded
+
+[MODLISTS-202]: https://folio-org.atlassian.net/browse/MODLISTS-202
+[MODFQMMGR-723]: https://folio-org.atlassian.net/browse/MODFQMMGR-723
+
+## 3.1.0
+- Add support for the new contains and starts-with FQL operators ([MODFQMMGR-613])
+- Update UserFriendlyQueryService to handle new custom field naming scheme (#154) ([MODFQMMGR-376])
+- Update content type, to allow for streaming of data on Eureka to reduce memory usage ([MODLISTS-192])
+- Fail install if ALL lists fail to migrate (#164) ([MODLISTS-189])
+- Use user-friendly field names in exports (#165) ([MODLISTS-193])
+- Increase timeout for system user and extract it into env variable (#168)
+- Update Java to 21 (#171) ([FOLIO-4239])
+- Add general FeignException for retry logic (#170)
+- Improve handling of retries (#174)
+- Fix regression in list creation FOLIO-4239
+- Sensitive data cleanup in logs (#180) ([MODLISTS-194])
+- Include empty collections when serializing JSON ([MODLISTS-201])
+- Add permissions to system user to account for entity type changes in FQM
+
+[MODFQMMGR-613]: https://folio-org.atlassian.net/browse/MODFQMMGR-613
+[MODFQMMGR-376]: https://folio-org.atlassian.net/browse/MODFQMMGR-376
+[MODLISTS-192]: https://folio-org.atlassian.net/browse/MODLISTS-192
+[MODLISTS-189]: https://folio-org.atlassian.net/browse/MODLISTS-189
+[MODLISTS-193]: https://folio-org.atlassian.net/browse/MODLISTS-193
+[FOLIO-4239]: https://folio-org.atlassian.net/browse/FOLIO-4239
+[MODLISTS-194]: https://folio-org.atlassian.net/browse/MODLISTS-194
+[MODLISTS-201]: https://folio-org.atlassian.net/browse/MODLISTS-201
+
 # 3.0.x
+
+## 3.0.9
+- Add permissions to the mod-lists system user ([MODFQMMGR-650](https://folio-org.atlassian.net/browse/MODFQMMGR-650) and [MODFQMMGR-643](https://folio-org.atlassian.net/browse/MODFQMMGR-643))
 
 ## 3.0.8
 - Stream export downloads directly without buffering ([MODLISTS-186](https://folio-org.atlassian.net/browse/MODLISTS-186))

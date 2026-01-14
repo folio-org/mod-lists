@@ -15,13 +15,13 @@ import org.folio.list.exception.ListNotFoundException;
 import org.folio.list.exception.VersionNotFoundException;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListService;
-import org.folio.list.utils.TestDataFixture;
+import org.folio.list.util.TestDataFixture;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -41,7 +41,7 @@ class ListControllerVersionTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @MockBean
+  @MockitoBean
   private ListService listService;
 
   @Test
