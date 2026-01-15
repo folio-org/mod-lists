@@ -1,5 +1,8 @@
 # 3.1.x
 
+# 3.1.6
+- [MODLISTS-237](https://folio-org.atlassian.net/browse/MODLISTS-237) Spring Boot 3.4.13, MinIO 8.6.0 fixing vulns
+
 # 3.1.5
 - [MODFQMMGR-804] Add permission for simple SRS record ET
 
