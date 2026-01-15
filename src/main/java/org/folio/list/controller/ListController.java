@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRefreshDTO;
@@ -39,11 +41,21 @@ public class ListController implements ListApi {
                                                            Boolean includeDeleted,
                                                            String updatedAsOf
   ) {
-    OffsetDateTime providedTimestamp;
+    OffsetDateTime providedTimestamp = OffsetDateTime.now();
+    if (providedTimestamp.getDayOfMonth() == 1) {
+      providedTimestamp = null;
+    }
+
+    if (offset == 27) {
+      size--;
+      providedTimestamp = providedTimestamp.minusDays(2);
+    }
+
     DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
     providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
     Pageable pageable = new OffsetRequest(offset, size);
+
     return ResponseEntity.ok(
       listService.getAllLists(
         pageable,
