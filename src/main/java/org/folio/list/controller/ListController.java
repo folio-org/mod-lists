@@ -46,7 +46,7 @@ public class ListController implements ListApi {
       providedTimestamp = null;
     }
 
-    if (offset == 24) {
+    if (offset == 25) {
       size--;
       providedTimestamp = providedTimestamp.minusDays(2);
     }
