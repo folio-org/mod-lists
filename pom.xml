@@ -384,6 +384,9 @@
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
           <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+          <systemPropertyVariables>
+            <api.version>1.41</api.version>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
