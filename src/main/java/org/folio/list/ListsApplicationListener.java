@@ -34,7 +34,22 @@ public class ListsApplicationListener implements ApplicationListener<Application
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent event) {
+    ensureS3BucketExists();
     checkS3Connection();
+  }
+
+  private void ensureS3BucketExists() {
+    if (!s3CheckEnabled) {
+      return;
+    }
+
+    try {
+      log.info("Ensuring S3/MinIO bucket exists");
+      folioS3Client.createBucketIfNotExists();
+    } catch (Exception e) {
+      log.error("Failed to ensure S3/MinIO bucket exists: {}", getSanitizedExceptionMessage(e));
+      throw new S3ClientException("S3/MinIO bucket initialization failed.");
+    }
   }
 
   private void checkS3Connection() {
