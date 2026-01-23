@@ -19,17 +19,22 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class ListAppConfiguration {
   private final ListExportProperties listExportProperties;
+  private static final String AWS_S3_ENDPOINT_FORMAT = "https://s3.%s.amazonaws.com";
 
   @Bean
   @Lazy // Do not connect to S3 when the application starts
   public FolioS3Client s3Client() {
     ListExportProperties.S3Properties s3Config = listExportProperties.s3Properties();
+    String endpoint = s3Config.endpoint();
+    if (s3Config.awsSdk()) {
+        endpoint = String.format(AWS_S3_ENDPOINT_FORMAT, s3Config.region());
+    }
     S3ClientProperties s3Properties = S3ClientProperties.builder()
       .awsSdk(s3Config.awsSdk())
       .bucket(s3Config.bucket())
       .forcePathStyle(false)
       .region(s3Config.region())
-      .endpoint(s3Config.endpoint())
+      .endpoint(endpoint)
       .accessKey(s3Config.accessKey())
       .secretKey(s3Config.secretKey())
       .subPath(s3Config.subPath())
