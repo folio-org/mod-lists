@@ -42,12 +42,12 @@
     <easy-random.version>5.0.0</easy-random.version>
 
     <!-- plugins -->
-    <openapi-generator.version>6.2.1</openapi-generator.version>
+    <openapi-generator.version>7.19.0</openapi-generator.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
-    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
-    <maven-release-plugin.version>3.0.0-M7</maven-release-plugin.version>
-    <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
+    <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
 
     <!-- other properties -->
     <java.version>21</java.version>
