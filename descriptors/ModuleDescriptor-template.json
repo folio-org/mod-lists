@@ -297,6 +297,7 @@
         "owners.collection.get",
         "patron-blocks.user-summary.item.get",
         "payments.collection.get",
+        "proxiesfor.collection.get",
         "refunds.collection.get",
         "source-storage.records.collection.get",
         "tags.collection.get",
