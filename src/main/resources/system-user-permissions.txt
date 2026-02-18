@@ -19,3 +19,4 @@ users.collection.get
 users.item.get
 users.item.post
 users.item.put
+proxiesfor.collection.get
