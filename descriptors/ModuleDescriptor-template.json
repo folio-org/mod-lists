@@ -219,6 +219,7 @@
       "type": "system",
       "permissions": [
         "accounts.collection.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
         "acquisitions-units.units.collection.get",
         "addresstypes.collection.get",
         "batch-groups.collection.get",
