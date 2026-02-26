@@ -454,5 +454,4 @@
     <developerConnection>scm:git:git@github.com:folio-org/${project.artifactId}.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
-
 </project>
