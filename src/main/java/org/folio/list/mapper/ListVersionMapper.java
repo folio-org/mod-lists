@@ -11,7 +11,7 @@ import org.mapstruct.MappingConstants;
 @Mapper(
   componentModel = MappingConstants.ComponentModel.SPRING,
   injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = { MappingMethods.class, ListRefreshMapper.class },
+  uses = { ListRefreshMapper.class },
   builder = @Builder(disableBuilder = true)
 )
 public interface ListVersionMapper {

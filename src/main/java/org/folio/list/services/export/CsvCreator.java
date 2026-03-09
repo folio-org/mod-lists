@@ -4,10 +4,10 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.databind.ObjectWriter;
+import tools.jackson.dataformat.csv.CsvMapper;
+import tools.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
-import org.folio.list.rest.SystemUserQueryClient;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
@@ -48,7 +48,7 @@ public class CsvCreator {
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
   private final FolioS3Client folioS3Client;
-  private final SystemUserQueryClient systemUserQueryClient;
+  private final QueryClient queryClient;
 
   // Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -93,7 +93,7 @@ public class CsvCreator {
         .ids(ids)
         .localize(true)
         .userId(userId);
-      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+      var sortedContents = queryClient.getContentsPrivileged(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
         .toList();
@@ -177,7 +177,7 @@ public class CsvCreator {
 
       objectWriter.with(csvSchemas.nameSchema().withoutHeader())
         // Ignore unknown, so that the export doesn't include any extra data that FQM might return
-        .with(JsonGenerator.Feature.IGNORE_UNKNOWN)
+        .with(StreamWriteFeature.IGNORE_UNKNOWN)
         .writeValues(destination).write(transformedContents);
       destination.flush();
       firstBatch = false;

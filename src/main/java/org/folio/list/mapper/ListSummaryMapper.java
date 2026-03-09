@@ -1,11 +1,14 @@
 package org.folio.list.mapper;
 
-import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.domain.dto.ListSummaryDTO;
 import org.mapstruct.*;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
+@Mapper(
+  componentModel = MappingConstants.ComponentModel.SPRING,
+  injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+  builder = @Builder(disableBuilder = true)
+)
 public interface ListSummaryMapper {
   @Mapping(target = "name", source = "list.name")
   @Mapping(target = "entityTypeId", source = "list.entityTypeId")
