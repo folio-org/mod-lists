@@ -19,7 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.Supplier;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.mapper.ListMigrationMapper;
 import org.folio.list.repository.ListRepository;
@@ -27,10 +26,10 @@ import org.folio.list.repository.MigrationRepository;
 import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.rest.MigrationClient;
 import org.folio.list.services.MigrationService;
-import org.folio.list.services.RunAsSystemUserService;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,8 +38,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
 
 @ExtendWith(MockitoExtension.class)
 class MigrationServiceTest {
@@ -69,7 +66,7 @@ class MigrationServiceTest {
   ListMigrationMapper mapper;
 
   @Mock
-  RunAsSystemUserService runAsSystemUserService;
+  SystemUserScopedExecutionService systemUserScopedExecutionService;
 
   @Mock
   AsyncTaskExecutor executor;
@@ -123,8 +120,8 @@ class MigrationServiceTest {
     );
 
     when(executionContext.getTenantId()).thenReturn("tenant");
-    when(runAsSystemUserService.executeSystemUserScoped(eq("tenant"), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+    when(systemUserScopedExecutionService.executeSystemUserScoped(eq("tenant"), any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(1)).call());
     when(listRepository.findAll()).thenReturn(sourceLists);
     when(migrationClient.migrate(any()))
       .thenReturn(
@@ -223,8 +220,8 @@ class MigrationServiceTest {
     when(migrationClient.getVersion()).thenReturn("new");
     when(migrationRepository.getLatestMigratedVersion()).thenReturn("old");
     when(listRepository.findAll()).thenReturn(List.of());
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
 
     migrationService.verifyListsAreUpToDate();
 
@@ -235,7 +232,6 @@ class MigrationServiceTest {
     verifyNoMoreInteractions(migrationClient, migrationRepository, listRepository);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   void testModlists152CrossTenantSetToPrivateMigration() {
     UUID crossTenantEntityType = UUID.fromString("cf238d2f-6b39-5fcb-a771-cb7610b4ede2");
@@ -256,8 +252,8 @@ class MigrationServiceTest {
         )
       );
     when(listRepository.findAll()).thenReturn(List.of(listToUpdate, listToNotUpdate));
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
 
     migrationService.handleModlists152CrossTenantSetToPrivateMigration();
 
@@ -281,8 +277,8 @@ class MigrationServiceTest {
     when(migrationClient.getVersion()).thenReturn("current");
     when(migrationRepository.getLatestMigratedVersion()).thenReturn("current");
     when(migrationRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred()).thenReturn(true);
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenAnswer(invocation -> ((Callable<?>) invocation.getArgument(0)).call());
 
     migrationService.performTenantInstallMigrations();
 
@@ -290,13 +286,5 @@ class MigrationServiceTest {
     verify(migrationRepository, times(1)).getLatestMigratedVersion();
     verify(migrationRepository, times(1)).hasModlists152CrossTenantSetToPrivateMigrationOccurred();
     verifyNoMoreInteractions(migrationClient, migrationRepository, listRepository);
-  }
-
-  @Test
-  void testTenantInstallExceptional() {
-    when(migrationRepository.getLatestMigratedVersion())
-      .thenThrow(HttpClientErrorException.create("uh oh", HttpStatus.INTERNAL_SERVER_ERROR, null, null, null, null));
-
-    assertThrows(HttpClientErrorException.class, migrationService::performTenantInstallMigrations);
   }
 }

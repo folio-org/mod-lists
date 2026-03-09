@@ -1,19 +1,22 @@
 package org.folio.list.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.folio.list.domain.ExportDetails;
-import org.folio.list.domain.dto.ListExportDTO;
 import org.folio.list.util.TestDataFixture;
+import org.folio.list.domain.dto.ListExportDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(classes = { ListExportMapperImpl.class })
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@SpringBootTest(classes = {ListExportMapperImpl.class, MappingMethods.class})
 class ListExportMapperTest {
 
   @Autowired
   private ListExportMapper listExportMapper;
+
+  @Autowired
+  private MappingMethods mappingMethods;
 
   @Test
   void shouldMapExportDetailsToDto() {
@@ -24,7 +27,7 @@ class ListExportMapperTest {
     assertEquals(dto.getListId(), exportDetails.getList().getId());
     assertEquals(dto.getStatus().toString(), exportDetails.getStatus().toString());
     assertEquals(dto.getCreatedBy(), exportDetails.getCreatedBy());
-    assertEquals(dto.getStartDate(), exportDetails.getStartDate());
-    assertEquals(dto.getEndDate(), exportDetails.getEndDate());
+    assertEquals(dto.getStartDate(), mappingMethods.offsetDateTimeAsDate(exportDetails.getStartDate()));
+    assertEquals(dto.getEndDate(), mappingMethods.offsetDateTimeAsDate(exportDetails.getEndDate()));
   }
 }

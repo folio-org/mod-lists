@@ -1,5 +1,6 @@
 package org.folio.list.services;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -43,7 +44,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
 
 import jakarta.annotation.Nonnull;
 
@@ -320,7 +320,7 @@ public class ListService {
         .ids(contentIds);
       try {
         sortedContents = queryClient.getContents(contentsRequest);
-      } catch (HttpClientErrorException e) {
+      } catch (FeignException.FeignServerException | FeignException.BadRequest e) {
         log.error("Encountered an error when attempting to retrieve list contents for list {}", list.getId(), e);
         throw new ListContentsFqmRequestException(list);
       }

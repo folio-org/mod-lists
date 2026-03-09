@@ -3,9 +3,12 @@ package org.folio.list.rest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import feign.FeignException;
 import java.util.UUID;
+
 import org.folio.list.exception.EntityTypeNotFoundException;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
@@ -15,8 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
 
 @ExtendWith(MockitoExtension.class)
 class EntityTypeClientTest {
@@ -38,11 +39,10 @@ class EntityTypeClientTest {
   void testHandlesUnauthorized() {
     when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false))
       .thenThrow(
-        HttpClientErrorException.create(
-          HttpStatus.UNAUTHORIZED,
-          "Unauthorized",
+        new FeignException.Unauthorized(
+          "[{\"User is missing permissions: [foo.bar]\"}]",
+          mock(feign.Request.class),
           null,
-          "[{\"User is missing permissions: [foo.bar]\"}]".getBytes(),
           null
         )
       );
@@ -56,11 +56,8 @@ class EntityTypeClientTest {
   @Test
   void testHandlesNotFound() {
     when(entityTypeClient.getEntityType(ENTITY_TYPE_ID, false))
-      .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null));
+      .thenThrow(new FeignException.NotFound("Entity type not found", mock(feign.Request.class), null, null));
 
-    assertThrows(
-      EntityTypeNotFoundException.class,
-      () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false)
-    );
+    assertThrows(EntityTypeNotFoundException.class, () -> entityTypeClient.getEntityType(ENTITY_TYPE_ID, ListActions.READ, false));
   }
 }
