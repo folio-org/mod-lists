@@ -7,9 +7,9 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-@HttpExchange(url = "fqm")
+@HttpExchange(url = "http://localhost:8000/")
 public interface MigrationClient {
-  @GetExchange("version")
+  @GetExchange("test.txt")
   String getVersion();
 
   @PostExchange("migrate")
