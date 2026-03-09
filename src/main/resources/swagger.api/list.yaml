@@ -1,8 +1,12 @@
 openapi: 3.0.3
 info:
-  title: ListEntity API
-  description: ListEntity API description
+  title: Lists API
+  description: Lists API description
   version: 1.0.0
+
+servers:
+  - url: https://folio-etesting-snapshot-kong.ci.folio.org/
+
 paths:
   /lists:
     get:
@@ -81,13 +85,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListSummaryResultsDTO"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+                $ref: '#/components/schemas/ListSummaryResultsDTO'
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
     post:
       summary: Create a List
       operationId: createList
@@ -107,12 +108,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}:
     delete:
       summary: Delete List with the provided id
@@ -125,8 +123,9 @@ paths:
       responses:
         '204':
           description: List has been deleted
-        '404':
-          description: List with id not found
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
     get:
       operationId: getListById
       tags:
@@ -141,12 +140,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
     put:
       summary: Update a List
       operationId: updateList
@@ -168,12 +164,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/refresh:
     post:
       operationId: performRefresh
@@ -189,12 +182,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListRefreshDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
     delete:
       operationId: cancelRefresh
       tags:
@@ -205,12 +195,9 @@ paths:
       responses:
         '204':
           description: 'Refresh cancelled'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/contents:
     get:
       operationId: getListContents
@@ -226,8 +213,7 @@ paths:
           schema:
             type: array
             items:
-              type:
-                string
+              type: string
         - name: offset
           in: query
           description: Offset to start retrieving items from
@@ -256,12 +242,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResultsetPage'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/exports:
     post:
       operationId: exportList
@@ -286,12 +269,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListExportDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/exports/{exportId}:
     get:
       operationId: getExportDetails
@@ -303,17 +283,14 @@ paths:
         - $ref: '#/components/parameters/exportId'
       responses:
         '200':
-          description: "Returns details of requested exportId"
+          description: 'Returns details of requested exportId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListExportDTO'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/exports/{exportId}/cancel:
     post:
       operationId: cancelExport
@@ -326,12 +303,9 @@ paths:
       responses:
         '204':
           description: Export cancelled
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/exports/{exportId}/download:
     get:
       operationId: downloadList
@@ -349,12 +323,9 @@ paths:
               schema:
                 type: string
                 format: binary
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/configuration:
     get:
       operationId: getListConfiguration
@@ -368,12 +339,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListConfiguration'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/versions:
     get:
       operationId: getListVersions
@@ -391,13 +359,10 @@ paths:
                 type: array
                 items:
                   type:
-                  $ref: "#/components/schemas/ListVersionDTO"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+                  $ref: '#/components/schemas/ListVersionDTO'
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
   /lists/{id}/versions/{versionNumber}:
     get:
       operationId: getListVersion
@@ -413,19 +378,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListVersionDTO"
-        '404':
-          description: List or version not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListAppError"
+                $ref: '#/components/schemas/ListVersionDTO'
+        '4XX':
+          $ref: '#/components/responses/badRequestResponse'
+
 components:
   parameters:
     id:
@@ -478,3 +434,13 @@ components:
     ListConfiguration:
       $ref: schemas/ListConfiguration.json
 
+  responses:
+    badRequestResponse:
+      description: Invalid request
+      content:
+        application/json:
+          example:
+            message: List with ID 6c611396-b6bc-56a7-aada-3a90683d559c was not found
+            code: read-list.not.found
+          schema:
+            $ref: '#/components/schemas/ListAppError'

@@ -1,6 +1,5 @@
 package org.folio.list.service;
 
-import feign.FeignException;
 import org.folio.fql.service.FqlService;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListEntity;
@@ -27,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.Map;
@@ -262,14 +262,14 @@ class ListServiceGetListContentsTest {
       .withId(listId)
       .withFields(fields);
 
-    // Mock a FeignServerException to be thrown by queryClient
-    FeignException.FeignServerException feignException = mock(FeignException.FeignServerException.class);
+    // Mock a HttpClientErrorException to be thrown by queryClient
+    HttpClientErrorException httpClientErrorException = mock(HttpClientErrorException.class);
 
     when(executionContext.getTenantId()).thenReturn(tenantId);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(listEntity));
     when(listContentsRepository.getContents(listId, successRefresh.getId(), new OffsetRequest(offset, size))).thenReturn(listContents);
     when(entityTypeClient.getEntityType(entityTypeId, ListActions.READ)).thenReturn(entityType);
-    when(queryClient.getContents(contentsRequest)).thenThrow(feignException);
+    when(queryClient.getContents(contentsRequest)).thenThrow(httpClientErrorException);
 
     ListContentsFqmRequestException exception = assertThrows(
       ListContentsFqmRequestException.class,

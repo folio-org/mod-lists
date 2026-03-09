@@ -1,5 +1,9 @@
 package org.folio.list.controller;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.folio.list.domain.dto.ListExportDTO;
 import org.folio.list.rest.resource.ListExportApi;
@@ -11,10 +15,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.UUID;
-
 @Lazy // Do not connect to S3 when the application starts
 @RestController
 @RequiredArgsConstructor
@@ -23,8 +23,8 @@ public class ListExportController implements ListExportApi {
   private final ListExportService listExportService;
 
   @Override
-  public ResponseEntity<ListExportDTO> exportList(UUID listId, List<String> fields) {
-    var listExportDto = listExportService.createExport(listId, fields);
+  public ResponseEntity<ListExportDTO> exportList(UUID listId, Optional<List<String>> fields) {
+    var listExportDto = listExportService.createExport(listId, fields.orElse(null));
     return new ResponseEntity<>(listExportDto, HttpStatus.CREATED);
   }
 

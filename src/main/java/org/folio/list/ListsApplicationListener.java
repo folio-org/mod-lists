@@ -34,7 +34,22 @@ public class ListsApplicationListener implements ApplicationListener<Application
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent event) {
+    ensureS3BucketExists();
     checkS3Connection();
+  }
+
+  private void ensureS3BucketExists() {
+    if (!s3CheckEnabled) {
+      return;
+    }
+
+    try {
+      log.info("Ensuring S3/MinIO bucket exists");
+      folioS3Client.createBucketIfNotExists();
+    } catch (Exception e) {
+      log.error("Failed to ensure S3/MinIO bucket exists: {}", getSanitizedExceptionMessage(e));
+      throw new S3ClientException("S3/MinIO bucket initialization failed.");
+    }
   }
 
   private void checkS3Connection() {
@@ -48,24 +63,44 @@ public class ListsApplicationListener implements ApplicationListener<Application
     var formatter = DateTimeFormatter.ofPattern("yyyyMMdd-kkmmssSS"); // 20240412-14475478 = April 12, 2024 14:47:54.78
     var now = LocalDateTime.now();
     String tempFilePath = "mod-lists-s3-test-tmp-" + now.format(formatter) + '-' + UUID.randomUUID();
+    int maxUploadAttempts = 6;
+    int retryDelayMs = 5000;
+    int attempt = 0;
+    boolean success = false;
+    Exception lastException = null;
 
-    // Try uploading and deleting a temp file
-    try {
-      log.info("Attempting to upload test file %s to S3/MinIO to validate the config/connection".formatted(tempFilePath));
-      InputStream inputStream = new ByteArrayInputStream("mod-lists test file. This can be deleted.".getBytes(StandardCharsets.UTF_8));
-      folioS3Client.write(tempFilePath, inputStream);
-      log.info("File uploaded successfully");
-    } catch (Exception e) {
-      log.error("S3/MinIO configuration check failed: {}", getSanitizedExceptionMessage(e));
-      throw new S3ClientException("S3/MinIO configuration check failed.");
-    } finally {
+    // Bucket creation can have some propagation delay, so try multiple times before failing
+    while (attempt < maxUploadAttempts && !success) {
+      attempt++;
       try {
-        folioS3Client.remove(tempFilePath);
+        log.info("Attempt {}: Attempting to upload test file {} to S3/MinIO to validate the config/connection", attempt, tempFilePath);
+        InputStream inputStream = new ByteArrayInputStream("mod-lists test file. This can be deleted.".getBytes(StandardCharsets.UTF_8));
+        folioS3Client.write(tempFilePath, inputStream);
+        log.info("File uploaded successfully");
+        success = true;
       } catch (Exception e) {
-        // Don't throw anything here, since deleting isn't actually all that important for mod-lists
-        // If there truly was a fatal error, it'll get thrown in the previous try block
-        log.error("Unable to remove temp file from S3/MinIO (check for previous errors, as this may be because the file from was not successfully created). {}", getSanitizedExceptionMessage(e));
+        lastException = e;
+        log.info("Attempt {} failed to upload test file", attempt);
+        log.debug("Upload exception: {}", getSanitizedExceptionMessage(e));
+        if (attempt < maxUploadAttempts) {
+          try {
+            log.info("Retrying in {} ms...", retryDelayMs);
+            Thread.sleep(retryDelayMs);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        }
       }
+    }
+    if (!success) {
+      log.error("S3/MinIO configuration check failed after {} attempts: {}", maxUploadAttempts, getSanitizedExceptionMessage(lastException));
+      throw new S3ClientException("S3/MinIO configuration check failed.", lastException);
+    }
+    try {
+      folioS3Client.remove(tempFilePath);
+    } catch (Exception e) {
+      log.error("Unable to remove temp file from S3/MinIO (check for previous errors, as this may be because the file from was not successfully created). {}", getSanitizedExceptionMessage(e));
     }
   }
 }

@@ -1,12 +1,15 @@
 package org.folio.list.mapper;
 
+import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.domain.dto.ListAppError;
 import org.folio.list.domain.dto.ListRefreshDTO;
-import org.folio.list.domain.ListRefreshDetails;
 import org.mapstruct.*;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
+@Mapper(
+  componentModel = MappingConstants.ComponentModel.SPRING,
+  injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+  builder = @Builder(disableBuilder = true)
+)
 public interface ListRefreshMapper {
   @Mapping(target = "id", source = "listRefreshDetails.id")
   @Mapping(target = "listId", source = "listRefreshDetails.listId")
@@ -23,9 +26,7 @@ public interface ListRefreshMapper {
 
   default ListAppError convertToListAppError(ListRefreshDetails listRefreshDetails) {
     if (listRefreshDetails.getErrorCode() != null && listRefreshDetails.getErrorMessage() != null) {
-      return new ListAppError()
-        .code(listRefreshDetails.getErrorCode())
-        .message(listRefreshDetails.getErrorMessage());
+      return new ListAppError().code(listRefreshDetails.getErrorCode()).message(listRefreshDetails.getErrorMessage());
     }
     return null;
   }

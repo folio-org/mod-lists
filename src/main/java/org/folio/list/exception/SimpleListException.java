@@ -40,7 +40,7 @@ public abstract class SimpleListException extends AbstractListException {
 
   @Override
   public final ListAppError getError() {
-    return new org.folio.list.domain.dto.ListAppError()
+    return new ListAppError()
       .code(getErrorCode(failedAction, errorCode))
       .message(getMessage())
       .addParametersItem(

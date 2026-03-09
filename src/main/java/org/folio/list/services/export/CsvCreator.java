@@ -4,12 +4,13 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.list.exception.ExportNotFoundException.exportNotFound;
 import static org.folio.list.util.LogUtils.getSanitizedExceptionMessage;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.databind.ObjectWriter;
+import tools.jackson.dataformat.csv.CsvMapper;
+import tools.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,8 +27,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportCancelledException;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
-import org.folio.list.rest.EntityTypeClient;
-import org.folio.list.rest.SystemUserQueryClient;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
@@ -47,9 +47,8 @@ public class CsvCreator {
   private final ListExportRepository listExportRepository;
   private final ListContentsRepository contentsRepository;
   private final ListExportProperties exportProperties;
-  private final EntityTypeClient entityTypeClient;
   private final FolioS3Client folioS3Client;
-  private final SystemUserQueryClient systemUserQueryClient;
+  private final QueryClient queryClient;
 
   // Minimal s3 part size is 5 MB
   private static final Long MINIMAL_PART_SIZE = 5242880L;
@@ -58,15 +57,17 @@ public class CsvCreator {
   private static final long INITIAL_BACKOFF = 1000;
   private static final long MAX_BACKOFF = 16000;
 
+  /**
+   * @param localizedValues Map of localized values for export. The keys are field names, and the values are maps of non-localized to localized strings.
+   */
   @SneakyThrows
-  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId) {
+  public ExportLocalStorage createAndUploadCSV(ExportDetails exportDetails, String destinationFileName, String uploadId, List<String> partETags, UUID userId, EntityType entityType, Map<String, Map<String, String>> localizedValues) {
     var localStorage = new ExportLocalStorage(exportDetails.getExportId());
     ListEntity list = exportDetails.getList();
     var idsProvider = new ListIdsProvider(contentsRepository, list);
-    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
 
     OutputStream localStorageOutputStream = localStorage.outputStream();
-    var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields());
+    var csvWriter = new ListCsvWriter(entityType, exportDetails.getFields(), localizedValues);
     int batchSize = exportProperties.getBatchSize();
     int batchNumber = 0;
     int partNumber = 1;
@@ -92,7 +93,7 @@ public class CsvCreator {
         .ids(ids)
         .localize(true)
         .userId(userId);
-      var sortedContents = systemUserQueryClient.getContentsPrivileged(contentsRequest)
+      var sortedContents = queryClient.getContentsPrivileged(contentsRequest)
         .stream()
         .filter(map -> !Boolean.TRUE.equals(map.get(IS_DELETED)))
         .toList();
@@ -143,6 +144,7 @@ public class CsvCreator {
 
     private final EntityTypeCsvSchemas csvSchemas;
     private final ObjectWriter objectWriter;
+    private final Map<String, Map<String, String>> localizedValues; // Field name -> (non-localized value -> localized value)
     private boolean firstBatch;
 
     private static final Map<String, CsvSchema.ColumnType> COLUMN_TYPE_MAPPER = Map.of(
@@ -151,9 +153,10 @@ public class CsvCreator {
       "arrayType", CsvSchema.ColumnType.ARRAY
     );
 
-    private ListCsvWriter(EntityType entityType, List<String> fields) {
+    private ListCsvWriter(EntityType entityType, List<String> fields, Map<String, Map<String, String>> localizedValues) {
       this.csvSchemas = createSchema(entityType, fields);
       this.objectWriter = new CsvMapper().writerFor(List.class);
+      this.localizedValues = localizedValues;
       this.firstBatch = true;
     }
 
@@ -164,12 +167,43 @@ public class CsvCreator {
         destination.write(ByteOrderMark.UTF_8.getBytes());
         objectWriter.with(csvSchemas.labelSchema().withHeader()).writeValues(destination).write(List.of());
       }
+
+      List<Map<String, Object>> transformedContents = listContents;
+      if (localizedValues != null && !localizedValues.isEmpty()) {
+        transformedContents = listContents.stream()
+          .map(this::localizeRow)
+          .toList();
+      }
+
       objectWriter.with(csvSchemas.nameSchema().withoutHeader())
         // Ignore unknown, so that the export doesn't include any extra data that FQM might return
-        .with(JsonGenerator.Feature.IGNORE_UNKNOWN)
-        .writeValues(destination).write(listContents);
-      firstBatch = false;
+        .with(StreamWriteFeature.IGNORE_UNKNOWN)
+        .writeValues(destination).write(transformedContents);
       destination.flush();
+      firstBatch = false;
+    }
+
+    private Map<String, Object> localizeRow(Map<String, Object> row) {
+      // The algorithm, since it's kind of dense: For each column that needs localization, update the column in the row
+      // with the corresponding value in localizedValues, and return a new map with the localized values.
+      // Edge cases:
+      //   - If the column isn't there or is null, or there is no localized value, don't localize it
+      //   - If the value is a list, localize each item in the list
+      // Also, note that localized values are effectively always converted to String, even if the original value was another type
+      Map<String, Object> localizedMap = new HashMap<>(row);
+      localizedValues.forEach((columnName, valueMap) -> {
+        Object value = row.get(columnName);
+        if (value != null) {
+          if (value instanceof List<?> list) {
+            localizedMap.put(columnName, list.stream()
+              .map(v -> v == null ? null : valueMap.getOrDefault(v.toString(), v.toString()))
+              .toList());
+          } else {
+            localizedMap.put(columnName, valueMap.getOrDefault(value.toString(), value.toString()));
+          }
+        }
+      });
+      return localizedMap;
     }
 
     /**

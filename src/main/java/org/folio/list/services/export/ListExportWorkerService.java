@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.exception.ExportCancelledException;
+import org.folio.querytool.domain.dto.EntityType;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 import org.folio.spring.FolioExecutionContext;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,9 +30,13 @@ public class ListExportWorkerService {
   private final FolioS3Client folioS3Client;
   private final CsvCreator csvCreator;
 
+  /**
+   * Performs asynchronous export of list data to CSV and uploads it to S3 using multipart upload.
+   * @param localizedValues Map of localized values for export. The keys are field names, and the values are maps of non-localized to localized strings.
+   */
   @Async
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId) {
+  public CompletableFuture<Boolean> doAsyncExport(ExportDetails exportDetails, UUID userId, EntityType entityType, Map<String, Map<String, String>> localizedValues) {
     log.info("Starting export of list: " + exportDetails.getList().getId() + " with Export ID: " + exportDetails.getExportId());
     String destinationFileName = ExportUtils.getFileName(folioExecutionContext.getTenantId(), exportDetails.getExportId());
     String uploadId = null;
@@ -39,7 +45,7 @@ public class ListExportWorkerService {
       uploadId = folioS3Client.initiateMultipartUpload(destinationFileName);
       log.info("S3 multipart upload initialized for exportId {}", exportDetails.getExportId());
 
-      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId);
+      ExportLocalStorage andUploadCSV = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType, localizedValues);
       andUploadCSV.close();
 
       folioS3Client.completeMultipartUpload(destinationFileName, uploadId, partETags);
