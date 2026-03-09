@@ -194,7 +194,8 @@ public class MigrationService {
     multiplier = 1.5,
     maxDelay = 60000,
     timeUnit = TimeUnit.MILLISECONDS,
-    timeoutString = "${mod-lists.general.system-user-retry-wait-minutes:10} * 60 * 1000"
+//    timeoutString = "${mod-lists.general.system-user-retry-wait-minutes:10} * 60 * 1000"
+    timeoutString = "600000"
   )
   public void performTenantInstallMigrations() {
     try {
