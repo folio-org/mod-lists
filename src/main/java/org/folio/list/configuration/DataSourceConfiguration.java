@@ -1,14 +1,15 @@
 package org.folio.list.configuration;
 
-import javax.sql.DataSource;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
 
 @Configuration
 @Log4j2
@@ -25,7 +26,9 @@ public class DataSourceConfiguration {
   @Bean(name = "dataSource")
   @ConfigurationProperties("spring.datasource.hikari")
   public DataSource writerDataSource() {
-    return writerDataSourceProperties().initializeDataSourceBuilder().build();
+    return writerDataSourceProperties()
+      .initializeDataSourceBuilder()
+      .build();
   }
 
   @Primary
@@ -34,4 +37,5 @@ public class DataSourceConfiguration {
   public JdbcTemplate writerJdbcTemplate(DataSource dataSource) {
     return new JdbcTemplate(dataSource);
   }
+
 }

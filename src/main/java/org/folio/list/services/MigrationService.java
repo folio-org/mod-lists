@@ -4,12 +4,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.mapper.ListMigrationMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.repository.MigrationRepository;
@@ -18,11 +16,10 @@ import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Log4j2
 @Service
@@ -35,7 +32,7 @@ public class MigrationService {
   private final ListMigrationMapper mapper;
   private final ListRepository listRepository;
   private final MigrationClient migrationClient;
-  private final RunAsSystemUserService runAsSystemUserService;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
 
   private final AsyncTaskExecutor executor;
 
@@ -86,7 +83,7 @@ public class MigrationService {
             // attempting to set the scope inside migrateList fails, as its in another thread,
             // and so we've lost all context. Therefore, we need to create the context here,
             // and specifically pass in the tenant, too.
-            runAsSystemUserService.executeSystemUserScoped(tenant, () -> migrateList(list))
+            systemUserScopedExecutionService.executeSystemUserScoped(tenant, () -> migrateList(list))
           )
           .exceptionally(e -> {
             log.error("Error migrating list {}. This list may not function correctly", list, e);
@@ -134,10 +131,7 @@ public class MigrationService {
    * Check that lists are up to date with the current FQM entity types version, fetched via API
    */
   public void verifyListsAreUpToDate() {
-    String latestVersion = runAsSystemUserService.executeSystemUserScoped(
-      executionContext.getTenantId(),
-      migrationClient::getVersion
-    );
+    String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(migrationClient::getVersion);
     verifyListsAreUpToDate(latestVersion);
   }
 
@@ -155,8 +149,8 @@ public class MigrationService {
 
     log.info("Migrating cross-tenant lists to private, to cover cases in MODLISTS-152");
 
-    List<EntityTypeSummary> crossTenantEntityTypes = runAsSystemUserService
-      .executeSystemUserScoped(executionContext.getTenantId(), () -> entityTypeClient.getEntityTypeSummary(null))
+    List<EntityTypeSummary> crossTenantEntityTypes = systemUserScopedExecutionService
+      .executeSystemUserScoped(() -> entityTypeClient.getEntityTypeSummary(null))
       .entityTypes()
       .stream()
       .filter(EntityTypeSummary::crossTenantQueriesEnabled)
@@ -185,28 +179,8 @@ public class MigrationService {
     log.info("Marked {} lists as private", updatedLists.size());
   }
 
-  // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
-  // case of failures related to missing permissions or general Feign exceptions
-  // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
-  @Retryable(
-    includes = { InsufficientEntityTypePermissionsException.class, HttpClientErrorException.class },
-    delay = 2000,
-    multiplier = 1.5,
-    maxDelay = 60000,
-    timeUnit = TimeUnit.MILLISECONDS,
-//    timeoutString = "${mod-lists.general.system-user-retry-wait-minutes:10} * 60 * 1000"
-    timeoutString = "600000"
-  )
   public void performTenantInstallMigrations() {
-    try {
-      this.verifyListsAreUpToDate();
-      this.handleModlists152CrossTenantSetToPrivateMigration();
-    } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException e) {
-      log.warn(
-        "Encountered error during tenant install migrations, likely due to system user permissions not being fully set up yet. Sending back to Spring to retry...",
-        e
-      );
-      throw e;
-    }
+    this.verifyListsAreUpToDate();
+    this.handleModlists152CrossTenantSetToPrivateMigration();
   }
 }
