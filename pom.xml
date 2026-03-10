@@ -59,6 +59,29 @@
       src/main/java/org/folio/template/FolioSpringTemplateApplication.java
     </sonar.exclusions>
     <argLine />
+
+    <maven-compat.version>3.9.12</maven-compat.version>
+    <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
+    <swagger-annotations.version>2.2.43</swagger-annotations.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
+    <folio-util.version>35.4.2</folio-util.version>
+    <rhino.version>1.9.1</rhino.version>
+    <icu4j.version>78.2</icu4j.version>
+    <commons-fileupload.version>1.6.0</commons-fileupload.version>
+    <commons-lang3.version>3.20.0</commons-lang3.version>
+
+    <!-- Test dependencies versions -->
+    <easy-random.version>5.0.0</easy-random.version>
+    <mockito-inline.version>5.2.0</mockito-inline.version>
+    <wiremock.version>3.13.2</wiremock.version>
+
+    <!-- Plugins versions -->
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <openapi-generator.version>7.20.0</openapi-generator.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
+    <checkstyle.version>13.3.0</checkstyle.version>
+    <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
   </properties>
 
   <dependencies>
@@ -73,6 +96,94 @@
       <groupId>org.folio</groupId>
       <artifactId>folio-spring-i18n</artifactId>
       <version>${folio-spring-support.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-spring-common</artifactId>
+      <version>${folio-spring-support.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-properties-migrator</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-liquibase</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-log4j2</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+    </dependency>
+
+
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger-annotations.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-compat</artifactId>
+      <version>${maven-compat.version}</version>
     </dependency>
 
     <dependency>
