@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
@@ -31,11 +30,11 @@ import org.springframework.web.client.HttpClientErrorException;
 
 @Log4j2
 @Service
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MigrationService {
 
-  @Value("${mod-lists.general.system-user-retry-wait-minutes:10}")
   private final int MAX_RETRY_MINUTES;
+
+  private final AsyncTaskExecutor executor;
 
   private final EntityTypeClient entityTypeClient;
   private final FolioExecutionContext executionContext;
@@ -45,7 +44,28 @@ public class MigrationService {
   private final MigrationClient migrationClient;
   private final RunAsSystemUserService runAsSystemUserService;
 
-  private final AsyncTaskExecutor executor;
+  @Autowired
+  public MigrationService(
+    @Value("${mod-lists.general.system-user-retry-wait-minutes:10}") int maxRetryMinutes,
+    AsyncTaskExecutor executor,
+    EntityTypeClient entityTypeClient,
+    FolioExecutionContext executionContext,
+    MigrationRepository migrationRepository,
+    ListMigrationMapper mapper,
+    ListRepository listRepository,
+    MigrationClient migrationClient,
+    RunAsSystemUserService runAsSystemUserService
+  ) {
+    this.MAX_RETRY_MINUTES = maxRetryMinutes;
+    this.executor = executor;
+    this.entityTypeClient = entityTypeClient;
+    this.executionContext = executionContext;
+    this.migrationRepository = migrationRepository;
+    this.mapper = mapper;
+    this.listRepository = listRepository;
+    this.migrationClient = migrationClient;
+    this.runAsSystemUserService = runAsSystemUserService;
+  }
 
   /**
    * Upgrade a given list's query/entity type/field list.
