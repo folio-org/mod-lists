@@ -187,7 +187,6 @@ public class MigrationService {
   // case of failures related to missing permissions or general Feign exceptions
   // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
   @Retryable(
-    includes = { InsufficientEntityTypePermissionsException.class, HttpClientErrorException.class },
     delay = 2000,
     multiplier = 1.5,
     maxDelay = 60000,
