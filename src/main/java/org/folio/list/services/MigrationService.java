@@ -1,10 +1,10 @@
 package org.folio.list.services;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
@@ -21,8 +21,11 @@ import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -30,6 +33,9 @@ import org.springframework.web.client.HttpClientErrorException;
 @Service
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MigrationService {
+
+  @Value("${mod-lists.general.system-user-retry-wait-minutes:10}")
+  private final int MAX_RETRY_MINUTES;
 
   private final EntityTypeClient entityTypeClient;
   private final FolioExecutionContext executionContext;
@@ -183,26 +189,38 @@ public class MigrationService {
     log.info("Marked {} lists as private", updatedLists.size());
   }
 
-  // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
-  // case of failures related to missing permissions or general Feign exceptions
-  // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
-  @Retryable(
-    delay = 2000,
-    multiplier = 1.5,
-    maxDelay = 60000,
-    timeUnit = TimeUnit.MILLISECONDS,
-    timeoutString = "#{(systemProperties['mod-lists.general.system-user-retry-wait-minutes'] ?: 10) * 60 * 1000}"
-  )
   public void performTenantInstallMigrations() {
+    // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
+    // case of failures related to missing permissions or general Feign exceptions
+    // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
+    RetryTemplate retryTemplate = new RetryTemplate(
+      RetryPolicy
+        .builder()
+        .delay(Duration.ofSeconds(2))
+        .multiplier(1.5)
+        .maxDelay(Duration.ofMinutes(1))
+        .timeout(Duration.ofMinutes(MAX_RETRY_MINUTES))
+        .build()
+    );
+
     try {
-      this.verifyListsAreUpToDate();
-      this.handleModlists152CrossTenantSetToPrivateMigration();
-    } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException e) {
-      log.warn(
-        "Encountered error during tenant install migrations, likely due to system user permissions not being fully set up yet. Sending back to Spring to retry...",
-        e
-      );
-      throw e;
+      retryTemplate.execute(() -> {
+        try {
+          log.info("Attempting tenant install migrations...");
+          this.verifyListsAreUpToDate();
+          this.handleModlists152CrossTenantSetToPrivateMigration();
+          return null;
+        } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException e) {
+          log.warn(
+            "Encountered error during tenant install migrations, likely due to system user permissions not being fully set up yet. Sending back to Spring to retry...",
+            e
+          );
+          throw e;
+        }
+      });
+    } catch (RetryException e) {
+      log.error("Exhausted maximum number of retries for performTenantInstallMigrations", e);
+      throw new RuntimeException(e);
     }
   }
 }
