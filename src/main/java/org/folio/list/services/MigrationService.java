@@ -5,6 +5,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -75,6 +77,7 @@ public class MigrationService {
    */
   public List<CompletableFuture<Boolean>> migrateAllLists() {
     String tenant = executionContext.getTenantId();
+    Function<Supplier<Boolean>, Boolean> systemUserExecutor = runAsSystemUserService.prepareExecutorWithSystemUserContext(tenant);
 
     return StreamSupport
       .stream(listRepository.findAll().spliterator(), true)
@@ -82,12 +85,7 @@ public class MigrationService {
       .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
       .map(list ->
         executor
-          .submitCompletable(() ->
-            // attempting to set the scope inside migrateList fails, as its in another thread,
-            // and so we've lost all context. Therefore, we need to create the context here,
-            // and specifically pass in the tenant, too.
-            runAsSystemUserService.executeSystemUserScoped(tenant, () -> migrateList(list))
-          )
+          .submitCompletable(() -> systemUserExecutor.apply(() -> migrateList(list)))
           .exceptionally(e -> {
             log.error("Error migrating list {}. This list may not function correctly", list, e);
             throw new CompletionException(e);
