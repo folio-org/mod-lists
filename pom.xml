@@ -89,8 +89,6 @@
       <groupId>org.folio</groupId>
       <artifactId>folio-spring-base</artifactId>
       <version>${folio-spring-support.version}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/folio-spring-base-10.0.0-RC1.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
