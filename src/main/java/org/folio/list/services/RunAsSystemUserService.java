@@ -13,7 +13,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 
 /**
  * Runs code in an execution context using the current tenantId with no other headers,
@@ -21,7 +20,6 @@ import lombok.extern.log4j.Log4j2;
  * determine that things are running as a system user and will inject the token/etc at
  * the routing level.
  */
-@Log4j2
 @Service
 @AllArgsConstructor
 public class RunAsSystemUserService {
@@ -55,9 +53,6 @@ public class RunAsSystemUserService {
   }
 
   private FolioExecutionContext systemUserExecutionContext(String tenantId) {
-    log.info("Creating system user execution context for tenant {}", tenantId);
-    log.info("Extracted URL from outer context: {}", outerContext.getOkapiUrl());
-    log.info("Running with module metadata {}", outerContext.getFolioModuleMetadata());
     return new DefaultFolioExecutionContext(
       outerContext.getFolioModuleMetadata(),
       Map.ofEntries(
