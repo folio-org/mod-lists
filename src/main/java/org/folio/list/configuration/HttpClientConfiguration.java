@@ -17,9 +17,7 @@ public class HttpClientConfiguration {
   }
 
   @Bean
-  public MigrationClient migrationClient(
-    HttpServiceProxyFactory factory
-  ) {
+  public MigrationClient migrationClient(HttpServiceProxyFactory factory) {
     return factory.createClient(MigrationClient.class);
   }
 
