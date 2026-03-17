@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
@@ -27,6 +28,7 @@ import org.folio.list.rest.EntityTypeClient;
 import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.services.RunAsSystemUserService;
 import org.folio.list.services.export.ExportUtils;
 import org.folio.list.services.export.ListExportService;
 import org.folio.list.services.export.ListExportWorkerService;
@@ -38,7 +40,6 @@ import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,7 +81,7 @@ class ListExportServiceTest {
   private AppShutdownService appShutdownService;
 
   @Mock
-  private SystemUserScopedExecutionService systemUserScopedExecutionService;
+  private RunAsSystemUserService runAsSystemUserService;
 
   @Mock
   private EntityTypeClient entityTypeClient;
@@ -116,11 +117,11 @@ class ListExportServiceTest {
     when(listExportWorkerService.doAsyncExport(eq(exportDetails), eq(userId), eq(entityType), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
     when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
     doAnswer(invocation -> {
-      Runnable runnable = invocation.getArgument(1);
-      runnable.run();
+      Supplier<?> runnable = invocation.getArgument(1);
+      runnable.get();
       return CompletableFuture.completedFuture(null);
     })
-      .when(systemUserScopedExecutionService)
+      .when(runAsSystemUserService)
       .executeAsyncSystemUserScoped(any(), any());
 
     listExportService.createExport(listId, fields);
@@ -166,11 +167,11 @@ class ListExportServiceTest {
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(any(), any(), any(), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
     doAnswer(invocation -> {
-      Runnable runnable = invocation.getArgument(1);
-      runnable.run();
+      Supplier<?> runnable = invocation.getArgument(1);
+      runnable.get();
       return CompletableFuture.completedFuture(null);
     })
-      .when(systemUserScopedExecutionService)
+      .when(runAsSystemUserService)
       .executeAsyncSystemUserScoped(any(), any());
 
     listExportService.createExport(listId, List.of());
@@ -198,11 +199,11 @@ class ListExportServiceTest {
     when(listExportWorkerService.doAsyncExport(eq(exportDetails), eq(userId), any(EntityType.class), anyMap()))
       .thenReturn(CompletableFuture.failedFuture(new RuntimeException("something went wrong")));
     doAnswer(invocation -> {
-      Runnable runnable = invocation.getArgument(1);
-      runnable.run();
-      return CompletableFuture.completedFuture(null);
+
+  Supplier<?> runnable = invocation.getArgument(1);
+      runnable.get();      return CompletableFuture.completedFuture(null);
     })
-      .when(systemUserScopedExecutionService)
+      .when(runAsSystemUserService)
       .executeAsyncSystemUserScoped(any(), any());
 
     listExportService.createExport(listId, null);

@@ -1,6 +1,5 @@
 package org.folio.list.service;
 
-import feign.FeignException;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListDTO;
@@ -41,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +63,7 @@ class ListServiceTest {
   private ListService listService;
 
   @Spy
-  private ListMapper listMapper = new ListMapperImpl(new MappingMethods(), new ListRefreshMapperImpl(new MappingMethods()));
+  private ListMapper listMapper = new ListMapperImpl(new ListRefreshMapperImpl());
 
   @Spy
   private ListEntityMapper listEntityMapper = new org.folio.list.mapper.ListEntityMapperImpl();
@@ -685,7 +685,7 @@ class ListServiceTest {
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
-    doThrow(FeignException.class).when(entityTypeClient).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
+    doThrow(HttpClientErrorException.class).when(entityTypeClient).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
 
     assertDoesNotThrow(() -> listService.createList(listRequestDto));
   }

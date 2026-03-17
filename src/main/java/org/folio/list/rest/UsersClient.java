@@ -1,17 +1,16 @@
 package org.folio.list.rest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-@FeignClient(name = "users")
+@HttpExchange(url = "users")
 public interface UsersClient {
-
-  @GetMapping("/{userId}")
-  User getUser(@RequestHeader UUID userId);
+  @GetExchange("/{userId}")
+  User getUser(@PathVariable UUID userId);
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   record User(UUID id, Optional<Personal> personal) {

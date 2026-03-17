@@ -3,6 +3,7 @@ package org.folio.list.controller;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.folio.list.domain.dto.ListDTO;
@@ -30,28 +31,32 @@ public class ListController implements ListApi {
   private final ListService listService;
 
   @Override
-  public ResponseEntity<ListSummaryResultsDTO> getAllLists(List<UUID> ids,
-                                                           List<UUID> entityTypeIds,
-                                                           Integer offset,
-                                                           Integer size,
-                                                           Boolean active,
-                                                           Boolean isPrivate, // Note: query param name is "private"
-                                                           Boolean includeDeleted,
-                                                           String updatedAsOf
+  public ResponseEntity<ListSummaryResultsDTO> getAllLists(
+    Optional<List<UUID>> ids,
+    Optional<List<UUID>> entityTypeIds,
+    Optional<Integer> offset,
+    Optional<Integer> size,
+    Optional<Boolean> active,
+    Optional<Boolean> isPrivate, // Note: query param name is "private"
+    Optional<Boolean> includeDeleted,
+    Optional<String> updatedAsOf
   ) {
     OffsetDateTime providedTimestamp;
     DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     // In the backend, the plus sign (+) that is received through RequestParams within the provided timestamp gets substituted with a blank space.
-    providedTimestamp = !StringUtils.hasText(updatedAsOf) ? null : OffsetDateTime.parse(updatedAsOf.replace(' ', '+'), formatter);
-    Pageable pageable = new OffsetRequest(offset, size);
+    providedTimestamp =
+      updatedAsOf
+        .map(ts -> !StringUtils.hasText(ts) ? null : OffsetDateTime.parse(ts.replace(' ', '+'), formatter))
+        .orElse(null);
+    Pageable pageable = new OffsetRequest(offset.orElse(null), size.orElse(null));
     return ResponseEntity.ok(
       listService.getAllLists(
         pageable,
-        ids,
-        entityTypeIds,
-        active,
-        isPrivate,
-        Boolean.TRUE.equals(includeDeleted),
+        ids.orElse(null),
+        entityTypeIds.orElse(null),
+        active.orElse(null),
+        isPrivate.orElse(null),
+        Boolean.TRUE.equals(includeDeleted.orElse(null)),
         providedTimestamp
       )
     );
@@ -65,28 +70,37 @@ public class ListController implements ListApi {
 
   @Override
   public ResponseEntity<ListDTO> updateList(UUID id, ListUpdateRequestDTO listUpdateRequest) {
-    return listService.updateList(id, listUpdateRequest)
+    return listService
+      .updateList(id, listUpdateRequest)
       .map(ResponseEntity::ok)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.UPDATE));
   }
 
   @Override
   public ResponseEntity<ListDTO> getListById(UUID id) {
-    return listService.getListById(id)
+    return listService
+      .getListById(id)
       .map(ResponseEntity::ok)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.READ));
   }
 
   @Override
   public ResponseEntity<ListRefreshDTO> performRefresh(UUID id) {
-    return listService.performRefresh(id)
+    return listService
+      .performRefresh(id)
       .map(ResponseEntity::ok)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.REFRESH));
   }
 
   @Override
-  public ResponseEntity<ResultsetPage> getListContents(UUID id, List<String> fields, Integer offset, Integer size) {
-    return listService.getListContents(id, fields, offset, size)
+  public ResponseEntity<ResultsetPage> getListContents(
+    UUID id,
+    Optional<List<String>> fields,
+    Optional<Integer> offset,
+    Optional<Integer> size
+  ) {
+    return listService
+      .getListContents(id, fields.orElse(null), offset.orElse(null), size.orElse(null))
       .map(ResponseEntity::ok)
       .orElseThrow(() -> new ListNotFoundException(id, ListActions.READ));
   }
