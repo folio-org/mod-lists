@@ -29,33 +29,9 @@ public class HttpClientConfiguration {
 
   @Bean
   public MigrationClient migrationClient(
-    HttpServiceProxyFactory factory,
-    // temporary fix until FOLSPRINGS-222 is merged
-    JsonMapper jsonMapper,
-    @Qualifier("enrichUrlAndHeadersInterceptor") ClientHttpRequestInterceptor enrichUrlAndHeadersInterceptor,
-    @Qualifier("loggingInterceptor") @Autowired(required = false) ClientHttpRequestInterceptor loggingInterceptor,
-    @Qualifier("exchangeJsonMapper") @Autowired(required = false) JsonMapper exchangeJsonMapper
+    HttpServiceProxyFactory factory
   ) {
-    RestClient.Builder builder = RestClient
-      .builder()
-      .requestInterceptor(enrichUrlAndHeadersInterceptor)
-      .configureMessageConverters(clientBuilder ->
-        clientBuilder
-          .addCustomConverter(
-            new JacksonJsonHttpMessageConverter(ObjectUtils.getIfNull(exchangeJsonMapper, jsonMapper))
-          )
-          .addCustomConverter(new StringHttpMessageConverter())
-      );
-
-    if (loggingInterceptor != null) {
-      builder.bufferContent((uri, httpMethod) -> true).requestInterceptor(loggingInterceptor);
-    }
-
-    return HttpServiceProxyFactory
-      .builderFor(RestClientAdapter.create(builder.build()))
-      .exchangeAdapterDecorator(NotFoundRestClientAdapterDecorator::new)
-      .build()
-      .createClient(MigrationClient.class);
+    return factory.createClient(MigrationClient.class);
   }
 
   @Bean
