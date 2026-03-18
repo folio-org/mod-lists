@@ -3,15 +3,15 @@ package org.folio.list;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.resilience.annotation.EnableResilientMethods;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@SpringBootApplication
 @EnableAsync
-@EnableFeignClients
+@EnableResilientMethods
 @EnableTransactionManagement
 @ConfigurationPropertiesScan
+@SpringBootApplication
 public class ModListsApplication {
 
   public static void main(String[] args) {

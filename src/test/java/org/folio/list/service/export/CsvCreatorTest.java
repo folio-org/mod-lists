@@ -9,8 +9,7 @@ import org.folio.list.domain.ListEntity;
 import org.folio.list.repository.ListContentsRepository;
 import org.folio.list.repository.ListExportRepository;
 import org.folio.list.rest.EntityTypeClient;
-import org.folio.list.rest.SystemUserQueryClient;
-import org.folio.list.services.ListActions;
+import org.folio.list.rest.QueryClient;
 import org.folio.list.services.export.CsvCreator;
 import org.folio.list.services.export.ExportLocalStorage;
 import org.folio.list.util.TestDataFixture;
@@ -53,7 +52,7 @@ class CsvCreatorTest {
   @Mock
   private EntityTypeClient entityTypeClient;
   @Mock
-  private SystemUserQueryClient queryClient;
+  private QueryClient queryClient;
   @Mock
   private ListExportRepository listExportRepository;
   @Mock(mockMaker = MockMakers.INLINE)

@@ -5,7 +5,7 @@ import org.folio.list.domain.ListEntity;
 import org.mapstruct.*;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-  uses = {MappingMethods.class, ListRefreshMapper.class}, builder = @Builder(disableBuilder = true))
+  uses = {ListRefreshMapper.class}, builder = @Builder(disableBuilder = true))
 public interface ListMapper {
   @Mapping(target = "name", source = "entity.name")
   @Mapping(target = "entityTypeId", source = "entity.entityTypeId")
