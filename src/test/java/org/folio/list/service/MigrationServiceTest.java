@@ -6,7 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,13 +31,14 @@ import org.folio.list.services.RunAsSystemUserService;
 import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.retry.RetryException;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
@@ -74,8 +75,29 @@ class MigrationServiceTest {
   @Mock
   AsyncTaskExecutor executor;
 
-  @InjectMocks
   MigrationService migrationService;
+
+  @BeforeEach
+  void setUp() {
+    migrationService =
+      new MigrationService(
+        0,
+        executor,
+        entityTypeClient,
+        executionContext,
+        migrationRepository,
+        mapper,
+        listRepository,
+        migrationClient,
+        runAsSystemUserService
+      );
+
+    lenient()
+      .when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
+      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+
+    lenient().when(runAsSystemUserService.prepareExecutorWithSystemUserContext(any())).thenReturn(Supplier::get);
+  }
 
   @Test
   void testMigrateListWithNoQuery() {
@@ -123,8 +145,6 @@ class MigrationServiceTest {
     );
 
     when(executionContext.getTenantId()).thenReturn("tenant");
-    when(runAsSystemUserService.executeSystemUserScoped(eq("tenant"), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
     when(listRepository.findAll()).thenReturn(sourceLists);
     when(migrationClient.migrate(any()))
       .thenReturn(
@@ -223,8 +243,6 @@ class MigrationServiceTest {
     when(migrationClient.getVersion()).thenReturn("new");
     when(migrationRepository.getLatestMigratedVersion()).thenReturn("old");
     when(listRepository.findAll()).thenReturn(List.of());
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
 
     migrationService.verifyListsAreUpToDate();
 
@@ -256,8 +274,6 @@ class MigrationServiceTest {
         )
       );
     when(listRepository.findAll()).thenReturn(List.of(listToUpdate, listToNotUpdate));
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
 
     migrationService.handleModlists152CrossTenantSetToPrivateMigration();
 
@@ -281,8 +297,6 @@ class MigrationServiceTest {
     when(migrationClient.getVersion()).thenReturn("current");
     when(migrationRepository.getLatestMigratedVersion()).thenReturn("current");
     when(migrationRepository.hasModlists152CrossTenantSetToPrivateMigrationOccurred()).thenReturn(true);
-    when(runAsSystemUserService.executeSystemUserScoped(any(), any()))
-      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
 
     migrationService.performTenantInstallMigrations();
 
@@ -297,6 +311,7 @@ class MigrationServiceTest {
     when(migrationRepository.getLatestMigratedVersion())
       .thenThrow(HttpClientErrorException.create("uh oh", HttpStatus.INTERNAL_SERVER_ERROR, null, null, null, null));
 
-    assertThrows(HttpClientErrorException.class, migrationService::performTenantInstallMigrations);
+    RuntimeException ex = assertThrows(RuntimeException.class, migrationService::performTenantInstallMigrations);
+    assertThat(ex.getCause().getClass(), is(RetryException.class));
   }
 }
