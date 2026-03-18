@@ -1,16 +1,13 @@
 package org.folio.list.services;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.domain.ListEntity;
-import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.mapper.ListMigrationMapper;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.repository.MigrationRepository;
@@ -19,22 +16,15 @@ import org.folio.list.rest.EntityTypeClient.EntityTypeSummary;
 import org.folio.list.rest.MigrationClient;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.retry.RetryException;
-import org.springframework.core.retry.RetryPolicy;
-import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Log4j2
 @Service
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MigrationService {
-
-  private final int MAX_RETRY_MINUTES;
-
-  private final AsyncTaskExecutor executor;
 
   private final EntityTypeClient entityTypeClient;
   private final FolioExecutionContext executionContext;
@@ -42,30 +32,9 @@ public class MigrationService {
   private final ListMigrationMapper mapper;
   private final ListRepository listRepository;
   private final MigrationClient migrationClient;
-  private final RunAsSystemUserService runAsSystemUserService;
+  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
 
-  @Autowired
-  public MigrationService(
-    @Value("${mod-lists.general.system-user-retry-wait-minutes:10}") int maxRetryMinutes,
-    AsyncTaskExecutor executor,
-    EntityTypeClient entityTypeClient,
-    FolioExecutionContext executionContext,
-    MigrationRepository migrationRepository,
-    ListMigrationMapper mapper,
-    ListRepository listRepository,
-    MigrationClient migrationClient,
-    RunAsSystemUserService runAsSystemUserService
-  ) {
-    this.MAX_RETRY_MINUTES = maxRetryMinutes;
-    this.executor = executor;
-    this.entityTypeClient = entityTypeClient;
-    this.executionContext = executionContext;
-    this.migrationRepository = migrationRepository;
-    this.mapper = mapper;
-    this.listRepository = listRepository;
-    this.migrationClient = migrationClient;
-    this.runAsSystemUserService = runAsSystemUserService;
-  }
+  private final AsyncTaskExecutor executor;
 
   /**
    * Upgrade a given list's query/entity type/field list.
@@ -103,7 +72,6 @@ public class MigrationService {
    */
   public List<CompletableFuture<Boolean>> migrateAllLists() {
     String tenant = executionContext.getTenantId();
-    Function<Supplier<Boolean>, Boolean> systemUserExecutor = runAsSystemUserService.prepareExecutorWithSystemUserContext(tenant);
 
     return StreamSupport
       .stream(listRepository.findAll().spliterator(), true)
@@ -111,7 +79,12 @@ public class MigrationService {
       .filter(list -> !Boolean.TRUE.equals(list.getIsDeleted()))
       .map(list ->
         executor
-          .submitCompletable(() -> systemUserExecutor.apply(() -> migrateList(list)))
+          .submitCompletable(() ->
+            // attempting to set the scope inside migrateList fails, as its in another thread,
+            // and so we've lost all context. Therefore, we need to create the context here,
+            // and specifically pass in the tenant, too.
+            systemUserScopedExecutionService.executeSystemUserScoped(tenant, () -> migrateList(list))
+          )
           .exceptionally(e -> {
             log.error("Error migrating list {}. This list may not function correctly", list, e);
             throw new CompletionException(e);
@@ -158,10 +131,7 @@ public class MigrationService {
    * Check that lists are up to date with the current FQM entity types version, fetched via API
    */
   public void verifyListsAreUpToDate() {
-    String latestVersion = runAsSystemUserService.executeSystemUserScoped(
-      executionContext.getTenantId(),
-      migrationClient::getVersion
-    );
+    String latestVersion = systemUserScopedExecutionService.executeSystemUserScoped(migrationClient::getVersion);
     verifyListsAreUpToDate(latestVersion);
   }
 
@@ -179,8 +149,8 @@ public class MigrationService {
 
     log.info("Migrating cross-tenant lists to private, to cover cases in MODLISTS-152");
 
-    List<EntityTypeSummary> crossTenantEntityTypes = runAsSystemUserService
-      .executeSystemUserScoped(executionContext.getTenantId(), () -> entityTypeClient.getEntityTypeSummary(null))
+    List<EntityTypeSummary> crossTenantEntityTypes = systemUserScopedExecutionService
+      .executeSystemUserScoped(() -> entityTypeClient.getEntityTypeSummary(null))
       .entityTypes()
       .stream()
       .filter(EntityTypeSummary::crossTenantQueriesEnabled)
@@ -210,37 +180,7 @@ public class MigrationService {
   }
 
   public void performTenantInstallMigrations() {
-    // In Eureka, the system user often takes a short bit of time for its permissions to be assigned, so retry in the
-    // case of failures related to missing permissions or general Feign exceptions
-    // for cases in which mod-fqm tries to invoke mod-roles-keycloak and cannot retrieve roles for a system user that has not yet been created.
-    RetryTemplate retryTemplate = new RetryTemplate(
-      RetryPolicy
-        .builder()
-        .delay(Duration.ofSeconds(2))
-        .multiplier(1.5)
-        .maxDelay(Duration.ofMinutes(1))
-        .timeout(Duration.ofMinutes(MAX_RETRY_MINUTES))
-        .build()
-    );
-
-    try {
-      retryTemplate.execute(() -> {
-        try {
-          log.info("Attempting tenant install migrations...");
-          this.verifyListsAreUpToDate();
-          this.handleModlists152CrossTenantSetToPrivateMigration();
-          return null;
-        } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException e) {
-          log.warn(
-            "Encountered error during tenant install migrations, likely due to system user permissions not being fully set up yet. Sending back to Spring to retry...",
-            e
-          );
-          throw e;
-        }
-      });
-    } catch (RetryException e) {
-      log.error("Exhausted maximum number of retries for performTenantInstallMigrations", e);
-      throw new RuntimeException(e);
-    }
+    this.verifyListsAreUpToDate();
+    this.handleModlists152CrossTenantSetToPrivateMigration();
   }
 }

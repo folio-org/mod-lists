@@ -1,5 +1,6 @@
 package org.folio.list.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.folio.list.domain.dto.ListUpdateRequestDTO;
 import org.folio.list.exception.InvalidFqlException;
 import org.folio.list.exception.OptimisticLockException;
@@ -10,10 +11,9 @@ import org.folio.list.util.TestDataFixture;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.Optional;
@@ -78,6 +78,7 @@ class ListControllerUpdateTest {
 
   @Test
   void shouldReturnHttp404WhenListNotFound() throws Exception {
+    var listDto = TestDataFixture.getListDTOSuccessRefresh(UUID.randomUUID());
     ListUpdateRequestDTO listUpdateRequestDto = TestDataFixture.getListUpdateRequestDTO();;
 
     var requestBuilder = put("/lists/" + UUID.randomUUID())

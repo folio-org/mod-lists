@@ -1,5 +1,6 @@
 package org.folio.list.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.ExportInProgressException;
 import org.folio.list.exception.ListNotFoundException;
@@ -10,11 +11,10 @@ import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.list.domain.dto.ListExportDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayInputStream;
 import java.net.URLEncoder;

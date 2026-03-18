@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class DatasourceConnectionTest {
 
   @Container
-  public static PostgreSQLContainer writerDbContainer = new PostgreSQLContainer("postgres:12-alpine");
+  public static PostgreSQLContainer<?> writerDbContainer = new PostgreSQLContainer<>("postgres:12-alpine");
 
   @Autowired
   private DataSource writerDatasource;

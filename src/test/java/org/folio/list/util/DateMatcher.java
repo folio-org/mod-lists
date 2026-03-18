@@ -1,22 +1,26 @@
 package org.folio.list.util;
 
-import java.time.OffsetDateTime;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
-public class DateMatcher extends BaseMatcher<OffsetDateTime> {
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-  private final OffsetDateTime firstDate;
+public class DateMatcher extends BaseMatcher<Date> {
+  private static final DateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+  private final Date firstDate;
   private Throwable error;
 
-  public DateMatcher(OffsetDateTime date) {
+  public DateMatcher(Date date) {
     this.firstDate = date;
   }
 
   @Override
   public boolean matches(Object o) {
     try {
-      OffsetDateTime secondDate = OffsetDateTime.parse((String) o);
+      Date secondDate = FORMATTER.parse((String) o);
       return secondDate.equals(firstDate);
     } catch (Exception e) {
       this.error = e;
@@ -26,7 +30,7 @@ public class DateMatcher extends BaseMatcher<OffsetDateTime> {
 
   @Override
   public void describeTo(Description description) {
-    if (error != null) {
+    if (error!=null) {
       description.appendText(error.getMessage());
     }
   }

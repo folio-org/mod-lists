@@ -1,50 +1,48 @@
 package org.folio.list.rest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import feign.FeignException;
 import java.util.List;
 import java.util.UUID;
+
 import org.folio.list.exception.EntityTypeNotFoundException;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.services.ListActions;
 import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.UpdateUsedByRequest;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.annotation.PatchExchange;
 
-@HttpExchange(url = "entity-types")
+@FeignClient(name = "entity-types")
 public interface EntityTypeClient {
-  @GetExchange("")
-  EntityTypeSummaryResponse getEntityTypeSummary(@RequestParam(required = false) List<UUID> ids);
+  @GetMapping("")
+  EntityTypeSummaryResponse getEntityTypeSummary(@RequestParam List<UUID> ids);
 
-  @GetExchange("/{entityTypeId}")
-  EntityType getEntityType(@PathVariable UUID entityTypeId);
+  @GetMapping("/{entityTypeId}")
+  EntityType getEntityType(@RequestHeader UUID entityTypeId);
 
-  @GetExchange("/{entityTypeId}")
-  EntityType getEntityType(@PathVariable UUID entityTypeId, @RequestParam(required = false) Boolean includeHidden);
+  @GetMapping("/{entityTypeId}")
+  EntityType getEntityType(@RequestHeader UUID entityTypeId, @RequestParam boolean includeHidden);
 
-  @GetExchange("/{entityTypeId}/columns/{columnName}/values")
-  ColumnValues getColumnValues(@PathVariable UUID entityTypeId, @PathVariable String columnName);
+  @GetMapping("/{entityTypeId}/columns/{columnName}/values" )
+  ColumnValues getColumnValues(@RequestHeader UUID entityTypeId, @RequestHeader String columnName);
 
-  @PatchExchange("/{entityTypeId}/used-by")
-  EntityType updateEntityTypeUsedBy(
-    @PathVariable UUID entityTypeId,
-    @RequestBody UpdateUsedByRequest updateUsedByRequest
-  );
+  @PatchMapping("/{entityTypeId}/used-by")
+  EntityType updateEntityTypeUsedBy(@RequestHeader UUID entityTypeId, @RequestBody UpdateUsedByRequest updateUsedByRequest);
 
   /** Gets an entity type; includes wrappers for feign exceptions */
   default EntityType getEntityType(UUID entityTypeId, ListActions attemptedAction, boolean includeHidden) {
     try {
       return getEntityType(entityTypeId, includeHidden);
-    } catch (HttpClientErrorException.Unauthorized e) {
-      String message = e.getResponseBodyAsString();
+    } catch (FeignException.Unauthorized e) {
+      String message = e.getMessage();
       throw new InsufficientEntityTypePermissionsException(entityTypeId, attemptedAction, message);
-    } catch (HttpClientErrorException.NotFound e) {
+    } catch (FeignException.NotFound e) {
       throw new EntityTypeNotFoundException(entityTypeId, attemptedAction);
     }
   }
