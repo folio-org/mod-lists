@@ -1,6 +1,5 @@
 package org.folio.list.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.folio.list.domain.dto.ListDTO;
 import org.folio.list.domain.dto.ListRequestDTO;
 import org.folio.list.exception.EntityTypeNotFoundException;
@@ -12,9 +11,10 @@ import org.folio.list.util.DateMatcher;
 import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.UUID;

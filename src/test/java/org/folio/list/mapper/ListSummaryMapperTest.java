@@ -1,18 +1,16 @@
 package org.folio.list.mapper;
 
-import org.folio.list.domain.dto.ListSummaryDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.UUID;
 import org.folio.list.domain.ListEntity;
+import org.folio.list.domain.dto.ListSummaryDTO;
 import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-
-@SpringBootTest(classes = {ListSummaryMapperImpl.class, MappingMethods.class})
+@SpringBootTest(classes = { ListSummaryMapperImpl.class })
 class ListSummaryMapperTest {
 
   @Autowired

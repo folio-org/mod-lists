@@ -61,9 +61,7 @@ mvn clean install
 | S3_SECRET_ACCESS_KEY                           | -                        | secret key for the S3 bucket                                                                                                                                                                                                             |
 | S3_SUB_PATH                                    | mod-lists                | S3 subpath for file storage                                                                                                                                                                                                              |
 | OKAPI_URL                                      | http://okapi:9130        | Okapi URL, used for system user authentication/management                                                                                                                                                                                |
-| SYSTEM_USER_PASSWORD                           | -                        | Password for the system user; **must be set**                                                                                                                                                                                            |
-| SYSTEM_USER_ENABLED                            | true                     | Defines if system user must be created at service tenant initialization or used for egress service requests                                                                                                                              |
-| SYSTEM_USER_RETRY_WAIT_MINUTES                 | 10                       | Max time to wait for the system user to be created, which is used in the Tenant API                                                                                                                                                      |
+| SYSTEM_USER_RETRY_WAIT_MINUTES                 | 10                       | Max time to wait for the system user to be created, for tenant migration operations                                                                                                                                                      |
 | mod-lists.list-export.s3-startup-check.enabled | true                     | Verify that S3/MinIO is accessible on startup                                                                                                                                                                                            |
 | spring.task.execution.pool.max-size            | 10                       | refresh/export/migrate thread pool's max size                                                                                                                                                                                            |
 | REFRESH_QUERY_TIMEOUT_MINUTES                  | 90                       | Max time to wait for an FQL query to run during a list refresh                                                                                                                                                                           |
@@ -84,9 +82,8 @@ Follow the guide of Deploying Modules sections of the [Okapi Guide](https://gith
 
 ### System user
 
-As part of installation, this module creates a system user with the username `mod-lists`, password as the environment
-variable `SYSTEM_USER_PASSWORD`, and permissions to interact with `mod-fqm-manager`
-(as specified [here](src/main/resources/system-user-permissions.txt)).
+As part of installation, a system user will be created by Eureka with permissions to interact with `mod-fqm-manager`
+(as specified [here](descriptors/ModuleDescriptor-template.json)).
 
 ### Resource requirements
 

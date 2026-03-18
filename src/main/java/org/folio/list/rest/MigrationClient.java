@@ -2,16 +2,16 @@ package org.folio.list.rest;
 
 import org.folio.querytool.domain.dto.FqmMigrateRequest;
 import org.folio.querytool.domain.dto.FqmMigrateResponse;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
-@FeignClient(name = "fqm")
+@HttpExchange(url = "fqm")
 public interface MigrationClient {
-  @GetMapping("version")
+  @GetExchange("version")
   String getVersion();
 
-  @PostMapping("migrate")
+  @PostExchange("migrate")
   FqmMigrateResponse migrate(@RequestBody FqmMigrateRequest request);
 }

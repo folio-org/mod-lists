@@ -13,13 +13,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-@SpringBootTest(classes = {ListMapperImpl.class, MappingMethods.class, ListRefreshMapperImpl.class})
+@SpringBootTest(classes = {ListMapperImpl.class, ListRefreshMapperImpl.class})
 class ListMapperTest {
-  @Autowired
-  private MappingMethods mappingMethods;
-
-  @Autowired
-  private ListRefreshMapper listRefreshMapper;
 
   @Autowired
   private ListMapper mapper;
@@ -43,14 +38,12 @@ class ListMapperTest {
     assertEquals(dto.getUpdatedBy(), listEntity.getUpdatedBy());
     assertEquals(dto.getUpdatedByUsername(), listEntity.getUpdatedByUsername());
     assertEquals(dto.getVersion(), listEntity.getVersion());
-    assertEquals(dto.getUpdatedDate(), mappingMethods.offsetDateTimeAsDate(listEntity.getUpdatedDate()));
+    assertEquals(dto.getUpdatedDate(), listEntity.getUpdatedDate());
     assertEquals(dto.getSuccessRefresh().getId(), listEntity.getSuccessRefresh().getId());
     assertEquals(dto.getSuccessRefresh().getListId(), listEntity.getSuccessRefresh().getListId());
     assertEquals(ListRefreshDTO.StatusEnum.SUCCESS, dto.getSuccessRefresh().getStatus());
-    assertEquals(dto.getSuccessRefresh().getRefreshStartDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getSuccessRefresh().getRefreshStartDate()));
-    assertEquals(dto.getSuccessRefresh().getRefreshEndDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getSuccessRefresh().getRefreshEndDate()));
+    assertEquals(dto.getSuccessRefresh().getRefreshStartDate(), listEntity.getSuccessRefresh().getRefreshStartDate());
+    assertEquals(dto.getSuccessRefresh().getRefreshEndDate(), listEntity.getSuccessRefresh().getRefreshEndDate());
     assertEquals(dto.getSuccessRefresh().getRefreshedBy(), listEntity.getSuccessRefresh().getRefreshedBy());
     assertEquals(dto.getSuccessRefresh().getRefreshedByUsername(), listEntity.getSuccessRefresh().getRefreshedByUsername());
     assertEquals(dto.getSuccessRefresh().getRecordsCount(), listEntity.getSuccessRefresh().getRecordsCount());
@@ -74,14 +67,12 @@ class ListMapperTest {
     assertEquals(dto.getUpdatedBy(), listEntity.getUpdatedBy());
     assertEquals(dto.getUpdatedByUsername(), listEntity.getUpdatedByUsername());
     assertEquals(dto.getVersion(), listEntity.getVersion());
-    assertEquals(dto.getUpdatedDate(), mappingMethods.offsetDateTimeAsDate(listEntity.getUpdatedDate()));
+    assertEquals(dto.getUpdatedDate(), listEntity.getUpdatedDate());
     assertEquals(dto.getInProgressRefresh().getId(), listEntity.getInProgressRefresh().getId());
     assertEquals(dto.getInProgressRefresh().getListId(), listEntity.getInProgressRefresh().getListId());
     assertEquals(ListRefreshDTO.StatusEnum.IN_PROGRESS, dto.getInProgressRefresh().getStatus());
-    assertEquals(dto.getInProgressRefresh().getRefreshStartDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getInProgressRefresh().getRefreshStartDate()));
-    assertEquals(dto.getInProgressRefresh().getRefreshEndDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getInProgressRefresh().getRefreshEndDate()));
+    assertEquals(dto.getInProgressRefresh().getRefreshStartDate(), listEntity.getInProgressRefresh().getRefreshStartDate());
+    assertEquals(dto.getInProgressRefresh().getRefreshEndDate(), listEntity.getInProgressRefresh().getRefreshEndDate());
     assertEquals(dto.getInProgressRefresh().getRefreshedBy(), listEntity.getInProgressRefresh().getRefreshedBy());
     assertEquals(dto.getInProgressRefresh().getRefreshedByUsername(), listEntity.getInProgressRefresh().getRefreshedByUsername());
     assertEquals(dto.getInProgressRefresh().getRecordsCount(), listEntity.getInProgressRefresh().getRecordsCount());
@@ -105,14 +96,12 @@ class ListMapperTest {
     assertEquals(dto.getUpdatedBy(), listEntity.getUpdatedBy());
     assertEquals(dto.getUpdatedByUsername(), listEntity.getUpdatedByUsername());
     assertEquals(dto.getVersion(), listEntity.getVersion());
-    assertEquals(dto.getUpdatedDate(), mappingMethods.offsetDateTimeAsDate(listEntity.getUpdatedDate()));
+    assertEquals(dto.getUpdatedDate(), listEntity.getUpdatedDate());
     assertEquals(dto.getFailedRefresh().getId(), listEntity.getFailedRefresh().getId());
     assertEquals(dto.getFailedRefresh().getListId(), listEntity.getFailedRefresh().getListId());
     assertEquals(ListRefreshDTO.StatusEnum.FAILED, dto.getFailedRefresh().getStatus());
-    assertEquals(dto.getFailedRefresh().getRefreshStartDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getFailedRefresh().getRefreshStartDate()));
-    assertEquals(dto.getFailedRefresh().getRefreshEndDate(), mappingMethods.offsetDateTimeAsDate(
-      listEntity.getFailedRefresh().getRefreshEndDate()));
+    assertEquals(dto.getFailedRefresh().getRefreshStartDate(), listEntity.getFailedRefresh().getRefreshStartDate());
+    assertEquals(dto.getFailedRefresh().getRefreshEndDate(), listEntity.getFailedRefresh().getRefreshEndDate());
     assertEquals(dto.getFailedRefresh().getRefreshedBy(), listEntity.getFailedRefresh().getRefreshedBy());
     assertEquals(dto.getFailedRefresh().getRefreshedByUsername(), listEntity.getFailedRefresh().getRefreshedByUsername());
     assertEquals(dto.getFailedRefresh().getRecordsCount(), listEntity.getFailedRefresh().getRecordsCount());
