@@ -40,8 +40,8 @@ spring:
     hibernate:
       ddl-auto: none
       naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl
-        implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -56,8 +56,23 @@ spring:
     default-property-inclusion: non_null
     deserialization:
       accept-single-value-as-array: true
+      # unfortunately, this is required for the system user library, pending FOLSPRINGS-157
+      fail-on-unknown-properties: false
   mustache:
     check-template-location: false
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+  feign:
+    client:
+      config:
+        default:
+          connectTimeout: 5000
+          readTimeout: 5000
+          loggerLevel: BASIC
+    httpclient:
+      enabled: true
   task:
     execution:
       pool:
@@ -69,14 +84,14 @@ folio:
   tenant:
     validation:
       enabled: true
-  exchange:
-    enabled: true
-  logging:
-    request:
-      enabled: false
-    exchange:
-      enabled: true
-      level: BASIC # NONE, BASIC, HEADERS, FULL
+  environment: folio
+  okapi-url: ${OKAPI_URL}
+  system-user:
+    username: mod-lists
+    enabled: ${SYSTEM_USER_ENABLED:true}
+    password: ${SYSTEM_USER_PASSWORD}
+    lastname: System
+    permissionsFilePath: system-user-permissions.txt
 management:
   endpoints:
     web:

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 @Component
@@ -13,7 +13,7 @@ public class TestcontainerCallbackExtension implements BeforeAllCallback {
   private static final int POSTGRES_PORT = 5432;
 
   @Container
-  public static PostgreSQLContainer dbContainer = new PostgreSQLContainer("postgres:12-alpine");
+  public static PostgreSQLContainer<?> dbContainer = new PostgreSQLContainer<>("postgres:12-alpine");
 
   @Override
   public void beforeAll(ExtensionContext context) {
