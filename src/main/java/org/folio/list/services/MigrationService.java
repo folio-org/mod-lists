@@ -9,6 +9,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 import lombok.extern.log4j.Log4j2;
+
+import org.apache.commons.lang3.exception.UncheckedException;
 import org.folio.list.domain.ListEntity;
 import org.folio.list.exception.InsufficientEntityTypePermissionsException;
 import org.folio.list.mapper.ListMigrationMapper;
@@ -32,7 +34,7 @@ import org.springframework.web.client.HttpClientErrorException;
 @Service
 public class MigrationService {
 
-  private final int MAX_RETRY_MINUTES;
+  private final int maxRetryMinutes;
 
   private final AsyncTaskExecutor executor;
 
@@ -56,7 +58,7 @@ public class MigrationService {
     MigrationClient migrationClient,
     RunAsSystemUserService runAsSystemUserService
   ) {
-    this.MAX_RETRY_MINUTES = maxRetryMinutes;
+    this.maxRetryMinutes = maxRetryMinutes;
     this.executor = executor;
     this.entityTypeClient = entityTypeClient;
     this.executionContext = executionContext;
@@ -219,7 +221,7 @@ public class MigrationService {
         .delay(Duration.ofSeconds(2))
         .multiplier(1.5)
         .maxDelay(Duration.ofMinutes(1))
-        .timeout(Duration.ofMinutes(MAX_RETRY_MINUTES))
+        .timeout(Duration.ofMinutes(maxRetryMinutes))
         .build()
     );
 
@@ -240,7 +242,7 @@ public class MigrationService {
       });
     } catch (RetryException e) {
       log.error("Exhausted maximum number of retries for performTenantInstallMigrations", e);
-      throw new RuntimeException(e);
+      throw new UncheckedException(e);
     }
   }
 }
