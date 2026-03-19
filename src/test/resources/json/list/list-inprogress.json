@@ -3,10 +3,7 @@
   "name": "Missing Items",
   "description": "Missing Items List",
   "entityTypeId": "0cb79a4c-f7eb-4941-a104-745224ae0292",
-  "fields": [
-    "id",
-    "item_status"
-  ],
+  "fields": ["id", "item_status"],
   "fqlQuery": "item_status = 'missing' or item_status = 'aged to lost' or item_status = 'claimed returned' or item_status = 'declared lost' or item_status = 'long missing'",
   "createdBy": "3d96d21c-1b05-481b-97be-698a32e50d1b",
   "createdByUsername": "SYSTEM",
@@ -21,5 +18,6 @@
     "refreshStartDate": "2023-02-02T00:07:44.44125+05:30",
     "refreshedBy": "7127d488-6ab6-4853-b234-45dca1dd1989",
     "refreshedByUsername": "7127d488-6ab6-4853-b234-45dca1dd1989"
-  }
+  },
+  "version": 1
 }

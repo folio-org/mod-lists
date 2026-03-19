@@ -1,5 +1,7 @@
 package org.folio.list.mapper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.folio.list.domain.ListVersion;
 import org.folio.list.domain.dto.ListVersionDTO;
 import org.folio.list.util.TestDataFixture;
@@ -7,10 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-@SpringBootTest(classes = {org.folio.list.mapper.ListVersionMapperImpl.class, MappingMethods.class})
+@SpringBootTest(classes = { org.folio.list.mapper.ListVersionMapperImpl.class })
 class ListVersionMapperTest {
+
   @Autowired
   private ListVersionMapper listVersionMapper;
 

@@ -29,13 +29,13 @@ import org.folio.list.services.AppShutdownService;
 import org.folio.list.services.AppShutdownService.ShutdownTask;
 import org.folio.list.services.ListActions;
 import org.folio.list.services.ListValidationService;
+import org.folio.list.services.RunAsSystemUserService;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
 import org.folio.querytool.domain.dto.Field;
 import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,15 +47,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class ListExportService {
 
   private final FolioExecutionContext executionContext;
-  private final SystemUserScopedExecutionService systemUserScopedExecutionService;
-  private final ListExportRepository listExportRepository;
-  private final ListExportMapper listExportMapper;
-  private final ListRepository listRepository;
-  private final ListExportWorkerService listExportWorkerService;
-  private final FolioS3Client folioS3Client;
-  private final ListValidationService validationService;
   private final AppShutdownService appShutdownService;
   private final EntityTypeClient entityTypeClient;
+  private final FolioS3Client folioS3Client;
+  private final ListExportMapper listExportMapper;
+  private final ListExportRepository listExportRepository;
+  private final ListExportWorkerService listExportWorkerService;
+  private final ListRepository listRepository;
+  private final ListValidationService validationService;
+  private final RunAsSystemUserService runAsSystemUserService;
 
   @Transactional
   public ListExportDTO createExport(UUID listId, List<String> fields) {
@@ -164,7 +164,7 @@ public class ListExportService {
     );
     UUID userId = executionContext.getUserId();
     log.debug("Using user {} as proxy user for export", userId);
-    systemUserScopedExecutionService.executeAsyncSystemUserScoped(
+    runAsSystemUserService.executeAsyncSystemUserScoped(
       executionContext.getTenantId(),
       () ->
         listExportWorkerService
