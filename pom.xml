@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
   <groupId>org.folio</groupId>
@@ -28,7 +28,7 @@
     <mapstruct.version>1.6.3</mapstruct.version>
     <lib-fqm-query-processor.version>4.1.0-SNAPSHOT</lib-fqm-query-processor.version>
     <jackson-dataformat-csv.version>3.1.0</jackson-dataformat-csv.version>
-    <aws-sdk-java.version>2.42.16</aws-sdk-java.version>
+    <aws-sdk-java.version>2.42.18</aws-sdk-java.version>
     <folio-s3-client.version>2.4.0</folio-s3-client.version>
     <awaitility.version>4.3.0</awaitility.version>
     <snakeyaml.version>2.6</snakeyaml.version>
