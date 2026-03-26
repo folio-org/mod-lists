@@ -270,6 +270,7 @@
         "inventory-storage.instance-types.collection.get",
         "inventory-storage.instance-types.item.get",
         "inventory-storage.instances.item.get",
+        "inventory-storage.item-damaged-statuses.collection.get",
         "inventory-storage.item-note-types.collection.get",
         "inventory-storage.items.item.get",
         "inventory-storage.loan-types.collection.get",
