@@ -225,6 +225,8 @@ public class MigrationService {
         .build()
     );
 
+    log.info("RetryTemplate configured with max retry time of {} minutes", maxRetryMinutes);
+
     try {
       retryTemplate.execute(() -> {
         try {
