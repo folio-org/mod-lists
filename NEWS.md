@@ -1,7 +1,33 @@
-# 3.2.0
+# 4.0.0
 - [MODLISTS-109] Remove precomputed userFriendlyQuery from list details (**major change of `lists` interface, v1.0 -> v2.0**)
+- [MODLISTS-226] Remove `entityTypeName` from API responses
+- [MODLISTS-232], [MODLISTS-234], [MODLISTS-235] Improve exports by omitting IDs unless requested, transforming values during export, and loading entity types without the system user
+- [MODFQMMGR-944] Make the refresh batch size configurable
+- [MODLISTS-223], [UILISTS-239], [MODFQMMGR-1045] Improve errors for invalid content IDs and missing entity types, and standardize API error responses
+- [MODLISTS-225] Update `EntityType.usedBy` when lists are created or deleted
+- [MODLISTS-216], [MODLISTS-231] Standardize S3-related environment variables and create the S3 bucket on startup if it doesn't exist
+- [MODLISTS-229] Update to Spring Boot 4.0 and related dependencies
+- Update system user permissions to match current FQM and related entity types
+- Update translation strings
 
 [MODLISTS-109]: https://folio-org.atlassian.net/browse/MODLISTS-109
+[MODLISTS-216]: https://folio-org.atlassian.net/browse/MODLISTS-216
+[MODLISTS-223]: https://folio-org.atlassian.net/browse/MODLISTS-223
+[MODLISTS-225]: https://folio-org.atlassian.net/browse/MODLISTS-225
+[MODLISTS-226]: https://folio-org.atlassian.net/browse/MODLISTS-226
+[MODLISTS-229]: https://folio-org.atlassian.net/browse/MODLISTS-229
+[MODLISTS-231]: https://folio-org.atlassian.net/browse/MODLISTS-231
+[MODLISTS-232]: https://folio-org.atlassian.net/browse/MODLISTS-232
+[MODLISTS-234]: https://folio-org.atlassian.net/browse/MODLISTS-234
+[MODLISTS-235]: https://folio-org.atlassian.net/browse/MODLISTS-235
+[MODFQMMGR-944]: https://folio-org.atlassian.net/browse/MODFQMMGR-944
+[MODFQMMGR-1045]: https://folio-org.atlassian.net/browse/MODFQMMGR-1045
+[UILISTS-239]: https://folio-org.atlassian.net/browse/UILISTS-239
+
+# 3.1.6
+- [MODLISTS-237] Spring Boot 3.4.13, MinIO 8.6.0 fixing vulns
+
+[MODLISTS-237]: https://folio-org.atlassian.net/browse/MODLISTS-237
 
 # 3.1.5
 - [MODFQMMGR-804] Add permission for simple SRS record ET
@@ -197,4 +223,3 @@
 
 ## 1.0.0
 - Initial release
-

@@ -195,7 +195,7 @@
   "requires": [
     {
       "id": "entity-types",
-      "version": "2.0"
+      "version": "2.0 2.1"
     },
     {
       "id": "fqm-query",
