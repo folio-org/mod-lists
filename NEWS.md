@@ -1,4 +1,7 @@
-# 4.0.0
+# 4.0.1
+- Switch from folio-spring-support 10.0.0-RC1 to 10.0.0
+
+# 4.0.0 (Trillium)
 - [MODLISTS-109] Remove precomputed userFriendlyQuery from list details (**major change of `lists` interface, v1.0 -> v2.0**)
 - [MODLISTS-226] Remove `entityTypeName` from API responses
 - [MODLISTS-232], [MODLISTS-234], [MODLISTS-235] Improve exports by omitting IDs unless requested, transforming values during export, and loading entity types without the system user

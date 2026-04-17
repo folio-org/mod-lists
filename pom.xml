@@ -10,7 +10,7 @@
   <groupId>org.folio</groupId>
   <artifactId>mod-lists</artifactId>
   <name>mod-lists</name>
-  <version>4.0.1-SNAPSHOT</version>
+  <version>4.0.2-SNAPSHOT</version>
   <description>Lists app back-end module</description>
   <packaging>jar</packaging>
 
@@ -23,7 +23,7 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-support.version>10.0.0-RC1</folio-spring-support.version>
+    <folio-spring-support.version>10.0.0</folio-spring-support.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <lib-fqm-query-processor.version>4.1.0</lib-fqm-query-processor.version>
