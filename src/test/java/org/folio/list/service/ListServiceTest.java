@@ -668,7 +668,7 @@ class ListServiceTest {
     verifyNoMoreInteractions(listRepository, listVersionRepository, validationService);
     verifyNoInteractions(listVersionMapper);
   }
-
+//
   @Test
   void shouldCatchExceptionWhenUpdatingUsedByFails() {
     ListRequestDTO listRequestDto = TestDataFixture.getListRequestDTO();
