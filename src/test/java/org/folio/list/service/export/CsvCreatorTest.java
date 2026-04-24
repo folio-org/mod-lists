@@ -278,6 +278,67 @@ class CsvCreatorTest {
   }
 
   @Test
+  void shouldDisambiguateDuplicateLocalizedArrayValuesInExport() {
+    int batchSize = 100;
+    UUID userId = UUID.randomUUID();
+    String destinationFileName = "destinationFileName";
+    String uploadId = "uploadId";
+    List<String> partETags = new ArrayList<>();
+    String partETag = "partETag";
+
+    ListEntity entity = TestDataFixture.getPrivateListEntity();
+    EntityTypeColumn arrayColumn = new EntityTypeColumn()
+      .name("languages")
+      .dataType(new StringType().dataType("arrayType"))
+      .labelAlias("[languages-label]")
+      .visibleByDefault(false);
+
+    EntityType entityType = createEntityType(List.of(createColumn("id"), arrayColumn));
+    ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
+    exportDetails.setFields(List.of("id", "languages"));
+    List<List<String>> contentIds = List.of(List.of(UUID.randomUUID().toString()));
+
+    Map<String, Object> content = new LinkedHashMap<>();
+    content.put("id", "id-1");
+    content.put("languages", Arrays.asList("de", "ger", "eng"));
+    List<Map<String, Object>> contentsWithData = List.of(content);
+
+    Map<String, Map<String, String>> localizedValues = Map.of(
+      "languages", Map.of(
+        "de", "German",
+        "ger", "German",
+        "eng", "English"
+      )
+    );
+
+    when(queryClient.getContentsPrivileged(any())).thenReturn(contentsWithData);
+    AtomicInteger seq = new AtomicInteger(0);
+    when(contentsRepository.getContents(any(), any(), anyInt(), any())).thenAnswer(i -> {
+      if (seq.get() > 0) {
+        return List.of();
+      }
+      return contentIds.stream().map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, seq.getAndIncrement())).toList();
+    });
+    when(exportProperties.getBatchSize()).thenReturn(batchSize);
+    when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
+
+    StringWriter data = new StringWriter();
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), anyInt(), any())).thenAnswer(i -> {
+      data.append(FileUtils.readFileToString(new File((String) i.getArgument(3)), "UTF-8"));
+      return partETag;
+    });
+
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType, localizedValues)) {
+      String actual = data.toString();
+      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8)
+        + "[id-label],[languages-label]\n"
+        + "id-1,German [de];German [ger];English\n";
+
+      assertEquals(expected, actual);
+    }
+  }
+
+  @Test
   void shouldCreateLocalizedCsvWithQuoting() {
     int batchSize = 100;
     UUID userId = UUID.randomUUID();

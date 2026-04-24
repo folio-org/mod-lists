@@ -10,9 +10,12 @@ import tools.jackson.dataformat.csv.CsvMapper;
 import tools.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -195,15 +198,50 @@ public class CsvCreator {
         Object value = row.get(columnName);
         if (value != null) {
           if (value instanceof List<?> list) {
-            localizedMap.put(columnName, list.stream()
-              .map(v -> v == null ? null : valueMap.getOrDefault(v.toString(), v.toString()))
-              .toList());
+            localizedMap.put(columnName, localizeListValues(list, valueMap));
           } else {
             localizedMap.put(columnName, valueMap.getOrDefault(value.toString(), value.toString()));
           }
         }
       });
       return localizedMap;
+    }
+
+    private List<String> localizeListValues(List<?> list, Map<String, String> valueMap) {
+      List<LocalizedValue> localizedValues = new ArrayList<>();
+      for (Object value : list) {
+        if (value == null) {
+          localizedValues.add(new LocalizedValue(null, null));
+        } else {
+          String rawValue = value.toString();
+          localizedValues.add(new LocalizedValue(rawValue, valueMap.getOrDefault(rawValue, rawValue)));
+        }
+      }
+
+      Map<String, Long> distinctRawValueCountsByLabel = new LinkedHashMap<>();
+      localizedValues.stream()
+        .filter(item -> item.localizedValue() != null)
+        .map(LocalizedValue::localizedValue)
+        .distinct()
+        .forEach(label -> distinctRawValueCountsByLabel.put(
+          label,
+          localizedValues.stream()
+            .filter(other -> Objects.equals(other.localizedValue(), label))
+            .map(LocalizedValue::rawValue)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count()
+        ));
+
+      return localizedValues.stream()
+        .map(item -> {
+          if (item.localizedValue() == null) {
+            return null;
+          }
+          long distinctCount = distinctRawValueCountsByLabel.getOrDefault(item.localizedValue(), 0L);
+          return distinctCount > 1 ? "%s [%s]".formatted(item.localizedValue(), item.rawValue()) : item.localizedValue();
+        })
+        .toList();
     }
 
     /**
@@ -243,5 +281,7 @@ public class CsvCreator {
     }
 
     private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {}
+
+    private record LocalizedValue(String rawValue, String localizedValue) {}
   }
 }
