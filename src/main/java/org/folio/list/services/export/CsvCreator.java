@@ -8,7 +8,6 @@ import tools.jackson.core.StreamWriteFeature;
 import tools.jackson.databind.ObjectWriter;
 import tools.jackson.dataformat.csv.CsvMapper;
 import tools.jackson.dataformat.csv.CsvSchema;
-
 import java.io.File;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -244,7 +242,6 @@ public class CsvCreator {
       return COLUMN_TYPE_MAPPER.getOrDefault(column.getDataType().getDataType(), CsvSchema.ColumnType.STRING);
     }
 
-    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {
-    }
+    private record EntityTypeCsvSchemas(CsvSchema nameSchema, CsvSchema labelSchema) {}
   }
 }
