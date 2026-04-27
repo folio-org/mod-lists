@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,7 @@ import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.SourceColumn;
 import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
@@ -180,6 +182,45 @@ class ListExportServiceTest {
     verify(listExportWorkerService, times(1)).doAsyncExport(any(), eq(userId), eq(entityType), argThat(map ->
       map.containsKey("col") && map.get("col").get("val").equals("label")
     ));
+  }
+
+  @Test
+  void shouldNotFetchLocalizedValuesForLanguagesColumn() {
+    UUID listId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID exportId = UUID.randomUUID();
+    ListEntity fetchedEntity = TestDataFixture.getListEntityWithSuccessRefresh(listId);
+    ExportDetails exportDetails = new ExportDetails();
+    exportDetails.setExportId(exportId);
+    exportDetails.setList(fetchedEntity);
+    EntityType entityType = new EntityType()
+      .id(fetchedEntity.getEntityTypeId().toString())
+      .columns(List.of(
+        new EntityTypeColumn()
+          .name("languages")
+          .localizeForExports(true)
+          .source(new SourceColumn()
+            .type(SourceColumn.TypeEnum.FQM)
+            .name("languages"))
+      ));
+
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listExportRepository.save(any())).thenReturn(exportDetails);
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
+    when(folioExecutionContext.getUserId()).thenReturn(userId);
+    when(listExportWorkerService.doAsyncExport(any(), any(), any(), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
+    doAnswer(invocation -> {
+      Supplier<?> runnable = invocation.getArgument(1);
+      runnable.get();
+      return CompletableFuture.completedFuture(null);
+    })
+      .when(runAsSystemUserService)
+      .executeAsyncSystemUserScoped(any(), any());
+
+    listExportService.createExport(listId, List.of());
+
+    verify(entityTypeClient, never()).getColumnValues(fetchedEntity.getEntityTypeId(), "languages");
+    verify(listExportWorkerService, times(1)).doAsyncExport(any(), eq(userId), eq(entityType), argThat(Map::isEmpty));
   }
 
   @Test
