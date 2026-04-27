@@ -142,7 +142,7 @@ public class ListExportService {
     // where permission issues may arise.
     Map<String, Map<String, String>> localizedValues = new HashMap<>();
     for (EntityTypeColumn column : entityType.getColumns()) {
-      if (Boolean.TRUE.equals(column.getLocalizeForExports()) && !isAlwaysLocalizedInFqm(column)) {
+      if (Boolean.TRUE.equals(column.getLocalizeForExports())) {
         log.info("Fetching localized values for column {} in entity type {}", column.getName(), entityType.getId());
         try {
           var columnValues = entityTypeClient.getColumnValues(UUID.fromString(entityType.getId()), column.getName());
@@ -178,10 +178,6 @@ public class ListExportService {
             }
           })
     );
-  }
-
-  private boolean isAlwaysLocalizedInFqm(EntityTypeColumn column) {
-    return column.getSource() != null && "languages".equals(column.getSource().getName());
   }
 
   private void setExportStatus(ExportDetails exportDetails, Throwable throwable) {
