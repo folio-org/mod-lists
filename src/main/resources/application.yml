@@ -2,6 +2,7 @@ mod-lists:
   general:
     max-list-size: ${MAX_LIST_SIZE:1250000}
     system-user-retry-wait-minutes: ${SYSTEM_USER_RETRY_WAIT_MINUTES:10}
+    system-user-retry-max-attempts: ${SYSTEM_USER_RETRY_MAX_ATTEMPTS:15}
     refresh-query-timeout-minutes: ${REFRESH_QUERY_TIMEOUT_MINUTES:90}
     refresh-batch-size: ${REFRESH_BATCH_SIZE:10000}
   list-export:

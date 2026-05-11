@@ -29,12 +29,14 @@ import org.springframework.core.retry.RetryTemplate;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Log4j2
 @Service
 public class MigrationService {
 
   private final int maxRetryMinutes;
+  private final int maxRetryAttempts;
 
   private final AsyncTaskExecutor executor;
 
@@ -49,6 +51,7 @@ public class MigrationService {
   @Autowired
   public MigrationService(
     @Value("${mod-lists.general.system-user-retry-wait-minutes:10}") int maxRetryMinutes,
+    @Value("${mod-lists.general.system-user-retry-max-attempts:15}") int maxRetryAttempts,
     AsyncTaskExecutor executor,
     EntityTypeClient entityTypeClient,
     FolioExecutionContext executionContext,
@@ -59,6 +62,7 @@ public class MigrationService {
     RunAsSystemUserService runAsSystemUserService
   ) {
     this.maxRetryMinutes = maxRetryMinutes;
+    this.maxRetryAttempts = maxRetryAttempts;
     this.executor = executor;
     this.entityTypeClient = entityTypeClient;
     this.executionContext = executionContext;
@@ -221,6 +225,7 @@ public class MigrationService {
         .delay(Duration.ofSeconds(2))
         .multiplier(1.5)
         .maxDelay(Duration.ofMinutes(1))
+        .maxRetries(maxRetryAttempts)
         .timeout(Duration.ofMinutes(maxRetryMinutes))
         .build()
     );
@@ -234,7 +239,7 @@ public class MigrationService {
           this.verifyListsAreUpToDate();
           this.handleModlists152CrossTenantSetToPrivateMigration();
           return null;
-        } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException e) {
+        } catch (InsufficientEntityTypePermissionsException | HttpClientErrorException | HttpServerErrorException e) {
           log.warn(
             "Encountered error during tenant install migrations, likely due to system user permissions not being fully set up yet. Sending back to Spring to retry...",
             e
