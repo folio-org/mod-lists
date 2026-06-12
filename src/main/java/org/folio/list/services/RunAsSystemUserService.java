@@ -69,9 +69,10 @@ public class RunAsSystemUserService {
   }
 
   private void copyAcceptLanguageHeader(Map<String, Collection<String>> headers) {
-    outerContext.getAllHeaders().entrySet().stream()
-      .filter(entry -> HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(entry.getKey()))
-      .findFirst()
-      .ifPresent(entry -> headers.put(HttpHeaders.ACCEPT_LANGUAGE, List.copyOf(entry.getValue())));
+    outerContext.getAllHeaders().forEach((key, value) -> {
+      if (HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(key) && value != null) {
+        headers.put(HttpHeaders.ACCEPT_LANGUAGE, List.copyOf(value));
+      }
+    });
   }
 }

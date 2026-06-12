@@ -1,8 +1,10 @@
 package org.folio.list.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.log4j.Log4j2;
 import org.folio.list.context.TestcontainerCallbackExtension;
@@ -31,21 +33,32 @@ class RunAsSystemUserServiceTest {
   private static final String MODULE_NAME = "our-module";
   private static final String ACCEPT_LANGUAGE = "de-DE-u-nu-latn";
 
-  private static final FolioExecutionContext REGULAR_EXECUTION_CONTEXT = new DefaultFolioExecutionContext(
-    new FolioModuleMetadata() {
-      public String getModuleName() {
-        return MODULE_NAME;
-      }
+  private static final FolioModuleMetadata MODULE_METADATA = new FolioModuleMetadata() {
+    public String getModuleName() {
+      return MODULE_NAME;
+    }
 
-      public String getDBSchemaName(String t) {
-        return t + "_schema";
-      }
-    },
+    public String getDBSchemaName(String t) {
+      return t + "_schema";
+    }
+  };
+
+  private static final FolioExecutionContext REGULAR_EXECUTION_CONTEXT = new DefaultFolioExecutionContext(
+    MODULE_METADATA,
     Map.ofEntries(
       Map.entry(XOkapiHeaders.TENANT, Collections.singleton(TENANT_ID)),
       Map.entry(XOkapiHeaders.TOKEN, Collections.singleton(TOKEN)),
       Map.entry(XOkapiHeaders.URL, Collections.singleton(OKAPI_URL)),
       Map.entry(HttpHeaders.ACCEPT_LANGUAGE, Collections.singleton(ACCEPT_LANGUAGE))
+    )
+  );
+
+  private static final FolioExecutionContext NO_ACCEPT_LANGUAGE_CONTEXT = new DefaultFolioExecutionContext(
+    MODULE_METADATA,
+    Map.ofEntries(
+      Map.entry(XOkapiHeaders.TENANT, Collections.singleton(TENANT_ID)),
+      Map.entry(XOkapiHeaders.TOKEN, Collections.singleton(TOKEN)),
+      Map.entry(XOkapiHeaders.URL, Collections.singleton(OKAPI_URL))
     )
   );
 
@@ -97,6 +110,20 @@ class RunAsSystemUserServiceTest {
     });
   }
 
+  @Test
+  void doesNotPropagateAcceptLanguageWhenAbsent() {
+    NO_ACCEPT_LANGUAGE_CONTEXT.execute(() ->
+      runAsSystemUserService.executeSystemUserScoped(
+        INNER_TENANT_ID,
+        () -> {
+          assertEquals(INNER_TENANT_ID, folioExecutionContext.getTenantId());
+          assertNull(folioExecutionContext.getAllHeaders().get(HttpHeaders.ACCEPT_LANGUAGE));
+          return null;
+        }
+      )
+    );
+  }
+
   private void verifyRegularContext() {
     assertEquals(OKAPI_URL, folioExecutionContext.getOkapiUrl());
     assertEquals(MODULE_NAME, folioExecutionContext.getFolioModuleMetadata().getModuleName());
@@ -113,7 +140,7 @@ class RunAsSystemUserServiceTest {
     assertEquals(MODULE_NAME, folioExecutionContext.getFolioModuleMetadata().getModuleName());
     assertEquals(INNER_TENANT_ID, folioExecutionContext.getTenantId());
     assertEquals(
-      Collections.singleton(ACCEPT_LANGUAGE),
+      List.of(ACCEPT_LANGUAGE),
       folioExecutionContext.getAllHeaders().get(HttpHeaders.ACCEPT_LANGUAGE)
     );
     assertEquals("", folioExecutionContext.getToken());
