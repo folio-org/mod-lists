@@ -4,9 +4,13 @@ import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -15,7 +19,7 @@ import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 
 /**
- * Runs code in an execution context using the current tenantId with no other headers,
+ * Runs code in an execution context using the current tenantId with only safe non-auth headers,
  * simulating a system user's context. Eureka uses a lack of token/etc from us here to
  * determine that things are running as a system user and will inject the token/etc at
  * the routing level.
@@ -53,12 +57,21 @@ public class RunAsSystemUserService {
   }
 
   private FolioExecutionContext systemUserExecutionContext(String tenantId) {
+    Map<String, Collection<String>> headers = new HashMap<>();
+    headers.put(XOkapiHeaders.URL, Collections.singleton(outerContext.getOkapiUrl()));
+    headers.put(XOkapiHeaders.TENANT, Collections.singleton(tenantId));
+    copyAcceptLanguageHeader(headers);
+
     return new DefaultFolioExecutionContext(
       outerContext.getFolioModuleMetadata(),
-      Map.ofEntries(
-        Map.entry(XOkapiHeaders.URL, Collections.singleton(outerContext.getOkapiUrl())),
-        Map.entry(XOkapiHeaders.TENANT, Collections.singleton(tenantId))
-      )
+      headers
     );
+  }
+
+  private void copyAcceptLanguageHeader(Map<String, Collection<String>> headers) {
+    outerContext.getAllHeaders().entrySet().stream()
+      .filter(entry -> HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(entry.getKey()))
+      .findFirst()
+      .ifPresent(entry -> headers.put(HttpHeaders.ACCEPT_LANGUAGE, List.copyOf(entry.getValue())));
   }
 }
