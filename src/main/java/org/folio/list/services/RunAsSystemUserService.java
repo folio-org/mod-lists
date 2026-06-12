@@ -70,7 +70,7 @@ public class RunAsSystemUserService {
 
   private void copyAcceptLanguageHeader(Map<String, Collection<String>> headers) {
     outerContext.getAllHeaders().forEach((key, value) -> {
-      if (HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(key) && value != null) {
+      if (HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(key)) {
         headers.put(HttpHeaders.ACCEPT_LANGUAGE, List.copyOf(value));
       }
     });
