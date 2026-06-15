@@ -341,16 +341,22 @@ class CsvCreatorTest {
     String uploadId = "uploadId";
     var partETags = new ArrayList<String>();
     int firstPartNumber = 1;
+    String partETag = "partETag";
 
     ListEntity entity = TestDataFixture.getPrivateListEntity();
     EntityType entityType = createEntityType(List.of(createColumn("id"), createColumn("item_status")));
     ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
 
     when(exportProperties.getBatchSize()).thenReturn(batchSize);
-    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any())).thenThrow(S3ClientException.class);
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any()))
+      .thenThrow(S3ClientException.class)
+      .thenReturn(partETag);
 
-    assertThrows(S3ClientException.class, () -> csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType, Map.of()));
-    verify(folioS3Client, times(5)).uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any());
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType, Map.of())) {
+      assertEquals(List.of(partETag), partETags);
+    }
+
+    verify(folioS3Client, times(2)).uploadMultipartPart(eq(destinationFileName), eq(uploadId), eq(firstPartNumber), any());
   }
 
   private static String toCSV(List<Map<String, Object>> list) {

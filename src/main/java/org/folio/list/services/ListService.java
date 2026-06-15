@@ -43,12 +43,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import jakarta.annotation.Nonnull;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,7 +83,8 @@ public class ListService {
   private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
-                                           Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf) {
+                                           Boolean isPrivate, boolean includeDeleted, OffsetDateTime updatedAsOf,
+                                           String search) {
 
     log.info("Attempting to get all lists");
 
@@ -106,6 +109,7 @@ public class ListService {
     }
 
     UUID currentUserId = executionContext.getUserId();
+    String searchPattern = getSearchPattern(search);
 
     Page<ListEntity> lists = listRepository.searchList(
       pageable,
@@ -115,7 +119,8 @@ public class ListService {
       active,
       isPrivate,
       includeDeleted,
-      updatedAsOf
+      updatedAsOf,
+      searchPattern
     );
 
     List<ListSummaryDTO> content = lists
@@ -376,7 +381,34 @@ public class ListService {
   }
 
   private boolean hasNoAssociatedLists(UUID entityTypeId) {
-    Page<ListEntity> listsUsingEntityType = listRepository.searchList(null, null, List.of(entityTypeId), null, null, null, false, null);
+    Page<ListEntity> listsUsingEntityType = listRepository.searchList(
+      null, // pageable
+      null, // ids
+      List.of(entityTypeId), // entityTypeIds
+      null, // currentUserId
+      null, // active
+      null, // isPrivate
+      false, // includeDeleted
+      null, // updatedAsOf
+      null // searchPattern
+    );
     return listsUsingEntityType.isEmpty();
+  }
+
+  private String getSearchPattern(String search) {
+    if (!StringUtils.hasText(search)) {
+      return null;
+    }
+
+    // Keep the search case-insensitive while treating user-entered LIKE metacharacters literally.
+    String normalizedSearch = search.trim().toLowerCase(Locale.ROOT);
+    return "%" + escapeLikePattern(normalizedSearch) + "%";
+  }
+
+  private String escapeLikePattern(String search) {
+    return search
+      .replace("!", "!!")
+      .replace("%", "!%")
+      .replace("_", "!_");
   }
 }

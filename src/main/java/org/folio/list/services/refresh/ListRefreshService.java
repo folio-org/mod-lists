@@ -31,11 +31,11 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class ListRefreshService {
 
-  private static final int GET_QUERY_TIME_DELAY_SECONDS = 10;
   @Value("${mod-lists.general.refresh-query-timeout-minutes:90}")
   private int getQueryTimeoutMinutes;
   @Value("${mod-lists.general.refresh-batch-size:10000}")
   private int refreshBatchSize;
+  private long getQueryPollIntervalSeconds = 10;
 
   private final RefreshSuccessCallback refreshSuccessCallback;
   private final RefreshFailedCallback refreshFailedCallback;
@@ -86,7 +86,7 @@ public class ListRefreshService {
     log.info("Waiting for completion of query {} for list {}", queryId, list.getId());
     timer.time(TimedStage.WAIT_FOR_QUERY_COMPLETION,
       () -> Awaitility.with()
-        .pollInterval(GET_QUERY_TIME_DELAY_SECONDS, TimeUnit.SECONDS)
+        .pollInterval(getQueryPollIntervalSeconds, TimeUnit.SECONDS)
         .await()
         .atMost(getQueryTimeoutMinutes, TimeUnit.MINUTES)
         .until(() -> queryClient.getQuery(queryId).getStatus() != QueryDetails.StatusEnum.IN_PROGRESS));

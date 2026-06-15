@@ -24,8 +24,10 @@ class ModListApplicationListenerTest extends ModListApplicationTest {
 
     ListsApplicationListener listsApplicationListener = new ListsApplicationListener(folioS3Client);
     ReflectionTestUtils.setField(listsApplicationListener, "s3CheckEnabled", true);
+    ReflectionTestUtils.setField(listsApplicationListener, "s3StartupCheckRetryDelayMs", 1);
 
     assertThrows(RuntimeException.class, () -> listsApplicationListener.onApplicationEvent(null));
+    Mockito.verify(folioS3Client, times(6)).write(anyString(), any(InputStream.class));
   }
 
   @Test

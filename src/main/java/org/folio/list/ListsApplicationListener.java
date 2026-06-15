@@ -26,6 +26,7 @@ public class ListsApplicationListener implements ApplicationListener<Application
   private boolean s3CheckEnabled;
 
   private final FolioS3Client folioS3Client;
+  private int s3StartupCheckRetryDelayMs = 5000;
 
   @Autowired
   public ListsApplicationListener(FolioS3Client folioS3Client) {
@@ -64,7 +65,6 @@ public class ListsApplicationListener implements ApplicationListener<Application
     var now = LocalDateTime.now();
     String tempFilePath = "mod-lists-s3-test-tmp-" + now.format(formatter) + '-' + UUID.randomUUID();
     int maxUploadAttempts = 6;
-    int retryDelayMs = 5000;
     int attempt = 0;
     boolean success = false;
     Exception lastException = null;
@@ -84,8 +84,8 @@ public class ListsApplicationListener implements ApplicationListener<Application
         log.debug("Upload exception: {}", getSanitizedExceptionMessage(e));
         if (attempt < maxUploadAttempts) {
           try {
-            log.info("Retrying in {} ms...", retryDelayMs);
-            Thread.sleep(retryDelayMs);
+            log.info("Retrying in {} ms...", s3StartupCheckRetryDelayMs);
+            Thread.sleep(s3StartupCheckRetryDelayMs);
           } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             break;

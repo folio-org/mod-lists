@@ -54,7 +54,17 @@ class ListServiceDeleteListTest {
       .operation(UpdateUsedByRequest.OperationEnum.REMOVE);
 
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
-    when(listRepository.searchList(null, null, List.of(entity.getEntityTypeId()), null, null, null, false, null))
+    when(listRepository.searchList(
+      null,
+      null,
+      List.of(entity.getEntityTypeId()),
+      null,
+      null,
+      null,
+      false,
+      null,
+      null
+    ))
       .thenReturn(Page.empty());
 
     listValidationService.validateDelete(entity);
@@ -77,7 +87,17 @@ class ListServiceDeleteListTest {
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
 
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
-    when(listRepository.searchList(null, null, List.of(entity.getEntityTypeId()), null, null, null, false, null))
+    when(listRepository.searchList(
+      null,
+      null,
+      List.of(entity.getEntityTypeId()),
+      null,
+      null,
+      null,
+      false,
+      null,
+      null
+    ))
       .thenReturn(new PageImpl<>(List.of(entity)));
 
     listService.deleteList(entity.getId());

@@ -31,7 +31,9 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
-       ORDER BY l.name ASC, s.refreshEndDate DESC NULLS LAST
+      AND (:searchPattern IS NULL
+        OR LOWER(l.name) LIKE :searchPattern ESCAPE '!'
+        OR LOWER(l.description) LIKE :searchPattern ESCAPE '!')
       """,
     countQuery = """
       SELECT count(*)
@@ -45,6 +47,9 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
       l.updatedDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS')))
+      AND (:searchPattern IS NULL
+        OR LOWER(l.name) LIKE :searchPattern ESCAPE '!'
+        OR LOWER(l.description) LIKE :searchPattern ESCAPE '!')
        """
   )
   Page<ListEntity> searchList(
@@ -55,8 +60,8 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
     Boolean active,
     Boolean isPrivate,
     boolean includeDeleted,
-    OffsetDateTime updatedAsOf
+    OffsetDateTime updatedAsOf,
+    String searchPattern
   );
 
 }
-
