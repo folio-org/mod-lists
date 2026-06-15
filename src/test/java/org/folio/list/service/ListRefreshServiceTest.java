@@ -63,6 +63,7 @@ class ListRefreshServiceTest {
   @BeforeEach
   void setup() {
     ReflectionTestUtils.setField(listRefreshService, "getQueryTimeoutMinutes", 10);
+    ReflectionTestUtils.setField(listRefreshService, "getQueryPollIntervalSeconds", 0L);
   }
 
   @Test
@@ -143,5 +144,3 @@ class ListRefreshServiceTest {
     verify(refreshFailedCallback, times(1)).accept(eq(list), eq(timer), any(MaxListSizeExceededException.class));
   }
 }
-
-
