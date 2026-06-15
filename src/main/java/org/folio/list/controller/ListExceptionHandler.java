@@ -2,6 +2,7 @@ package org.folio.list.controller;
 
 import static org.folio.list.util.LogUtils.sanitizeExceptionMessage;
 
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.list.domain.dto.ListAppError;
@@ -52,7 +53,11 @@ public class ListExceptionHandler {
     return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler({ HttpMessageNotReadableException.class, IllegalArgumentException.class })
+  @ExceptionHandler({
+    HttpMessageNotReadableException.class,
+    IllegalArgumentException.class,
+    ConstraintViolationException.class
+  })
   public ResponseEntity<ListAppError> handleValidationExceptions2(Exception exception, ServletWebRequest webRequest) {
     ListAppError errors = handleGenericError(exception, webRequest, INVALID_REQUEST_ERROR_CODE);
     return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);

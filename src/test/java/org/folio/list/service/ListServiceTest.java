@@ -130,7 +130,8 @@ class ListServiceTest {
       Mockito.eq(true),
       Mockito.eq(false),
       Mockito.eq(false),
-      any()
+      any(),
+      isNull()
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1)).thenReturn(listSummaryDto1);
     when(listSummaryMapper.toListSummaryDTO(entity2)).thenReturn(listSummaryDto2);
@@ -146,6 +147,7 @@ class ListServiceTest {
       true,
       false,
       false,
+      null,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
@@ -178,7 +180,8 @@ class ListServiceTest {
       Mockito.eq(true),
       Mockito.eq(false),
       Mockito.eq(false),
-      any()
+      any(),
+      isNull()
     )).thenReturn(listEntities);
     when(listSummaryMapper.toListSummaryDTO(entity1)).thenReturn(listSummaryDto1);
     when(listSummaryMapper.toListSummaryDTO(entity2)).thenReturn(listSummaryDto2);
@@ -194,6 +197,7 @@ class ListServiceTest {
       true,
       false,
       false,
+      null,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
@@ -212,10 +216,174 @@ class ListServiceTest {
       true,
       false,
       false,
+      null,
       null
     );
     assertThat(actual.getContent()).isEqualTo(expected.getContent());
 
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
+  }
+
+  @Test
+  void getAllListsShouldReturnMatchingListsForSearchTerm() {
+    UUID entityTypeId1 = UUID.randomUUID();
+    UUID entityTypeId2 = UUID.randomUUID();
+    UUID currentUserId = UUID.randomUUID();
+    ListEntity entity1 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    entity1.setEntityTypeId(entityTypeId1);
+    ListSummaryDTO listSummaryDto1 = TestDataFixture.getListSummaryDTO(entity1.getId()).entityTypeId(entityTypeId1);
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(entityTypeId1, "Item", false);
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(entityTypeId2, "Loan", false);
+
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
+    when(listRepository.searchList(
+      any(Pageable.class),
+      isNull(),
+      Mockito.eq(List.of(entityTypeId1, entityTypeId2)),
+      Mockito.eq(currentUserId),
+      isNull(),
+      isNull(),
+      Mockito.eq(false),
+      isNull(),
+      Mockito.eq("%missing%")
+    )).thenReturn(new PageImpl<>(List.of(entity1), Pageable.ofSize(100), 1));
+    when(listSummaryMapper.toListSummaryDTO(entity1)).thenReturn(listSummaryDto1);
+
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      null,
+      null,
+      null,
+      null,
+      false,
+      null,
+      "missing"
+    );
+
+    assertThat(actual.getContent()).containsExactly(listSummaryDto1);
+    assertThat(actual.getTotalRecords()).isEqualTo(1);
+    assertThat(actual.getTotalPages()).isEqualTo(1);
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
+  }
+
+  @Test
+  void getAllListsShouldApplySearchWithFilters() {
+    UUID entityTypeId1 = UUID.randomUUID();
+    UUID entityTypeId2 = UUID.randomUUID();
+    UUID currentUserId = UUID.randomUUID();
+    ListEntity entity2 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
+    entity2.setEntityTypeId(entityTypeId2);
+    ListSummaryDTO listSummaryDto2 = TestDataFixture.getListSummaryDTO(entity2.getId()).entityTypeId(entityTypeId2);
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(entityTypeId1, "Item", false);
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(entityTypeId2, "Loan", false);
+
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
+    when(listRepository.searchList(
+      any(Pageable.class),
+      isNull(),
+      Mockito.eq(List.of(entityTypeId2)),
+      Mockito.eq(currentUserId),
+      Mockito.eq(true),
+      Mockito.eq(false),
+      Mockito.eq(false),
+      isNull(),
+      Mockito.eq("%missing%")
+    )).thenReturn(new PageImpl<>(List.of(entity2), Pageable.ofSize(100), 1));
+    when(listSummaryMapper.toListSummaryDTO(entity2)).thenReturn(listSummaryDto2);
+
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      null,
+      List.of(entityTypeId2),
+      true,
+      false,
+      false,
+      null,
+      "missing"
+    );
+
+    assertThat(actual.getContent()).containsExactly(listSummaryDto2);
+    assertThat(actual.getTotalRecords()).isEqualTo(1);
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
+  }
+
+  @Test
+  void getAllListsShouldReturnEmptyResultsWhenSearchHasNoMatches() {
+    UUID entityTypeId1 = UUID.randomUUID();
+    UUID entityTypeId2 = UUID.randomUUID();
+    UUID currentUserId = UUID.randomUUID();
+    EntityTypeSummary expectedSummary1 = new EntityTypeClient.EntityTypeSummary(entityTypeId1, "Item", false);
+    EntityTypeSummary expectedSummary2 = new EntityTypeClient.EntityTypeSummary(entityTypeId2, "Loan", false);
+
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary1, expectedSummary2), "newest and bestest"));
+    when(listRepository.searchList(
+      any(Pageable.class),
+      isNull(),
+      Mockito.eq(List.of(entityTypeId1, entityTypeId2)),
+      Mockito.eq(currentUserId),
+      isNull(),
+      isNull(),
+      Mockito.eq(false),
+      isNull(),
+      Mockito.eq("%missing%")
+    )).thenReturn(Page.empty(Pageable.ofSize(100)));
+
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      null,
+      null,
+      null,
+      null,
+      false,
+      null,
+      " MISSING "
+    );
+
+    assertThat(actual.getContent()).isEmpty();
+    assertThat(actual.getTotalRecords()).isZero();
+    assertThat(actual.getTotalPages()).isZero();
+    verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
+  }
+
+  @Test
+  void getAllListsShouldEscapeLikeWildcardsInSearchTerm() {
+    UUID entityTypeId = UUID.randomUUID();
+    UUID currentUserId = UUID.randomUUID();
+    EntityTypeSummary expectedSummary = new EntityTypeClient.EntityTypeSummary(entityTypeId, "Item", false);
+
+    when(executionContext.getUserId()).thenReturn(currentUserId);
+    when(entityTypeClient.getEntityTypeSummary(null))
+      .thenReturn(new EntityTypeSummaryResponse(List.of(expectedSummary), "newest and bestest"));
+    when(listRepository.searchList(
+      any(Pageable.class),
+      isNull(),
+      Mockito.eq(List.of(entityTypeId)),
+      Mockito.eq(currentUserId),
+      isNull(),
+      isNull(),
+      Mockito.eq(false),
+      isNull(),
+      Mockito.eq("%50!%!_off!!%")
+    )).thenReturn(Page.empty(Pageable.ofSize(100)));
+
+    var actual = listService.getAllLists(
+      Pageable.ofSize(100),
+      null,
+      null,
+      null,
+      null,
+      false,
+      null,
+      "50%_OFF!"
+    );
+
+    assertThat(actual.getContent()).isEmpty();
     verify(migrationService, times(1)).verifyListsAreUpToDate("newest and bestest");
   }
 

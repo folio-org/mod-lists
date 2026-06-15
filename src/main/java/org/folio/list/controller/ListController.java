@@ -3,6 +3,7 @@ package org.folio.list.controller;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.folio.list.services.ListService;
 import org.folio.querytool.domain.dto.ResultsetPage;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -36,10 +38,13 @@ public class ListController implements ListApi {
     Optional<List<UUID>> entityTypeIds,
     Optional<Integer> offset,
     Optional<Integer> size,
+    Optional<String> search,
     Optional<Boolean> active,
     Optional<Boolean> isPrivate, // Note: query param name is "private"
     Optional<Boolean> includeDeleted,
-    Optional<String> updatedAsOf
+    Optional<String> updatedAsOf,
+    Optional<String> sortBy,
+    Optional<String> sortOrder
   ) {
     OffsetDateTime providedTimestamp;
     DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -48,7 +53,7 @@ public class ListController implements ListApi {
       updatedAsOf
         .map(ts -> !StringUtils.hasText(ts) ? null : OffsetDateTime.parse(ts.replace(' ', '+'), formatter))
         .orElse(null);
-    Pageable pageable = new OffsetRequest(offset.orElse(null), size.orElse(null));
+    Pageable pageable = new OffsetRequest(offset.orElse(null), size.orElse(null), getSort(sortBy, sortOrder));
     return ResponseEntity.ok(
       listService.getAllLists(
         pageable,
@@ -57,9 +62,31 @@ public class ListController implements ListApi {
         active.orElse(null),
         isPrivate.orElse(null),
         Boolean.TRUE.equals(includeDeleted.orElse(null)),
-        providedTimestamp
+        providedTimestamp,
+        search.orElse(null)
       )
     );
+  }
+
+  private static Sort getSort(Optional<String> sortBy, Optional<String> sortOrder) {
+    Map<String, String> sortableProperties = Map.of(
+      "name", "name",
+      "updatedDate", "updatedDate",
+      "recordsCount", "successRefresh.recordsCount"
+    );
+
+    Sort.Direction direction = sortOrder
+      .filter(StringUtils::hasText)
+      .map(Sort.Direction::fromString)
+      .orElse(Sort.Direction.ASC);
+
+    String property = sortBy
+      .filter(StringUtils::hasText)
+      .map(String::trim)
+      .map(sortableProperties::get)
+      .orElse("name");
+
+    return Sort.by(new Sort.Order(direction, property).nullsLast());
   }
 
   @Override

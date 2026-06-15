@@ -49,6 +49,12 @@ paths:
             type: integer
             format: int32
             default: 100
+        - name: search
+          in: query
+          description: Search term for list name or description
+          required: false
+          schema:
+            type: string
         - name: active
           in: query
           description: Indicates whether list should be active or not
@@ -74,6 +80,27 @@ paths:
           schema:
             type: string
             format: offset-date-time
+        - name: sortBy
+          in: query
+          description: Field to sort by. Supported values are name, updatedDate, and recordsCount
+          required: false
+          schema:
+            type: string
+            pattern: '^(name|updatedDate|recordsCount)$'
+            enum:
+              - name
+              - updatedDate
+              - recordsCount
+        - name: sortOrder
+          in: query
+          description: Sort direction. Supported values are asc and desc
+          required: false
+          schema:
+            type: string
+            pattern: '^(asc|desc)$'
+            enum:
+              - asc
+              - desc
       responses:
         '200':
           description: A paged array of reports
