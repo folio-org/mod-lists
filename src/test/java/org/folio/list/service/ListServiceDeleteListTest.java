@@ -61,6 +61,7 @@ class ListServiceDeleteListTest {
       null,
       null,
       null,
+      null,
       false,
       null,
       null
@@ -91,6 +92,7 @@ class ListServiceDeleteListTest {
       null,
       null,
       List.of(entity.getEntityTypeId()),
+      null,
       null,
       null,
       null,
