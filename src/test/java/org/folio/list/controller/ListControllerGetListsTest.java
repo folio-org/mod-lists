@@ -10,7 +10,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -64,7 +64,7 @@ class ListControllerGetListsTest {
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-     isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
+      isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -77,7 +77,7 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(), isNull(),
-      isNull(), isNull(), eq(false), isNull(), isNull());
+      isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
     assertSort(pageableCaptor.getValue(), "name", Sort.Direction.ASC);
   }
 
@@ -105,9 +105,9 @@ class ListControllerGetListsTest {
       .queryParam("updatedAsOf", "2023-01-27T20:54:41.528281+05:30");
 
 
-    when(listService.getAllLists(any(Pageable.class), Mockito.eq(listIds),
-      Mockito.eq(listEntityIds), Mockito.eq(true), Mockito.eq(true), Mockito.eq(false), Mockito.eq(providedTimestamp),
-      isNull()))
+    when(listService.getAllLists(any(Pageable.class), eq(listIds),
+      eq(listEntityIds), eq(true), eq(true), isNull(), eq(false),
+      eq(providedTimestamp), isNull()))
       .thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
@@ -149,7 +149,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, false, null, "missing")).thenReturn(listSummaryResultsDto);
+      null, false, false, null, false, null, "missing")).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -162,10 +162,38 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(),
-      isNull(), eq(false), eq(false), eq(false), isNull(), eq("missing"));
+      isNull(), eq(false), eq(false), isNull(), eq(false), isNull(), eq("missing"));
     assertThat(pageableCaptor.getValue().getOffset()).isEqualTo(offset);
     assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(size);
     assertSort(pageableCaptor.getValue(), "successRefresh.recordsCount", Sort.Direction.DESC);
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "true",
+    "false"
+  })
+  void testGetAllListsWithCannedParameter(Boolean canned) throws Exception {
+    ListSummaryResultsDTO emptyResults = new ListSummaryResultsDTO()
+      .content(List.of())
+      .totalRecords(0L)
+      .totalPages(0);
+
+    var requestBuilder = get("/lists")
+      .contentType(APPLICATION_JSON)
+      .header(XOkapiHeaders.TENANT, TENANT_ID)
+      .queryParam("canned", canned.toString());
+
+    when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
+      isNull(), isNull(), eq(canned), eq(false), isNull(), isNull())).thenReturn(emptyResults);
+
+    mockMvc.perform(requestBuilder)
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.totalRecords", is(0)))
+      .andExpect(jsonPath("$.totalPages", is(0)));
+
+    verify(listService).getAllLists(any(Pageable.class), isNull(), isNull(),
+      isNull(), isNull(), eq(canned), eq(false), isNull(), isNull());
   }
 
   @ParameterizedTest
@@ -191,7 +219,7 @@ class ListControllerGetListsTest {
       .queryParam("sortOrder", sortOrder);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(emptyResults);
+      isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(emptyResults);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -200,7 +228,7 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(), isNull(),
-      isNull(), isNull(), eq(false), isNull(), isNull());
+      isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
     assertSort(pageableCaptor.getValue(), expectedProperty, expectedDirection);
   }
 
@@ -218,7 +246,7 @@ class ListControllerGetListsTest {
       .andExpect(jsonPath("$.parameters[0].value", containsString("getAllLists.sortBy")))
       .andExpect(jsonPath("$.parameters[0].value", containsString("name|updatedDate|recordsCount")));
 
-    Mockito.verifyNoInteractions(listService);
+    verifyNoInteractions(listService);
   }
 
   @Test
@@ -235,7 +263,7 @@ class ListControllerGetListsTest {
       .andExpect(jsonPath("$.parameters[0].value", containsString("getAllLists.sortOrder")))
       .andExpect(jsonPath("$.parameters[0].value", containsString("asc|desc")));
 
-    Mockito.verifyNoInteractions(listService);
+    verifyNoInteractions(listService);
   }
 
   private ListSummaryResultsDTO getListSummaryResultsDTO(ListSummaryDTO listDto1, ListSummaryDTO listDto2) {

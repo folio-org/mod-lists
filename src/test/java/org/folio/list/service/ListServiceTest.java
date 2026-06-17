@@ -129,6 +129,7 @@ class ListServiceTest {
       any(UUID.class),
       Mockito.eq(true),
       Mockito.eq(false),
+      isNull(),
       Mockito.eq(false),
       any(),
       isNull()
@@ -146,6 +147,7 @@ class ListServiceTest {
       List.of(entity1.getEntityTypeId(), entity2.getEntityTypeId()),
       true,
       false,
+      null,
       false,
       null,
       null
@@ -179,6 +181,7 @@ class ListServiceTest {
       any(UUID.class),
       Mockito.eq(true),
       Mockito.eq(false),
+      isNull(),
       Mockito.eq(false),
       any(),
       isNull()
@@ -196,6 +199,7 @@ class ListServiceTest {
       null,
       true,
       false,
+      null,
       false,
       null,
       null
@@ -215,6 +219,7 @@ class ListServiceTest {
       null,
       true,
       false,
+      null,
       false,
       null,
       null
@@ -245,6 +250,7 @@ class ListServiceTest {
       Mockito.eq(currentUserId),
       isNull(),
       isNull(),
+      isNull(),
       Mockito.eq(false),
       isNull(),
       Mockito.eq("%missing%")
@@ -253,6 +259,7 @@ class ListServiceTest {
 
     var actual = listService.getAllLists(
       Pageable.ofSize(100),
+      null,
       null,
       null,
       null,
@@ -289,6 +296,7 @@ class ListServiceTest {
       Mockito.eq(currentUserId),
       Mockito.eq(true),
       Mockito.eq(false),
+      Mockito.eq(true),
       Mockito.eq(false),
       isNull(),
       Mockito.eq("%missing%")
@@ -301,6 +309,7 @@ class ListServiceTest {
       List.of(entityTypeId2),
       true,
       false,
+      true,
       false,
       null,
       "missing"
@@ -329,6 +338,7 @@ class ListServiceTest {
       Mockito.eq(currentUserId),
       isNull(),
       isNull(),
+      isNull(),
       Mockito.eq(false),
       isNull(),
       Mockito.eq("%missing%")
@@ -336,6 +346,7 @@ class ListServiceTest {
 
     var actual = listService.getAllLists(
       Pageable.ofSize(100),
+      null,
       null,
       null,
       null,
@@ -367,6 +378,7 @@ class ListServiceTest {
       Mockito.eq(currentUserId),
       isNull(),
       isNull(),
+      isNull(),
       Mockito.eq(false),
       isNull(),
       Mockito.eq("%50!%!_off!!%")
@@ -374,6 +386,7 @@ class ListServiceTest {
 
     var actual = listService.getAllLists(
       Pageable.ofSize(100),
+      null,
       null,
       null,
       null,

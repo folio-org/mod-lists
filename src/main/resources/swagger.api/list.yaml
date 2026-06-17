@@ -67,6 +67,12 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: canned
+          in: query
+          description: Indicates whether returned lists should be canned/system generated. When omitted, both canned and non-canned lists are returned.
+          required: false
+          schema:
+            type: boolean
         - name: includeDeleted
           in: query
           description: Indicates if deleted lists should be included in the results (default false)
