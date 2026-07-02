@@ -88,7 +88,10 @@ public class ListController implements ListApi {
       .map(sortableProperties::get)
       .orElse("name");
 
-    return Sort.by(new Sort.Order(direction, property).nullsLast());
+    Sort.Order order = direction == Sort.Direction.DESC
+      ? new Sort.Order(direction, property).nullsLast()
+      : new Sort.Order(direction, property).nullsFirst();
+    return Sort.by(order);
   }
 
   @Override
