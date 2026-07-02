@@ -278,6 +278,9 @@ class ListControllerGetListsTest {
     Sort.Order order = pageable.getSort().iterator().next();
     assertThat(order.getProperty()).isEqualTo(expectedProperty);
     assertThat(order.getDirection()).isEqualTo(expectedDirection);
-    assertThat(order.getNullHandling()).isEqualTo(Sort.NullHandling.NULLS_LAST);
+    Sort.NullHandling expectedNullHandling = expectedDirection == Sort.Direction.DESC
+      ? Sort.NullHandling.NULLS_LAST
+      : Sort.NullHandling.NULLS_FIRST;
+    assertThat(order.getNullHandling()).isEqualTo(expectedNullHandling);
   }
 }
