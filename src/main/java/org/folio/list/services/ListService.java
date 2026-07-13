@@ -314,6 +314,7 @@ public class ListService {
         .filter(entityTypeColumn -> Boolean.TRUE.equals(entityTypeColumn.getIsIdColumn()))
         .map(Field::getName)
         .toList();
+      log.error("\n\n\n\n Entity Type columns: {} \n\n\n", entityType.getColumns());
       log.error("\n\n\n\n Entity type {} has \n {} \n\n ID columns, list {} has content IDs \n\n {} \n\n\n\n", entityType.getId(), expectedIds, list.getId(), contentIds);
       if (expectedIdCount == 0) {
         log.error("Entity type {} has no ID columns", entityType.getId());
