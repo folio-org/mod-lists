@@ -312,8 +312,9 @@ public class ListService {
         .count();
       var expectedIds = entityType.getColumns().stream()
         .filter(entityTypeColumn -> Boolean.TRUE.equals(entityTypeColumn.getIsIdColumn()))
+        .map(Field::getName)
         .toList();
-      log.error("\n\n\n\n Entity type {} has \n {} \n\n ID columns, list {} has content IDs \n\n {} \n\n\n\n", entityType.getId(), expectedIds, list.getId(), contentIds.size());
+      log.error("\n\n\n\n Entity type {} has \n {} \n\n ID columns, list {} has content IDs \n\n {} \n\n\n\n", entityType.getId(), expectedIds, list.getId(), contentIds);
       if (expectedIdCount == 0) {
         log.error("Entity type {} has no ID columns", entityType.getId());
         throw new ListContentsFqmRequestException(list, "The upstream data schema is invalid.");
