@@ -150,7 +150,9 @@ public class CsvCreator {
     private static final Map<String, CsvSchema.ColumnType> COLUMN_TYPE_MAPPER = Map.of(
       "booleanType", CsvSchema.ColumnType.BOOLEAN,
       "numberType", CsvSchema.ColumnType.NUMBER,
-      "arrayType", CsvSchema.ColumnType.ARRAY
+      "arrayType", CsvSchema.ColumnType.ARRAY,
+      // MARC values arrive as arrays (jsonb_agg parsed to String[]), so format them like other arrays.
+      "marcType", CsvSchema.ColumnType.ARRAY
     );
 
     private ListCsvWriter(EntityType entityType, List<String> fields, Map<String, Map<String, String>> localizedValues) {

@@ -37,6 +37,7 @@ import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.ColumnValues;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.MarcType;
 import org.folio.querytool.domain.dto.ValueWithLabel;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.spring.FolioExecutionContext;
@@ -115,7 +116,7 @@ class ListExportServiceTest {
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(eq(exportDetails), eq(userId), eq(entityType), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(entityType);
     doAnswer(invocation -> {
       Supplier<?> runnable = invocation.getArgument(1);
       runnable.get();
@@ -145,6 +146,46 @@ class ListExportServiceTest {
     assertThat(successExport.getStatus()).hasToString(ListExportDTO.StatusEnum.SUCCESS.toString());
   }
 
+  @Test
+  void shouldKeepMarcFieldsInExportViaSyntheticColumns() {
+    UUID listId = TestDataFixture.getListExportDetails().getList().getId();
+    UUID userId = UUID.randomUUID();
+    // A MARC field is requested alongside a regular one; only the regular one is a declared column.
+    List<String> fields = new ArrayList<>(List.of("field1", "marc_245_a"));
+    // The entity type declares the generic MARC placeholder, so the lib can synthesize marc_245_a as a column.
+    List<EntityTypeColumn> entityTypeColumns = new ArrayList<>(List.of(
+      new EntityTypeColumn().name("field1").isIdColumn(true),
+      new EntityTypeColumn().name("marc").dataType(new MarcType().dataType("marcType"))
+    ));
+    EntityType entityType = new EntityType().name("test-entity").columns(entityTypeColumns);
+    ListEntity fetchedEntity = TestDataFixture.getListExportDetails().getList();
+    ExportDetails exportDetails = TestDataFixture.getListExportDetails();
+    ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
+
+    when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
+    when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
+    when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
+      .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
+    when(folioExecutionContext.getUserId()).thenReturn(userId);
+    // Augmentation returns a new entity-type instance, so match any() for the entity-type argument.
+    when(listExportWorkerService.doAsyncExport(any(), any(), any(), anyMap()))
+      .thenReturn(CompletableFuture.completedFuture(true));
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(entityType);
+    doAnswer(invocation -> {
+      Supplier<?> runnable = invocation.getArgument(1);
+      runnable.get();
+      return CompletableFuture.completedFuture(null);
+    })
+      .when(runAsSystemUserService)
+      .executeAsyncSystemUserScoped(any(), any());
+
+    listExportService.createExport(listId, fields);
+
+    ExportDetails inProgressExport = exportDetailsArgumentCaptor.getAllValues().get(0);
+    // The MARC field survived the "present in entity type" filter because it was synthesized as a column.
+    assertTrue(inProgressExport.getFields().containsAll(List.of("field1", "marc_245_a")));
+  }
+
 
   @Test
   void shouldFetchLocalizedValues() {
@@ -162,7 +203,7 @@ class ListExportServiceTest {
 
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(any())).thenReturn(exportDetails);
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(entityType);
     when(entityTypeClient.getColumnValues(fetchedEntity.getEntityTypeId(), "col")).thenReturn(columnValues);
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(any(), any(), any(), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
@@ -191,7 +232,7 @@ class ListExportServiceTest {
     ArgumentCaptor<ExportDetails> exportDetailsArgumentCaptor = ArgumentCaptor.forClass(ExportDetails.class);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(new EntityType());
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(new EntityType());
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
       .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
@@ -336,7 +377,7 @@ class ListExportServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(any(ExportDetails.class))).thenReturn(exportDetails);
     when(listExportMapper.toListExportDTO(exportDetails)).thenReturn(mock(ListExportDTO.class));
-    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT)).thenReturn(new EntityType());
+    when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(new EntityType());
 
     listExportService.createExport(listId, null);
 
