@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.fql.service.MarcFieldFactory;
 import org.folio.list.domain.ListContent;
 import org.folio.list.domain.ListRefreshDetails;
 import org.folio.list.domain.ListVersion;
@@ -370,6 +371,9 @@ public class ListService {
       // we cannot use EntityTypeColumn::getVisibleByDefault here since it may return null
       // if it is null, we get a NPE with plain .filter(...) :(
       .filter(f -> showHidden || Boolean.TRUE.equals(f.getVisibleByDefault()))
+      // Never surface the generic MARC capability placeholder as a field; it's a correlation marker, not a
+      // user-facing column, and (with showHidden=true) would otherwise leak into the default field list.
+      .filter(f -> !MarcFieldFactory.isGenericMarcPlaceholder(f))
       .map(Field::getName)
       .toList();
   }

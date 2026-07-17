@@ -1,3 +1,6 @@
+# 4.1.0 (Umbrellaleaf)
+- [MODLISTS-266](https://folio-org.atlassian.net/browse/MODLISTS-266) Request hidden columns when fetching entity types for FQL validation
+
 # 4.0.1
 - Switch from folio-spring-support 10.0.0-RC1 to 10.0.0
 
