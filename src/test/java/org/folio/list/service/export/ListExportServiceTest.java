@@ -113,7 +113,7 @@ class ListExportServiceTest {
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
-      .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
+      .thenReturn(mock(ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(eq(exportDetails), eq(userId), eq(entityType), anyMap())).thenReturn(CompletableFuture.completedFuture(true));
     when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(entityType);
@@ -165,7 +165,7 @@ class ListExportServiceTest {
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(fetchedEntity));
     when(listExportRepository.save(exportDetailsArgumentCaptor.capture())).thenReturn(exportDetails);
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
-      .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
+      .thenReturn(mock(ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     // Augmentation returns a new entity-type instance, so match any() for the entity-type argument.
     when(listExportWorkerService.doAsyncExport(any(), any(), any(), anyMap()))
@@ -235,7 +235,7 @@ class ListExportServiceTest {
     when(entityTypeClient.getEntityType(fetchedEntity.getEntityTypeId(), ListActions.EXPORT, true)).thenReturn(new EntityType());
 
     when(listExportMapper.toListExportDTO(any(ExportDetails.class)))
-      .thenReturn(mock(org.folio.list.domain.dto.ListExportDTO.class));
+      .thenReturn(mock(ListExportDTO.class));
     when(folioExecutionContext.getUserId()).thenReturn(userId);
     when(listExportWorkerService.doAsyncExport(eq(exportDetails), eq(userId), any(EntityType.class), anyMap()))
       .thenReturn(CompletableFuture.failedFuture(new RuntimeException("something went wrong")));
