@@ -16,6 +16,7 @@ import org.folio.list.util.TestDataFixture;
 import org.folio.querytool.domain.dto.ContentsRequest;
 import org.folio.querytool.domain.dto.EntityType;
 import org.folio.querytool.domain.dto.EntityTypeColumn;
+import org.folio.querytool.domain.dto.MarcType;
 import org.folio.querytool.domain.dto.StringType;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
@@ -272,6 +273,60 @@ class CsvCreatorTest {
       String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8)
         + "[id-label],[languages-label]\n"
         + "id-1,English;fra;\n";
+
+      assertEquals(expected, actual);
+    }
+  }
+
+  @Test
+  void shouldExportMarcColumnValuesAsArray() {
+    int batchSize = 100;
+    UUID userId = UUID.randomUUID();
+    String destinationFileName = "destinationFileName";
+    String uploadId = "uploadId";
+    List<String> partETags = new ArrayList<>();
+    String partETag = "partETag";
+
+    ListEntity entity = TestDataFixture.getPrivateListEntity();
+    // MARC columns are marcType; their values arrive as arrays, so they should serialize like arrayType.
+    EntityTypeColumn marcColumn = new EntityTypeColumn()
+      .name("marc_245_a")
+      .dataType(new MarcType().dataType("marcType"))
+      .labelAlias("[marc-label]")
+      .visibleByDefault(false);
+    EntityType entityType = createEntityType(List.of(createColumn("id"), marcColumn));
+    ExportDetails exportDetails = createExportDetails(entity, UUID.randomUUID());
+    exportDetails.setFields(List.of("id", "marc_245_a"));
+    List<List<String>> contentIds = List.of(List.of(UUID.randomUUID().toString()));
+
+    Map<String, Object> content = new LinkedHashMap<>();
+    content.put("id", "id-1");
+    content.put("marc_245_a", Arrays.asList("Shakespeare", "Hamlet"));
+    List<Map<String, Object>> contentsWithData = List.of(content);
+
+    when(queryClient.getContentsPrivileged(any())).thenReturn(contentsWithData);
+    AtomicInteger seq = new AtomicInteger(0);
+    when(contentsRepository.getContents(any(), any(), anyInt(), any())).thenAnswer(i -> {
+      if (seq.get() > 0) {
+        return List.of();
+      }
+      return contentIds.stream().map(id -> new ListContent(entity.getId(), entity.getSuccessRefresh().getId(), id, seq.getAndIncrement())).toList();
+    });
+    when(exportProperties.getBatchSize()).thenReturn(batchSize);
+    when(listExportRepository.findById(exportDetails.getExportId())).thenReturn(Optional.of(exportDetails));
+
+    StringWriter data = new StringWriter();
+    when(folioS3Client.uploadMultipartPart(eq(destinationFileName), eq(uploadId), anyInt(), any())).thenAnswer(i -> {
+      data.append(FileUtils.readFileToString(new File((String) i.getArgument(3)), "UTF-8"));
+      return partETag;
+    });
+
+    try (ExportLocalStorage csvStorage = csvCreator.createAndUploadCSV(exportDetails, destinationFileName, uploadId, partETags, userId, entityType, Map.of())) {
+      String actual = data.toString();
+      // Array values are joined with ';' — proving marcType maps to the ARRAY CSV column type, not STRING.
+      String expected = new String(ByteOrderMark.UTF_8.getBytes(), StandardCharsets.UTF_8)
+        + "[id-label],[marc-label]\n"
+        + "id-1,Shakespeare;Hamlet\n";
 
       assertEquals(expected, actual);
     }

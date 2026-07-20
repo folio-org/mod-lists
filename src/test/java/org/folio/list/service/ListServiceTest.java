@@ -416,7 +416,7 @@ class ListServiceTest {
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
 
     var actual = listService.createList(listRequestDto);
     ListDTO expected = new ListDTO()
@@ -457,7 +457,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
@@ -478,7 +478,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -510,7 +510,7 @@ class ListServiceTest {
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
 
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     listService.createList(listRequestDto);
     assertNull(entity.getSuccessRefresh());
@@ -540,7 +540,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(listRequestDto.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
     listService.createList(listRequestDto);
@@ -564,7 +564,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listVersionRepository.save(any(ListVersion.class))).thenReturn(previousVersions);
     when(listMapper.toListDTO(entity)).thenReturn(expected);
@@ -608,7 +608,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     when(listMapper.toListDTO(entity)).thenReturn(expected);
     doNothing().when(validationService).validateUpdate(entity, listUpdateRequestDto, entityType);
@@ -631,7 +631,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(entity));
     doNothing().when(validationService).validateUpdate(entity, deactivateRequest, entityType);
 
@@ -660,7 +660,7 @@ class ListServiceTest {
 
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(entityType);
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
     when(listRepository.save(entity)).thenReturn(entity);
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
@@ -693,7 +693,7 @@ class ListServiceTest {
     when(usersClient.getUser(userId)).thenReturn(user);
     when(executionContext.getUserId()).thenReturn(userId);
     when(listRepository.findByIdAndIsDeletedFalse(entity.getId())).thenReturn(Optional.of(entity));
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.UPDATE, true)).thenReturn(entityType);
 
     int oldVersion = entity.getVersion(); // Save the original version, since updateList modifies entity
     var actual = listService.updateList(entity.getId(), listUpdateRequestDto);
@@ -865,7 +865,7 @@ class ListServiceTest {
     when(executionContext.getUserId()).thenReturn(userId);
     when(listEntityMapper.toListEntity(listRequestDto, user)).thenReturn(entity);
     when(listRepository.save(entity)).thenReturn(entity);
-    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE)).thenReturn(entityType);
+    when(entityTypeClient.getEntityType(entity.getEntityTypeId(), ListActions.CREATE, true)).thenReturn(entityType);
     doThrow(HttpClientErrorException.class).when(entityTypeClient).updateEntityTypeUsedBy(entity.getEntityTypeId(), updateUsedByRequest);
 
     assertDoesNotThrow(() -> listService.createList(listRequestDto));

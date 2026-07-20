@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.fql.service.MarcFieldFactory;
 import org.folio.list.domain.AsyncProcessStatus;
 import org.folio.list.domain.ExportDetails;
 import org.folio.list.domain.ListEntity;
@@ -64,7 +65,10 @@ public class ListExportService {
       .orElseThrow(() -> new ListNotFoundException(listId, ListActions.EXPORT));
     validationService.validateCreateExport(list);
     List<String> exportFields = isEmpty(fields) ? list.getFields() : fields;
-    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT);
+    // includeHidden=true exposes the generic MARC placeholder; augment with synthetic MARC columns for any
+    // marc_* export fields so they survive the column filter below and get a header + column in the CSV.
+    EntityType entityType = entityTypeClient.getEntityType(list.getEntityTypeId(), ListActions.EXPORT, true);
+    entityType = MarcFieldFactory.addSyntheticColumns(entityType, exportFields);
     List<EntityTypeColumn> columns = entityType.getColumns();
 
     // Remove any fields that are not present in the entity type definition
