@@ -64,7 +64,7 @@ class ListControllerGetListsTest {
       .header(XOkapiHeaders.TENANT, TENANT_ID);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
+      isNull(), isNull(), isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -77,7 +77,7 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
+      isNull(), isNull(), isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
     assertSort(pageableCaptor.getValue(), "name", Sort.Direction.ASC);
   }
 
@@ -106,7 +106,7 @@ class ListControllerGetListsTest {
 
 
     when(listService.getAllLists(any(Pageable.class), eq(listIds),
-      eq(listEntityIds), eq(true), eq(true), isNull(), eq(false),
+      eq(listEntityIds), eq(true), eq(true), isNull(), isNull(), isNull(), eq(false),
       eq(providedTimestamp), isNull()))
       .thenReturn(listSummaryResultsDto);
 
@@ -149,7 +149,7 @@ class ListControllerGetListsTest {
       .queryParam("private", "false");
 
     when(listService.getAllLists(pageable, null,
-      null, false, false, null, false, null, "missing")).thenReturn(listSummaryResultsDto);
+      null, false, false, null, null, null, false, null, "missing")).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -162,7 +162,7 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(),
-      isNull(), eq(false), eq(false), isNull(), eq(false), isNull(), eq("missing"));
+      isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), eq(false), isNull(), eq("missing"));
     assertThat(pageableCaptor.getValue().getOffset()).isEqualTo(offset);
     assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(size);
     assertSort(pageableCaptor.getValue(), "successRefresh.recordsCount", Sort.Direction.DESC);
@@ -185,7 +185,7 @@ class ListControllerGetListsTest {
       .queryParam("canned", canned.toString());
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), eq(canned), eq(false), isNull(), isNull())).thenReturn(emptyResults);
+      isNull(), isNull(), eq(canned), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(emptyResults);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -193,7 +193,32 @@ class ListControllerGetListsTest {
       .andExpect(jsonPath("$.totalPages", is(0)));
 
     verify(listService).getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), eq(canned), eq(false), isNull(), isNull());
+      isNull(), isNull(), eq(canned), isNull(), isNull(), eq(false), isNull(), isNull());
+  }
+
+  @Test
+  void testGetAllListsWithCreatedByAndUpdatedByParameters() throws Exception {
+    UUID createdBy = UUID.randomUUID();
+    UUID updatedBy = UUID.randomUUID();
+    UUID listId = UUID.randomUUID();
+    var listDto = TestDataFixture.getListSummaryDTO(listId);
+    ListSummaryResultsDTO listSummaryResultsDto = getListSummaryResultsDTO(listDto, listDto);
+
+    var requestBuilder = get("/lists")
+      .contentType(APPLICATION_JSON)
+      .header(XOkapiHeaders.TENANT, TENANT_ID)
+      .queryParam("createdBy", createdBy.toString())
+      .queryParam("updatedBy", updatedBy.toString());
+
+    when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
+      isNull(), isNull(), isNull(), eq(createdBy), eq(updatedBy), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
+
+    mockMvc.perform(requestBuilder)
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.totalRecords", is(2)));
+
+    verify(listService).getAllLists(any(Pageable.class), isNull(), isNull(),
+      isNull(), isNull(), isNull(), eq(createdBy), eq(updatedBy), eq(false), isNull(), isNull());
   }
 
   @ParameterizedTest
@@ -219,7 +244,7 @@ class ListControllerGetListsTest {
       .queryParam("sortOrder", sortOrder);
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(emptyResults);
+      isNull(), isNull(), isNull(), isNull(), isNull(), eq(false), isNull(), isNull())).thenReturn(emptyResults);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
@@ -228,7 +253,7 @@ class ListControllerGetListsTest {
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(listService).getAllLists(pageableCaptor.capture(), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
+      isNull(), isNull(), isNull(), isNull(), isNull(), eq(false), isNull(), isNull());
     assertSort(pageableCaptor.getValue(), expectedProperty, expectedDirection);
   }
 

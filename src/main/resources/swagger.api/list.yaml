@@ -73,6 +73,20 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: createdBy
+          in: query
+          description: Only return lists created by the user with this ID
+          required: false
+          schema:
+            type: string
+            format: UUID
+        - name: updatedBy
+          in: query
+          description: Only return lists last updated by the user with this ID
+          required: false
+          schema:
+            type: string
+            format: UUID
         - name: includeDeleted
           in: query
           description: Indicates if deleted lists should be included in the results (default false)

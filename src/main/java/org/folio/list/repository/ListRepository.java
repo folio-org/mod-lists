@@ -28,6 +28,8 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:canned IS NULL OR l.isCanned = :canned)
       AND (:active IS NULL OR l.isActive = :active)
+      AND (:createdBy IS NULL OR l.createdBy = :createdBy)
+      AND (:updatedBy IS NULL OR l.updatedBy = :updatedBy)
       AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
@@ -45,6 +47,8 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
       AND (:isPrivate IS NULL OR l.isPrivate = :isPrivate)
       AND (:canned IS NULL OR l.isCanned = :canned)
       AND (:active IS NULL OR l.isActive = :active)
+      AND (:createdBy IS NULL OR l.createdBy = :createdBy)
+      AND (:updatedBy IS NULL OR l.updatedBy = :updatedBy)
       AND (:includeDeleted = true OR l.isDeleted = false)
       AND (TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') IS NULL OR
       (l.createdDate>= TO_TIMESTAMP(CAST(:updatedAsOf AS text), 'YYYY-MM-DD HH24:MI:SS.MS') OR
@@ -62,6 +66,8 @@ public interface ListRepository extends CrudRepository<ListEntity, UUID>, Paging
     Boolean active,
     Boolean isPrivate,
     Boolean canned,
+    UUID createdBy,
+    UUID updatedBy,
     boolean includeDeleted,
     OffsetDateTime updatedAsOf,
     String searchPattern
