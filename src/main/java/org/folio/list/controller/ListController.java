@@ -42,6 +42,8 @@ public class ListController implements ListApi {
     Optional<Boolean> active,
     Optional<Boolean> isPrivate, // Note: query param name is "private"
     Optional<Boolean> canned,
+    Optional<UUID> createdBy,
+    Optional<UUID> updatedBy,
     Optional<Boolean> includeDeleted,
     Optional<String> updatedAsOf,
     Optional<String> sortBy,
@@ -63,6 +65,8 @@ public class ListController implements ListApi {
         active.orElse(null),
         isPrivate.orElse(null),
         canned.orElse(null),
+        createdBy.orElse(null),
+        updatedBy.orElse(null),
         Boolean.TRUE.equals(includeDeleted.orElse(null)),
         providedTimestamp,
         search.orElse(null)
