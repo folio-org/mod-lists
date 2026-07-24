@@ -82,6 +82,35 @@ public class ListExportService {
       .distinct()
       .toList();
 
+    // [export-marc-debug] Temporary diagnostics for the intermittent MARC-column drop on export.
+    // Captures ground truth at the exact decision point so a failing export identifies which link breaks:
+    //   marcTypeColumns empty / missing the placeholder -> the marc_* placeholder didn't arrive as a MarcType
+    //     (ET fetch or DTO/lib deserialization problem);
+    //   marcExportFields empty -> the running lib didn't recognize the field name (stale lib / parse);
+    //   field in marcExportFields but NOT in synthesizedMarcFields -> placeholder present but not matched;
+    //   field in droppedFields -> it was filtered out of the export.
+    if (log.isInfoEnabled()) {
+      List<String> marcTypeColumns = columns.stream()
+        .filter(c -> c.getDataType() instanceof org.folio.querytool.domain.dto.MarcType)
+        .map(Field::getName)
+        .toList();
+      List<String> marcExportFields = exportFields.stream()
+        .filter(MarcFieldFactory::isMarcFieldName)
+        .toList();
+      List<String> synthesizedMarcFields = marcExportFields.stream()
+        .filter(columnNames::contains)
+        .toList();
+      List<String> droppedFields = exportFields.stream()
+        .filter(f -> !validExportFields.contains(f))
+        .toList();
+      log.info(
+        "[export-marc-debug] list={} entityType={} exportFields={} marcTypeColumns={} marcExportFields={} "
+          + "synthesizedMarcFields={} droppedFields={}",
+        listId, list.getEntityTypeId(), exportFields, marcTypeColumns, marcExportFields,
+        synthesizedMarcFields, droppedFields
+      );
+    }
+
     ExportDetails exportDetails = createExportDetails(list, validExportFields);
     ExportDetails savedExport = listExportRepository.save(exportDetails);
     doAsyncExport(savedExport, entityType);
