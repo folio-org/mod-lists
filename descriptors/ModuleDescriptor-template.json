@@ -115,7 +115,7 @@
           "methods": ["GET"],
           "pathPattern": "/lists/related-users",
           "permissionsRequired": ["lists.related-users.collection.get"],
-          "modulePermissions": ["users.collection.get"]
+          "modulePermissions": ["users.item.get"]
         }
       ]
     }
