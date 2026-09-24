@@ -428,7 +428,31 @@ paths:
                 $ref: '#/components/schemas/ListVersionDTO'
         '4XX':
           $ref: '#/components/responses/badRequestResponse'
-
+  /lists/related-users:
+    get:
+      operationId: getRelatedUsers
+      tags:
+        - listRelatedUsers
+      description: Get users related to the list
+      parameters:
+        - $ref: '#/components/parameters/role'
+      responses:
+        '200':
+          description: Related user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatedUserCollection'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              example: "Related users not found"
+        '500':
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            text/plain:
+              example: "Internal server error"
 components:
   parameters:
     id:
@@ -455,6 +479,16 @@ components:
       schema:
         type: integer
         minimum: 1
+    role:
+      name: role
+      in: query
+      required: true
+      description: User role (create/update)
+      schema:
+        type: string
+        enum:
+          - create
+          - update
   schemas:
     ListDTO:
       $ref: schemas/ListDTO.json
@@ -480,6 +514,8 @@ components:
       $ref: schemas/ListAppError.json
     ListConfiguration:
       $ref: schemas/ListConfiguration.json
+    RelatedUserCollection:
+      $ref: schemas/relatedUserCollection.json
 
   responses:
     badRequestResponse:

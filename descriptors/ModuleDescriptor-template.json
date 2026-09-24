@@ -110,6 +110,12 @@
           "methods": ["GET"],
           "pathPattern": "/lists/configuration",
           "permissionsRequired": ["lists.configuration.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/lists/related-users",
+          "permissionsRequired": ["lists.related-users.collection.get"],
+          "modulePermissions": ["users.collection.get"]
         }
       ]
     }
@@ -190,6 +196,11 @@
       "permissionName": "lists.item.versions.item.get",
       "displayName": "Lists: Get a previous version of a list",
       "description": "Get a previous version of a list"
+    },
+    {
+      "permissionName": "lists.related-users.collection.get",
+      "displayName": "Lists: Get related users",
+      "description": "Get users related to the list"
     }
   ],
   "requires": [
