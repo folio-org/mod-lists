@@ -73,7 +73,7 @@ class UserServiceTest {
   void getRelatedUsersByRole_unknownRole_returnsEmptyCollection() {
     RelatedUserCollection result = userService.getRelatedUsersByRole("unknown");
 
-    assertThat(result.getTotalRecords()).isEqualTo(0);
+    assertThat(result.getTotalRecords()).isZero();
     assertThat(result.getRelatedUsers()).isEmpty();
   }
 
@@ -89,7 +89,7 @@ class UserServiceTest {
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
-    assertThat(result.getTotalRecords()).isEqualTo(0);
+    assertThat(result.getTotalRecords()).isZero();
     assertThat(result.getRelatedUsers()).isEmpty();
   }
 
@@ -120,7 +120,7 @@ class UserServiceTest {
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
-    assertThat(result.getTotalRecords()).isEqualTo(0);
+    assertThat(result.getTotalRecords()).isZero();
     assertThat(result.getRelatedUsers()).isEmpty();
   }
 
