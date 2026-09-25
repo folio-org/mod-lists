@@ -3,7 +3,6 @@ package org.folio.list.rest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Optional;
 import java.util.UUID;
-import org.folio.list.domain.dto.RelatedUser;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -12,8 +11,6 @@ import org.springframework.web.service.annotation.HttpExchange;
 public interface UsersClient {
   @GetExchange("/{userId}")
   User getUser(@PathVariable UUID userId);
-
-  RelatedUser getRelatedUserByUserId(UUID userId);
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   record User(UUID id, Optional<Personal> personal) {
