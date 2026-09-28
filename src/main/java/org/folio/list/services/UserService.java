@@ -3,10 +3,8 @@ package org.folio.list.services;
 import static java.lang.Boolean.TRUE;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -15,7 +13,6 @@ import org.folio.list.domain.dto.RelatedUser;
 import org.folio.list.domain.dto.RelatedUserCollection;
 import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.UsersClient;
-import org.folio.list.rest.UsersClient.User;
 import org.springframework.stereotype.Service;
 
 @Log4j2
