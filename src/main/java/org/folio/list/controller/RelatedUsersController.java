@@ -14,7 +14,7 @@ public class RelatedUsersController implements ListRelatedUsersApi {
   private final UserService userService;
 
   @Override
-  public ResponseEntity<RelatedUserCollection> getRelatedUsers(String role) {
+  public ResponseEntity<RelatedUserCollection> getRelatedUsers(String query, String role) {
     return new ResponseEntity<>(userService.getRelatedUsersByRole(role), HttpStatus.OK);
   }
 }

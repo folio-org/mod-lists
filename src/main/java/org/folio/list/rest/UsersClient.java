@@ -1,9 +1,11 @@
 package org.folio.list.rest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -11,6 +13,12 @@ import org.springframework.web.service.annotation.HttpExchange;
 public interface UsersClient {
   @GetExchange("/{userId}")
   User getUser(@PathVariable UUID userId);
+
+  @GetExchange
+  UserCollection getByQuery(@RequestParam("query") String query);
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record UserCollection(List<User> users, Integer totalRecords) {}
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   record User(UUID id, Optional<Personal> personal) {

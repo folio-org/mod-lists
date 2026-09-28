@@ -435,6 +435,12 @@ paths:
         - listRelatedUsers
       description: Get users related to the list
       parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+          description: Request query
         - $ref: '#/components/parameters/role'
       responses:
         '200':

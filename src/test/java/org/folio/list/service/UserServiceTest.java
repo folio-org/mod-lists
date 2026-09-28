@@ -6,6 +6,7 @@ import org.folio.list.repository.ListRepository;
 import org.folio.list.rest.UsersClient;
 import org.folio.list.rest.UsersClient.Personal;
 import org.folio.list.rest.UsersClient.User;
+import org.folio.list.rest.UsersClient.UserCollection;
 import org.folio.list.services.UserService;
 import org.folio.list.util.TestDataFixture;
 import org.junit.jupiter.api.Test;
@@ -18,11 +19,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
+
+  private static final String QUERY = "id==(%s)";
 
   @InjectMocks
   private UserService userService;
@@ -38,11 +42,10 @@ class UserServiceTest {
     UUID userId = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
     entity.setCreatedBy(userId);
-    entity.setIsPrivate(false);
 
     User user = new User(userId, Optional.of(new Personal("John", "Doe")));
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getUser(userId)).thenReturn(user);
+    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -57,11 +60,10 @@ class UserServiceTest {
     UUID userId = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
     entity.setUpdatedBy(userId);
-    entity.setIsPrivate(false);
 
     User user = new User(userId, Optional.of(new Personal("Jane", "Smith")));
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getUser(userId)).thenReturn(user);
+    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("update");
 
@@ -69,21 +71,6 @@ class UserServiceTest {
     assertThat(result.getRelatedUsers()).hasSize(1);
     assertThat(result.getRelatedUsers().get(0).getId()).isEqualTo(userId.toString());
     assertThat(result.getRelatedUsers().get(0).getFullName()).isEqualTo("Smith, Jane");
-  }
-
-  @Test
-  void getRelatedUsersByRole_create_filtersOutPrivateLists() {
-    UUID userId = UUID.randomUUID();
-    ListEntity privateEntity = TestDataFixture.getListEntityWithSuccessRefresh();
-    privateEntity.setCreatedBy(userId);
-    // isPrivate is true by default in the fixture
-
-    when(listRepository.findAll()).thenReturn(List.of(privateEntity));
-
-    RelatedUserCollection result = userService.getRelatedUsersByRole("create");
-
-    assertThat(result.getTotalRecords()).isZero();
-    assertThat(result.getRelatedUsers()).isEmpty();
   }
 
   @Test
@@ -99,11 +86,10 @@ class UserServiceTest {
     UUID userId = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh();
     entity.setCreatedBy(userId);
-    entity.setIsPrivate(false);
 
     User userWithoutPersonal = new User(userId, Optional.empty());
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getUser(userId)).thenReturn(userWithoutPersonal);
+    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(userWithoutPersonal), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -117,13 +103,11 @@ class UserServiceTest {
     ListEntity entity1 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     ListEntity entity2 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     entity1.setCreatedBy(userId);
-    entity1.setIsPrivate(false);
     entity2.setCreatedBy(userId);
-    entity2.setIsPrivate(false);
 
     User user = new User(userId, Optional.of(new Personal("Alice", "Brown")));
     when(listRepository.findAll()).thenReturn(List.of(entity1, entity2));
-    when(usersClient.getUser(userId)).thenReturn(user);
+    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -135,7 +119,6 @@ class UserServiceTest {
   void getRelatedUsersByRole_create_skipsEntitiesWithNullCreatedBy() {
     ListEntity entityWithNull = TestDataFixture.getListEntityWithSuccessRefresh();
     entityWithNull.setCreatedBy(null);
-    entityWithNull.setIsPrivate(false);
 
     when(listRepository.findAll()).thenReturn(List.of(entityWithNull));
 
@@ -152,15 +135,14 @@ class UserServiceTest {
     ListEntity entity1 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     ListEntity entity2 = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     entity1.setCreatedBy(userId1);
-    entity1.setIsPrivate(false);
     entity2.setCreatedBy(userId2);
-    entity2.setIsPrivate(false);
 
     User user1 = new User(userId1, Optional.of(new Personal("Alice", "Brown")));
     User user2 = new User(userId2, Optional.of(new Personal("Bob", "Green")));
     when(listRepository.findAll()).thenReturn(List.of(entity1, entity2));
-    when(usersClient.getUser(userId1)).thenReturn(user1);
-    when(usersClient.getUser(userId2)).thenReturn(user2);
+    // Both IDs fit in one chunk, order depends on stream processing
+    String query = format(QUERY, userId1 + " or " + userId2);
+    when(usersClient.getByQuery(query)).thenReturn(new UserCollection(List.of(user1, user2), 2));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
