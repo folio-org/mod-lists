@@ -1,5 +1,7 @@
 package org.folio.list.services;
 
+import static java.lang.Boolean.TRUE;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +35,7 @@ public class UserService {
 
   private RelatedUserCollection getRelatedUsers(Function<ListEntity, UUID> function) {
     var users = StreamSupport.stream(listRepository.findAll().spliterator(), false)
+      .filter(listEntity -> !TRUE.equals(listEntity.getIsPrivate()))
       .map(function)
       .filter(Objects::nonNull)
       .distinct()
