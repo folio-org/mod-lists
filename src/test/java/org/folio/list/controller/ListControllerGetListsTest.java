@@ -211,14 +211,14 @@ class ListControllerGetListsTest {
       .queryParam("updatedBy", updatedBy.toString());
 
     when(listService.getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(createdBy), eq(updatedBy), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
+      isNull(), isNull(), isNull(), eq(List.of(createdBy)), eq(List.of(updatedBy)), eq(false), isNull(), isNull())).thenReturn(listSummaryResultsDto);
 
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.totalRecords", is(2)));
 
     verify(listService).getAllLists(any(Pageable.class), isNull(), isNull(),
-      isNull(), isNull(), isNull(), eq(createdBy), eq(updatedBy), eq(false), isNull(), isNull());
+      isNull(), isNull(), isNull(), eq(List.of(createdBy)), eq(List.of(updatedBy)), eq(false), isNull(), isNull());
   }
 
   @ParameterizedTest

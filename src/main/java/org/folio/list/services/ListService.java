@@ -84,7 +84,7 @@ public class ListService {
   private final UsersClient usersClient;
 
   public ListSummaryResultsDTO getAllLists(Pageable pageable, List<UUID> ids, List<UUID> entityTypeIds, Boolean active,
-                                           Boolean isPrivate, Boolean canned, UUID createdBy, UUID updatedBy,
+                                           Boolean isPrivate, Boolean canned, List<UUID> createdBy, List<UUID> updatedBy,
                                            boolean includeDeleted, OffsetDateTime updatedAsOf, String search) {
 
     log.info("Attempting to get all lists");
@@ -120,8 +120,8 @@ public class ListService {
       active,
       isPrivate,
       canned,
-      createdBy,
-      updatedBy,
+      isEmpty(createdBy) ? null : createdBy,
+      isEmpty(updatedBy) ? null : updatedBy,
       includeDeleted,
       updatedAsOf,
       searchPattern
