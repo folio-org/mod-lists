@@ -342,8 +342,8 @@ class ListServiceTest {
   void getAllListsShouldFilterByCreatedByAndUpdatedBy() {
     UUID entityTypeId = UUID.randomUUID();
     UUID currentUserId = UUID.randomUUID();
-    UUID createdBy = UUID.randomUUID();
-    UUID updatedBy = UUID.randomUUID();
+    UUID createdById = UUID.randomUUID();
+    UUID updatedById = UUID.randomUUID();
     ListEntity entity = TestDataFixture.getListEntityWithSuccessRefresh(UUID.randomUUID());
     entity.setEntityTypeId(entityTypeId);
     ListSummaryDTO listSummaryDto = TestDataFixture.getListSummaryDTO(entity.getId()).entityTypeId(entityTypeId);
@@ -360,8 +360,8 @@ class ListServiceTest {
       isNull(),
       isNull(),
       isNull(),
-      Mockito.eq(createdBy),
-      Mockito.eq(updatedBy),
+      Mockito.eq(List.of(createdById)),
+      Mockito.eq(List.of(updatedById)),
       Mockito.eq(false),
       isNull(),
       isNull()
@@ -375,8 +375,8 @@ class ListServiceTest {
       null,
       null,
       null,
-      createdBy,
-      updatedBy,
+      List.of(createdById),
+      List.of(updatedById),
       false,
       null,
       null

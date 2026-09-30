@@ -42,8 +42,8 @@ public class ListController implements ListApi {
     Optional<Boolean> active,
     Optional<Boolean> isPrivate, // Note: query param name is "private"
     Optional<Boolean> canned,
-    Optional<UUID> createdBy,
-    Optional<UUID> updatedBy,
+    Optional<List<UUID>> createdBy,
+    Optional<List<UUID>> updatedBy,
     Optional<Boolean> includeDeleted,
     Optional<String> updatedAsOf,
     Optional<String> sortBy,
