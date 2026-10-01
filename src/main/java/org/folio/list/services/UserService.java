@@ -50,7 +50,7 @@ public class UserService {
     var users =
       chunks.stream()
         .flatMap(idList -> usersClient
-          .getByQuery(format(QUERY, join(OR_DELIMETER, idList))).users().stream())
+          .getByQuery(format(QUERY, join(OR_DELIMETER, idList)), idList.size()).users().stream())
         .filter(user -> user.getFullName().isPresent())
         .map(user -> new RelatedUser()
           .id(user.id().toString())

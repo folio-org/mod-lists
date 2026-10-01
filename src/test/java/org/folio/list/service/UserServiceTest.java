@@ -45,7 +45,7 @@ class UserServiceTest {
 
     User user = new User(userId, Optional.of(new Personal("John", "Doe")));
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
+    when(usersClient.getByQuery(format(QUERY, userId), 1)).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -63,7 +63,7 @@ class UserServiceTest {
 
     User user = new User(userId, Optional.of(new Personal("Jane", "Smith")));
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
+    when(usersClient.getByQuery(format(QUERY, userId), 1)).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("update");
 
@@ -89,7 +89,7 @@ class UserServiceTest {
 
     User userWithoutPersonal = new User(userId, Optional.empty());
     when(listRepository.findAll()).thenReturn(List.of(entity));
-    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(userWithoutPersonal), 1));
+    when(usersClient.getByQuery(format(QUERY, userId), 1)).thenReturn(new UserCollection(List.of(userWithoutPersonal), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -107,7 +107,7 @@ class UserServiceTest {
 
     User user = new User(userId, Optional.of(new Personal("Alice", "Brown")));
     when(listRepository.findAll()).thenReturn(List.of(entity1, entity2));
-    when(usersClient.getByQuery(format(QUERY, userId))).thenReturn(new UserCollection(List.of(user), 1));
+    when(usersClient.getByQuery(format(QUERY, userId), 1)).thenReturn(new UserCollection(List.of(user), 1));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
@@ -142,7 +142,7 @@ class UserServiceTest {
     when(listRepository.findAll()).thenReturn(List.of(entity1, entity2));
     // Both IDs fit in one chunk, order depends on stream processing
     String query = format(QUERY, userId1 + " or " + userId2);
-    when(usersClient.getByQuery(query)).thenReturn(new UserCollection(List.of(user1, user2), 2));
+    when(usersClient.getByQuery(query, 2)).thenReturn(new UserCollection(List.of(user1, user2), 2));
 
     RelatedUserCollection result = userService.getRelatedUsersByRole("create");
 
