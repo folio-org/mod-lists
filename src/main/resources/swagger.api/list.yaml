@@ -440,12 +440,6 @@ paths:
     get:
       operationId: getRelatedUsers
       tags:
-        - in: query
-          name: limit
-          required: false
-          schema:
-            type: integer
-          description: Query limit
         - listRelatedUsers
       description: Get users related to the list
       parameters:
