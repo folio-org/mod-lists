@@ -15,7 +15,7 @@ public interface UsersClient {
   User getUser(@PathVariable UUID userId);
 
   @GetExchange
-  UserCollection getByQuery(@RequestParam("query") String query, int limit);
+  UserCollection getByQuery(@RequestParam("query") String query, @RequestParam("limit") int limit);
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   record UserCollection(List<User> users, Integer totalRecords) {}
