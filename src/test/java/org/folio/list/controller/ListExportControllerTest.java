@@ -152,8 +152,8 @@ class ListExportControllerTest {
     when(listExportService.downloadExport(listId, exportId))
       .thenReturn(new ExportDownloadContents(listName, csvInputStream, 1234));
 
-    var expectedContentDisposition = "attachment; filename=\"=?UTF-8?Q?%s?=\"; filename*=UTF-8''%s".formatted(
-            listName.replace(' ', '_') + ".csv",
+    var expectedContentDisposition = "attachment; filename=\"%s\"; filename*=UTF-8''%s".formatted(
+            listName + ".csv",
             URLEncoder.encode(listName, StandardCharsets.UTF_8).replace("+", "%20") + ".csv");
     mockMvc.perform(requestBuilder)
       .andExpect(status().isOk())
