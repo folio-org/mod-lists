@@ -25,17 +25,13 @@
     <!-- runtime dependencies -->
     <lombok.version>1.18.48</lombok.version>
     <folio-spring-support.version>10.0.1</folio-spring-support.version>
-    <commons-collections4.version>4.4</commons-collections4.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <lib-fqm-query-processor.version>4.2.0-SNAPSHOT</lib-fqm-query-processor.version>
-    <jackson-dataformat-csv.version>3.1.0</jackson-dataformat-csv.version>
     <aws-sdk-java.version>2.42.16</aws-sdk-java.version>
     <folio-s3-client.version>2.4.0</folio-s3-client.version>
-    <awaitility.version>4.3.0</awaitility.version>
     <snakeyaml.version>2.6</snakeyaml.version>
 
     <!-- test dependencies -->
-    <testcontainers.version>1.21.4</testcontainers.version>
     <wiremock.version>3.13.2</wiremock.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
@@ -124,12 +120,11 @@
     <dependency>
       <groupId>tools.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-csv</artifactId>
-      <version>${jackson-dataformat-csv.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>${awaitility.version}</version>
     </dependency>
 
     <dependency>
@@ -185,14 +180,12 @@
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${testcontainers.version}</version>
+      <artifactId>testcontainers-postgresql</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${testcontainers.version}</version>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
