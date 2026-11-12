@@ -1,3 +1,7 @@
+# 4.0.2  (Trillium)
+- [MODLISTS-279](https://folio-org.atlassian.net/browse/MODLISTS-279) - mod-lists - Trillium CSP#1 - Upgrade to SpringBoot 4.1
+- [MODLISTS-270](https://folio-org.atlassian.net/browse/MODLISTS-270) - Add DeployConfig.json to mod-lists (ADR-0013 Configuration Management)
+
 # 4.0.1
 - Switch from folio-spring-support 10.0.0-RC1 to 10.0.0
 
