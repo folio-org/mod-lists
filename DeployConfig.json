@@ -1,0 +1,327 @@
+{
+  "description": "mod-lists configuration template",
+  "moduleDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for container"
+      },
+      {
+        "name": "memory",
+        "value": "6000",
+        "description": "Memory hard limit for container"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "2600",
+        "description": "Memory reservation for container"
+      }
+    ],
+    "java": [
+      {
+        "name": "xmx",
+        "value": "2048m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "512m",
+        "description": "Maximum Java metaspace size"
+      },
+      {
+        "name": "MetaspaceSize",
+        "value": "256m",
+        "description": "Initial Java metaspace size"
+      }
+    ],
+    "deployment": {
+      "isHaSupported": true,
+      "replicasRecommendedCount": 2,
+      "description": "Deployment configuration for the backend module. Adjust replicas based on expected load and HA requirements. Set to false if only single instance is supported or required."
+    },
+    "kong": {
+      "timeouts": {
+        "connect": "60s",
+        "send": "60s",
+        "read": "60s"
+      },
+      "description": "Custom Kong proxy timeouts. Use this only if different from default Kong configuration"
+    },
+    "EnvVars": [
+      {
+        "name": "DB_DATABASE",
+        "value": null,
+        "description": "Database name",
+        "type": "DB",
+        "essential": true
+      },
+      {
+        "name": "DB_HOST",
+        "value": null,
+        "description": "Database host",
+        "type": "DB",
+        "essential": true
+      },
+      {
+        "name": "DB_MAXPOOLSIZE",
+        "value": "5",
+        "description": "Maximum database connection pool size",
+        "type": "DB",
+        "essential": false
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": null,
+        "description": "Database password",
+        "type": "DB",
+        "essential": true
+      },
+      {
+        "name": "DB_PORT",
+        "value": null,
+        "description": "Database port",
+        "type": "DB",
+        "essential": true
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": null,
+        "description": "Database username",
+        "type": "DB",
+        "essential": true
+      },
+
+      {
+        "name": "ENV",
+        "value": null,
+        "description": "Environment",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "JAVA_ARGS",
+        "value": null,
+        "description": "Java arguments",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "JAVA_OPTS",
+        "value": null,
+        "description": "Java options",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "LOG4J_CONFIGURATION_FILE",
+        "value": null,
+        "description": "Log4j configuration file",
+        "type": "CONFIG",
+        "essential": false
+      },
+
+      {
+        "name": "S3_ACCESS_KEY_ID",
+        "value": null,
+        "description": "S3 access key",
+        "type": "S3",
+        "essential": true
+      },
+      {
+        "name": "S3_BUCKET",
+        "value": null,
+        "description": "S3 bucket",
+        "type": "S3",
+        "essential": true
+      },
+      {
+        "name": "S3_IS_AWS",
+        "value": false,
+        "description": "Specify if AWS S3 is used as files storage",
+        "type": "S3",
+        "essential": true
+      },
+      {
+        "name": "S3_REGION",
+        "value": "us-west-2",
+        "description": "S3 region",
+        "type": "S3",
+        "essential": true
+      },
+      {
+        "name": "S3_SECRET_ACCESS_KEY",
+        "value": null,
+        "description": "S3 secret key",
+        "type": "S3",
+        "essential": true
+      },
+      {
+        "name": "S3_SUB_PATH",
+        "value": "mod-lists",
+        "description": "S3 subpath for file storage",
+        "type": "S3",
+        "essential": false
+      },
+      {
+        "name": "S3_URL",
+        "value": "https://s3.amazonaws.com",
+        "description": "S3 url",
+        "type": "S3",
+        "essential": true
+      },
+
+      {
+        "name": "OKAPI_URL",
+        "value": null,
+        "description": "Okapi url",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "SYSTEM_USER_NAME",
+        "value": "mod-lists",
+        "description": "Username of the system user",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "SYSTEM_USER_PASSWORD",
+        "value": "{SYSTEM_USER_PASSWORD}",
+        "description": "Password of the system user",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "SYSTEM_USER_ENABLED",
+        "value": true,
+        "description": "Defines if system user must be created at service tenant initialization or used for egress service requests",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "PLATFORM",
+        "value": "eureka",
+        "description": "Specifies if okapi or eureka platform",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "MAX_LIST_SIZE",
+        "value": "1250000",
+        "description": "Maximum number of records a list can contain",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "LIST_EXPORT_BATCH_SIZE",
+        "value": "1000",
+        "description": "Batch size used when fetching list records for export",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "REFRESH_BATCH_SIZE",
+        "value": "10000",
+        "description": "Batch size used when refreshing list contents",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "REFRESH_QUERY_TIMEOUT_MINUTES",
+        "value": "90",
+        "description": "Timeout in minutes for a list refresh query",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "SYSTEM_USER_RETRY_WAIT_MINUTES",
+        "value": "10",
+        "description": "Wait time in minutes between system user initialization retries",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "SYSTEM_USER_RETRY_MAX_ATTEMPTS",
+        "value": "15",
+        "description": "Maximum number of system user initialization retry attempts",
+        "type": "FUNCTIONAL",
+        "essential": false
+      }
+    ]
+  },
+
+  "sidecarDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for container"
+      },
+      {
+        "name": "memory",
+        "value": "1024",
+        "description": "Memory hard limit for container"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "512",
+        "description": "Memory reservation for container"
+      }
+    ],
+    "java": [
+      {
+        "name": "xms",
+        "value": "128m",
+        "description": "Initial Java heap size"
+      },
+      {
+        "name": "xmx",
+        "value": "256m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "96m",
+        "description": "Maximum Java metaspace size"
+      }
+    ],
+    "EnvVars": [
+      {
+        "name": "ENV",
+        "value": null,
+        "description": "Environment",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "JAVA_OPTS",
+        "value": null,
+        "description": "Additional JVM options for the sidecar process",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "MODULE_NAME",
+        "value": "mod-lists",
+        "description": "Name of the backend module the sidecar fronts",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_URL",
+        "value": null,
+        "description": "Internal URL (host:port) at which the mod-lists backend container is reachable from its sidecar",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_VERSION",
+        "value": null,
+        "description": "Version of the mod-lists module deployed alongside this sidecar",
+        "type": "CONFIG",
+        "essential": true
+      }
+    ]
+  }
+}
